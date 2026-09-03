@@ -1,48 +1,33 @@
-# Gym Tracker — contexto del proyecto
+# Sterk — contexto del proyecto
 
-> Fuente principal y permanente para las decisiones de producto, UX y arquitectura. Actualizar cuando cambie el alcance o se tome una decisión importante.
+> Fuente principal para decisiones de producto, UX y arquitectura. Actualizar cuando cambie el alcance o se tome una decisión importante.
 
-## Visión y objetivo
+## Visión
 
-Gym Tracker es una aplicación personal para registrar el progreso en el gimnasio desde un iPhone con la menor fricción posible. Se construye como una PWA instalable mediante **Añadir a pantalla de inicio**.
-
-La experiencia debe permitir registrar peso, series y repeticiones con una sola mano, pocos toques y casi nada de escritura. Debe mostrar el rendimiento anterior y mantener un historial por ejercicio. En fases futuras podrá mostrar progreso, récords personales, volumen y estimaciones de 1RM.
+Sterk es una aplicación personal para registrar el progreso en el gimnasio desde un iPhone con la menor fricción posible. Se distribuye como PWA instalable mediante **Añadir a pantalla de inicio**.
 
 ## Prioridades
 
-1. Minimizar toques y entrada de texto.
-2. Mostrar el entrenamiento anterior como referencia.
-3. Registrar peso y repeticiones individuales por serie.
-4. Mantener historial por ejercicio.
-5. Mantener los datos bajo control del usuario.
-6. Usar finalmente Excel en OneDrive como repositorio y plataforma de análisis.
-7. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
+1. Minimizar toques y escritura.
+2. Funcionar cómodamente con una mano.
+3. Mostrar el rendimiento anterior.
+4. Registrar peso y repeticiones individuales por serie.
+5. Recuperar una sesión interrumpida.
+6. Mantener historial y copias de seguridad bajo control del usuario.
+7. Usar finalmente Excel en OneDrive como repositorio y plataforma de análisis.
+8. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
 
-## Alcance de la V0
+## Decisiones confirmadas
 
-- HTML, CSS y JavaScript vanilla.
-- PWA local y mobile-first.
-- Persistencia mediante `localStorage`, detrás de una capa sustituible.
-- Rutinas iniciales Push, Pull y Legs.
-- Registro conjunto de todas las series de un ejercicio (modo A) para validar primero la interfaz.
-
-Fuera de alcance: backend, autenticación, Cloudflare, Microsoft Graph, Excel y bases de datos externas.
-
-## Arquitectura
-
-Actual:
-
-```text
-iPhone → PWA Gym Tracker → localStorage
-```
-
-Prevista:
-
-```text
-iPhone → PWA Gym Tracker → API / Cloudflare Worker → Microsoft Graph → Excel en OneDrive
-```
-
-La interfaz, la lógica de dominio y la persistencia deben permanecer separadas para que la arquitectura futura no exija reescribir la UI.
+- Nombre del producto y proyecto: **Sterk**.
+- Tecnología: HTML, CSS y JavaScript vanilla, sin frameworks.
+- Aplicación mobile-first y PWA.
+- Persistencia local abstraída mediante `localStorage` durante V0 y V1.
+- Dos modos disponibles: registro conjunto por ejercicio y marcado libre por serie.
+- **No se implementarán temporizadores** de ejercicio ni descanso. Sterk no debe imponer ritmos de entrenamiento.
+- La sesión activa debe persistir al cerrar, recargar o bloquear el teléfono.
+- La navegación durante la rutina permite avanzar, retroceder, saltar directamente y omitir ejercicios.
+- Los datos pueden exportarse e importarse mediante respaldo JSON.
 
 ## Rutinas iniciales
 
@@ -50,30 +35,40 @@ La interfaz, la lógica de dominio y la persistencia deben permanecer separadas 
 - **Pull:** Lat Pulldown, Seated Row, Biceps Curl, Rear Delt Fly.
 - **Legs:** Power Squat, Leg Extension, Leg Curl, Calf Raise.
 
-## Principios de UX
+## Arquitectura
 
-- Diseño oscuro, limpio y mobile-first.
-- Optimización principal para iPhone y uso con una mano.
-- Botones grandes, controles rápidos y números visibles.
-- Preferir selección y valores precargados sobre formularios y teclado.
-- Avanzar al siguiente ejercicio después de registrar el actual.
-- Mostrar confirmación breve sin interrumpir el flujo.
+Actual:
 
-## Decisión de UX pendiente
+```text
+iPhone → PWA Sterk → capa storage → localStorage
+```
 
-Se deben probar dos modos antes de elegir uno definitivamente:
+Futura:
 
-- **A — por ejercicio:** registrar todas las series juntas al finalizar el ejercicio.
-- **B — por serie:** registrar cada serie inmediatamente y posiblemente iniciar un temporizador de descanso.
+```text
+iPhone → PWA Sterk → API → Cloudflare Worker → Microsoft Graph → Excel en OneDrive
+```
 
-La V0 implementa temporalmente el modo A. El modelo conserva cada serie como un valor individual para no impedir el modo B más adelante.
+La arquitectura futura no está implementada. La interfaz, el dominio y la persistencia deben permanecer separados para poder sustituir `localStorage` sin reescribir la UI.
+
+## Fuera de alcance actual
+
+- backend y autenticación
+- Cloudflare Worker
+- Microsoft Graph
+- Excel y OneDrive
+- bases de datos externas
+- temporizadores
+- métricas avanzadas, PR, gráficas y 1RM
 
 ## Registro de decisiones
 
 | Fecha | Decisión | Estado |
 |---|---|---|
-| 2026-09-02 | Construir la V0 como PWA local en HTML, CSS y JavaScript vanilla. | Aprobada |
+| 2026-09-02 | Construir la aplicación como PWA vanilla. | Aprobada |
 | 2026-09-02 | Usar `localStorage` detrás de una abstracción sustituible. | Aprobada |
-| 2026-09-02 | Posponer backend, autenticación, Cloudflare, Microsoft Graph y Excel. | Aprobada |
-| 2026-09-02 | Implementar temporalmente el registro conjunto por ejercicio (modo A). | En validación |
-| 2026-09-02 | Mantener las series como datos individuales para permitir posteriormente el modo B. | Aprobada |
+| 2026-09-02 | Posponer backend, autenticación, Microsoft Graph y Excel. | Aprobada |
+| 2026-09-02 | Cambiar el nombre de Gym Tracker a Sterk. | Aprobada |
+| 2026-09-02 | Ofrecer registro por ejercicio y por serie. | Aprobada |
+| 2026-09-02 | Excluir permanentemente temporizadores de entrenamiento y descanso. | Aprobada |
+| 2026-09-02 | Añadir recuperación de sesión, historial básico y respaldo JSON en V1. | Aprobada |

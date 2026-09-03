@@ -4,19 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#0b0d0c">
-    <meta name="description" content="Registra tus entrenamientos con pocos toques.">
+    <meta name="description" content="Sterk: registra tu fuerza con pocos toques.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Gym Tracker">
+    <meta name="apple-mobile-web-app-title" content="Sterk">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="stylesheet" href="src/styles.css">
-    <title>Gym Tracker</title>
+    <title>Sterk</title>
   </head>
   <body>
     <main id="app" class="app-shell" aria-live="polite"></main>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <input id="import-data" class="visually-hidden" type="file" accept="application/json,.json">
     <script type="module" src="src/app.js"></script>
   </body>
 </html>

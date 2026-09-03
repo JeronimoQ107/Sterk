@@ -1,4 +1,4 @@
-const CACHE_NAME = "gym-tracker-v0-1";
+const CACHE_NAME = "sterk-v1-2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,6 +9,9 @@ const APP_SHELL = [
   "./src/storage.js",
   "./icons/icon.svg",
   "./icons/apple-touch-icon.svg",
+  "./icons/apple-touch-icon.png",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
 ];
 
 self.addEventListener("install", (event) => {
