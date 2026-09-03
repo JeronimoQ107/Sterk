@@ -1,6 +1,6 @@
 # Sterk
 
-PWA personal y mobile-first para registrar entrenamientos desde un iPhone con pocos toques y sin temporizadores.
+PWA personal y mobile-first para registrar entrenamientos desde un iPhone con pocos toques.
 
 ## Ejecutar localmente
 
@@ -12,15 +12,16 @@ python -m http.server 8080
 
 Abre `http://localhost:8080`. En iPhone, una publicación HTTPS permitirá instalar Sterk mediante **Safari → Compartir → Añadir a pantalla de inicio**.
 
-## Funcionalidades V1
+## Funcionalidades V1.1
 
 - rutinas Push, Pull y Legs
 - modos de registro por ejercicio y por serie
-- peso y repeticiones con controles táctiles
+- peso y repeticiones independientes por serie con controles táctiles
+- duración automática de la sesión desde el inicio hasta su finalización
 - recuperación automática de una sesión activa
 - navegación anterior, siguiente y salto directo entre ejercicios
 - omisión y recuperación de ejercicios
-- historial básico por ejercicio y eliminación de registros
+- historial agrupado por entrenamiento con detalle de ejercicios y series
 - resumen de ejercicios, series, reps, volumen, duración aproximada y omitidos
 - comparación de volumen con la sesión anterior
 - exportación e importación JSON
@@ -47,7 +48,7 @@ docs/architecture.md    Arquitectura y decisiones
 
 - los datos continúan ligados al navegador y dispositivo actual
 - no hay sincronización, cuentas ni recuperación remota
-- la duración del entrenamiento es informativa; no condiciona el flujo
+- la duración de la sesión se registra automáticamente
 - no hay gráficas, PR ni estimaciones de 1RM
 - la publicación HTTPS aún debe configurarse
 

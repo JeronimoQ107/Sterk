@@ -19,7 +19,7 @@ La UI consume métodos públicos de `storage`; no accede directamente a claves d
 
 ## Datos
 
-Una entrada de ejercicio contiene identificadores de sesión y entrada, fecha, rutina, ejercicio, peso, arreglo de repeticiones, series marcadas, cantidad de series, volumen y modo de registro.
+Una entrada de ejercicio contiene identificadores de sesión y entrada, fecha, rutina, ejercicio, series con peso y repeticiones independientes, volumen y modo de registro.
 
 La sesión activa guarda cada borrador y su estado (`pending`, `registered` o `skipped`). Cualquier cambio de peso, reps, series, navegación o marcado se persiste inmediatamente, permitiendo recuperar el entrenamiento tras una interrupción.
 
@@ -30,7 +30,7 @@ Las sesiones finalizadas almacenan su resumen para comparar volumen con la sesi�
 - **Por ejercicio:** editar y guardar todas las series juntas.
 - **Por serie:** marcar series terminadas individualmente y guardar el ejercicio al finalizar.
 
-No existe temporizador en ninguno de los modos. Es una decisión deliberada de producto: Sterk registra el entrenamiento sin imponer su ritmo.
+La sesión registra automáticamente el tiempo transcurrido entre su inicio y finalización.
 
 ## PWA
 
