@@ -12,11 +12,16 @@ python -m http.server 8080
 
 Abre `http://localhost:8080`. En iPhone, una publicación HTTPS permitirá instalar Sterk mediante **Safari → Compartir → Añadir a pantalla de inicio**.
 
-## Funcionalidades V1.1
+## Funcionalidades V1.2
 
-- rutinas Push, Pull y Legs
+- constructor de sesiones con selección y orden libre de ejercicios
+- catálogo filtrable por grupo muscular
+- clasificación automática Push, Pull, Legs, combinada o Full Body
+- creación y archivo de ejercicios personalizados
 - modos de registro por ejercicio y por serie
 - peso y repeticiones independientes por serie con controles táctiles
+- controles táctiles sin zoom accidental por doble toque
+- referencia compacta y expandible del entrenamiento anterior
 - duración automática de la sesión desde el inicio hasta su finalización
 - recuperación automática de una sesión activa
 - navegación anterior, siguiente y salto directo entre ejercicios
@@ -36,7 +41,7 @@ index.html              Entrada y metadatos PWA
 manifest.json           Instalación de Sterk
 service-worker.js       Caché offline
 icons/                  Iconos SVG y PNG
-src/data.js             Rutinas
+src/data.js             Catálogo, grupos musculares y categorías
 src/storage.js          Persistencia y respaldos
 src/app.js              Vistas e interacciones
 src/styles.css          Diseño mobile-first
@@ -54,4 +59,4 @@ docs/architecture.md    Arquitectura y decisiones
 
 ## Próxima etapa
 
-Probar la V1 durante entrenamientos reales, desplegarla con HTTPS y ajustar fricciones observadas. La integración con API, Microsoft Graph y Excel debe abordarse después de validar la experiencia.
+Probar la V1.2 durante entrenamientos reales y ajustar el constructor de sesiones. IndexedDB, HTTPS y sincronización continúan fuera de esta versión.

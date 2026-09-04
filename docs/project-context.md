@@ -14,8 +14,9 @@ Sterk es una aplicación personal para registrar el progreso en el gimnasio desd
 4. Registrar peso y repeticiones individuales por serie.
 5. Recuperar una sesión interrumpida.
 6. Mantener historial y copias de seguridad bajo control del usuario.
-7. Usar finalmente Excel en OneDrive como repositorio y plataforma de análisis.
-8. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
+7. Mantener una arquitectura local-first y añadir sincronización solo cuando aporte valor.
+8. Usar Excel únicamente como exportación opcional para análisis.
+9. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
 
 ## Decisiones confirmadas
 
@@ -28,12 +29,16 @@ Sterk es una aplicación personal para registrar el progreso en el gimnasio desd
 - La sesión activa debe persistir al cerrar, recargar o bloquear el teléfono.
 - La navegación durante la rutina permite avanzar, retroceder, saltar directamente y omitir ejercicios.
 - Los datos pueden exportarse e importarse mediante respaldo JSON.
+- Cada sesión se construye seleccionando y ordenando ejercicios libremente.
+- Cada ejercicio declara un grupo muscular y una categoría Push, Pull o Legs.
+- La categoría final de la sesión se deriva de los ejercicios registrados.
 
-## Rutinas iniciales
+## Catálogo inicial
 
 - **Push:** Bench Press, Incline Press, Shoulder Press, Triceps Extension.
 - **Pull:** Lat Pulldown, Seated Row, Biceps Curl, Rear Delt Fly.
 - **Legs:** Power Squat, Leg Extension, Leg Curl, Calf Raise.
+- El usuario puede combinar, ordenar y añadir ejercicios personalizados.
 
 ## Arquitectura
 
@@ -43,13 +48,13 @@ Actual:
 iPhone → PWA Sterk → capa storage → localStorage
 ```
 
-Futura:
+Futura, no implementada:
 
 ```text
-iPhone → PWA Sterk → API → Cloudflare Worker → Microsoft Graph → Excel en OneDrive
+iPhone → PWA Sterk → IndexedDB → sincronización opcional → base de datos remota
 ```
 
-La arquitectura futura no está implementada. La interfaz, el dominio y la persistencia deben permanecer separados para poder sustituir `localStorage` sin reescribir la UI.
+Excel se conserva como posible formato de exportación, no como base de datos. La interfaz, el dominio y la persistencia deben permanecer separados para poder sustituir `localStorage` sin reescribir la UI.
 
 ## Fuera de alcance actual
 
@@ -72,4 +77,6 @@ La arquitectura futura no está implementada. La interfaz, el dominio y la persi
 | 2026-09-02 | Ofrecer registro por ejercicio y por serie. | Aprobada |
 | 2026-09-03 | Medir automáticamente la duración total sin controles manuales. | Aprobada |
 | 2026-09-03 | Permitir peso independiente por serie y agrupar el historial por sesión. | Aprobada |
+| 2026-09-03 | Construir sesiones libremente desde un catálogo clasificado. | Aprobada |
+| 2026-09-03 | Mantener Excel fuera del camino crítico y como exportación opcional. | Aprobada |
 | 2026-09-02 | Añadir recuperación de sesión, historial básico y respaldo JSON en V1. | Aprobada |

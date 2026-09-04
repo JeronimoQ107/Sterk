@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-## V1 actual
+## V1.2 actual
 
 ```text
 PWA Sterk
@@ -10,7 +10,7 @@ capa storage
 localStorage
 ```
 
-- `src/data.js`: rutinas y valores predeterminados.
+- `src/data.js`: ejercicios predeterminados, grupos musculares, categorías y compatibilidad con rutinas antiguas.
 - `src/app.js`: estado de interfaz, navegación y sesión.
 - `src/storage.js`: entradas, sesiones, ajustes y respaldos.
 - `service-worker.js`: shell offline y actualización de recursos.
@@ -19,11 +19,11 @@ La UI consume métodos públicos de `storage`; no accede directamente a claves d
 
 ## Datos
 
-Una entrada de ejercicio contiene identificadores de sesión y entrada, fecha, rutina, ejercicio, series con peso y repeticiones independientes, volumen y modo de registro.
+Una entrada contiene identificadores de sesión, entrada y ejercicio, grupo muscular, categoría, series con peso y repeticiones independientes, volumen y modo de registro.
 
 La sesión activa guarda cada borrador y su estado (`pending`, `registered` o `skipped`). Cualquier cambio de peso, reps, series, navegación o marcado se persiste inmediatamente, permitiendo recuperar el entrenamiento tras una interrupción.
 
-Las sesiones finalizadas almacenan su resumen para comparar volumen con la sesión anterior de la misma rutina.
+Las sesiones se construyen seleccionando ejercicios del catálogo. La categoría prevista y final se deriva de sus etiquetas Push, Pull y Legs. Las sesiones finalizadas almacenan su resumen para comparar volumen con la sesión anterior de la misma categoría.
 
 ## Modos de registro
 
@@ -39,15 +39,9 @@ El manifiesto incluye iconos PNG de 192 y 512 px. iOS utiliza un icono PNG de 18
 ## Arquitectura futura — no implementada
 
 ```text
-PWA Sterk
- ↓
-API
- ↓
-Cloudflare Worker
- ↓
-Microsoft Graph
- ↓
-Excel en OneDrive
+PWA Sterk → IndexedDB → sincronización opcional → base de datos remota
+                                      ↓
+                              exportación CSV/XLSX
 ```
 
-La V1 continúa sin backend, autenticación, Cloudflare, Microsoft Graph, Excel ni bases de datos externas.
+La V1.2 continúa con `localStorage`, sin backend, autenticación, IndexedDB ni bases de datos externas.

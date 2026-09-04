@@ -1,8 +1,11 @@
+import { DEFAULT_EXERCISES, LEGACY_ROUTINES } from "./data.js";
+
 const KEYS = Object.freeze({
   entries: "sterk:v1:workout-entries",
   activeSession: "sterk:v1:active-session",
   sessions: "sterk:v1:completed-sessions",
   settings: "sterk:v1:settings",
+  customExercises: "sterk:v1:custom-exercises",
 });
 
 const LEGACY_ENTRIES_KEY = "gym-tracker:v0:workout-entries";
@@ -21,6 +24,18 @@ function write(key, value) {
   return value;
 }
 
+function catalogWith(customExercises = read(KEYS.customExercises, [])) {
+  return [...DEFAULT_EXERCISES, ...(Array.isArray(customExercises) ? customExercises : [])];
+}
+
+function findExercise(value, catalog = catalogWith()) {
+  const id = value?.exerciseId || value?.id;
+  const name = value?.exercise || value?.name;
+  return catalog.find((exercise) => exercise.id === id)
+    || catalog.find((exercise) => exercise.name.toLocaleLowerCase() === String(name || "").toLocaleLowerCase())
+    || null;
+}
+
 function normalizeSets(entry) {
   if (Array.isArray(entry?.sets) && entry.sets.length) {
     return entry.sets.map((set, index) => ({
@@ -37,10 +52,15 @@ function normalizeSets(entry) {
   }));
 }
 
-function normalizeEntry(entry) {
+function normalizeEntry(entry, catalog = catalogWith()) {
   const sets = normalizeSets(entry);
+  const metadata = findExercise(entry, catalog);
   return {
     ...entry,
+    exerciseId: entry.exerciseId || metadata?.id || `legacy-${String(entry.exercise || "exercise").toLocaleLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    exercise: entry.exercise || metadata?.name || "Ejercicio",
+    muscleGroup: entry.muscleGroup || metadata?.muscleGroup || "other",
+    category: entry.category || metadata?.category || entry.routineId || "push",
     sets,
     weight: sets[0]?.weight ?? 0,
     reps: sets.map((set) => set.reps),
@@ -50,14 +70,25 @@ function normalizeEntry(entry) {
   };
 }
 
-function normalizeActiveSession(session) {
+function normalizeActiveSession(session, catalog = catalogWith()) {
   if (!session || !Array.isArray(session.exercises)) return session;
+  const legacyNames = LEGACY_ROUTINES[session.routineId] || [];
+  const exercises = session.exercises.map((exercise, index) => {
+    const name = exercise.exercise || exercise.name || legacyNames[index];
+    const metadata = findExercise({ ...exercise, name }, catalog);
+    return {
+      ...exercise,
+      exerciseId: exercise.exerciseId || metadata?.id || `legacy-${index}`,
+      exercise: name || metadata?.name || `Ejercicio ${index + 1}`,
+      muscleGroup: exercise.muscleGroup || metadata?.muscleGroup || "other",
+      category: exercise.category || metadata?.category || session.routineId || "push",
+      sets: normalizeSets(exercise),
+    };
+  });
   return {
     ...session,
-    exercises: session.exercises.map((exercise) => ({
-      ...exercise,
-      sets: normalizeSets(exercise),
-    })),
+    categoryTags: session.categoryTags || [...new Set(exercises.map((exercise) => exercise.category))],
+    exercises,
   };
 }
 
@@ -67,15 +98,35 @@ if (localStorage.getItem(KEYS.entries) === null) {
 }
 
 export const storage = {
+  getExerciseCatalog({ includeArchived = false } = {}) {
+    const catalog = catalogWith();
+    return includeArchived ? catalog : catalog.filter((exercise) => !exercise.archived);
+  },
+  saveCustomExercise(exercise) {
+    const custom = read(KEYS.customExercises, []);
+    const normalized = { ...exercise, custom: true, archived: Boolean(exercise.archived) };
+    const duplicate = catalogWith(custom).find((item) => item.id !== normalized.id && item.name.toLocaleLowerCase() === normalized.name.toLocaleLowerCase());
+    if (duplicate) throw new Error("Ya existe un ejercicio con ese nombre.");
+    const index = custom.findIndex((item) => item.id === normalized.id);
+    if (index >= 0) custom[index] = normalized;
+    else custom.push(normalized);
+    return write(KEYS.customExercises, custom);
+  },
+  archiveCustomExercise(id) {
+    const custom = read(KEYS.customExercises, []);
+    const item = custom.find((exercise) => exercise.id === id);
+    if (item) item.archived = true;
+    return write(KEYS.customExercises, custom);
+  },
   getEntries() {
     const entries = read(KEYS.entries, []);
-    return Array.isArray(entries) ? entries.map(normalizeEntry) : [];
+    return Array.isArray(entries) ? entries.map((entry) => normalizeEntry(entry)) : [];
   },
-  getExerciseHistory(routineId, exercise) {
-    return this.getEntries().filter((entry) => entry.routineId === routineId && entry.exercise === exercise).sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
+  getExerciseHistory(exerciseId, exerciseName) {
+    return this.getEntries().filter((entry) => entry.exerciseId === exerciseId || entry.exercise === exerciseName).sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
   },
-  getLastExerciseEntry(routineId, exercise) {
-    return this.getExerciseHistory(routineId, exercise)[0] || null;
+  getLastExerciseEntry(exerciseId, exerciseName) {
+    return this.getExerciseHistory(exerciseId, exerciseName)[0] || null;
   },
   saveWorkoutEntry(entry) {
     const entries = this.getEntries();
@@ -110,14 +161,17 @@ export const storage = {
   getSettings() { return { trackingMode: "exercise", ...read(KEYS.settings, {}) }; },
   saveSettings(settings) { return write(KEYS.settings, { ...this.getSettings(), ...settings }); },
   exportData() {
-    return { app: "Sterk", version: 2, exportedAt: new Date().toISOString(), entries: this.getEntries(), completedSessions: this.getCompletedSessions(), activeSession: this.getActiveSession(), settings: this.getSettings() };
+    return { app: "Sterk", version: 3, exportedAt: new Date().toISOString(), entries: this.getEntries(), completedSessions: this.getCompletedSessions(), activeSession: this.getActiveSession(), settings: this.getSettings(), customExercises: read(KEYS.customExercises, []) };
   },
   importData(data) {
-    if (!data || data.app !== "Sterk" || ![1, 2].includes(data.version) || !Array.isArray(data.entries)) throw new Error("El archivo no es un respaldo válido de Sterk.");
-    write(KEYS.entries, data.entries.map(normalizeEntry));
+    if (!data || data.app !== "Sterk" || ![1, 2, 3].includes(data.version) || !Array.isArray(data.entries)) throw new Error("El archivo no es un respaldo válido de Sterk.");
+    const customExercises = data.version === 3 && Array.isArray(data.customExercises) ? data.customExercises : [];
+    const catalog = catalogWith(customExercises);
+    write(KEYS.customExercises, customExercises);
+    write(KEYS.entries, data.entries.map((entry) => normalizeEntry(entry, catalog)));
     write(KEYS.sessions, Array.isArray(data.completedSessions) ? data.completedSessions : []);
     write(KEYS.settings, data.settings || { trackingMode: "exercise" });
-    if (data.activeSession) write(KEYS.activeSession, normalizeActiveSession(data.activeSession));
+    if (data.activeSession) write(KEYS.activeSession, normalizeActiveSession(data.activeSession, catalog));
     else this.clearActiveSession();
   },
   clearAll() {
