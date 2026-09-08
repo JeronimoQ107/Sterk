@@ -12,7 +12,14 @@ python -m http.server 8080
 
 Abre `http://localhost:8080`. En iPhone, una publicación HTTPS permitirá instalar Sterk mediante **Safari → Compartir → Añadir a pantalla de inicio**.
 
-## Funcionalidades V1.2
+## Funcionalidades V1.3
+
+- 57 ejercicios predeterminados y búsqueda por nombres y alias en español e inglés
+- añadir, crear, quitar y reordenar ejercicios durante una sesión activa
+- finalización explícita: registrar el último ejercicio deja abierta la sesión
+- registro opcional por lado con peso, repeticiones y marcado independientes
+- peso compacto con rueda vertical de 2,5 lb y entrada decimal manual
+- respaldo JSON V4 con importación compatible con V1, V2 y V3
 
 - constructor de sesiones con selección y orden libre de ejercicios
 - catálogo filtrable por grupo muscular
@@ -43,6 +50,8 @@ service-worker.js       Caché offline
 icons/                  Iconos SVG y PNG
 src/data.js             Catálogo, grupos musculares y categorías
 src/storage.js          Persistencia y respaldos
+src/sets.js             Series bilaterales/unilaterales y cálculo de totales
+src/weight-picker.js    Selector de peso con rueda y escritura
 src/app.js              Vistas e interacciones
 src/styles.css          Diseño mobile-first
 docs/project-context.md Fuente principal de contexto
@@ -57,6 +66,21 @@ docs/architecture.md    Arquitectura y decisiones
 - no hay gráficas, PR ni estimaciones de 1RM
 - la publicación HTTPS aún debe configurarse
 
+## Desarrollo y pruebas
+
+Con Node.js instalado, sin instalar dependencias:
+
+```powershell
+npm start
+npm test
+```
+
+El servidor de desarrollo abre `http://127.0.0.1:8083`. Las pruebas usan almacenamiento en memoria y no modifican los datos del navegador.
+
+En el modo por serie, solo los lados o series marcados contribuyen al volumen y a las repeticiones. Una pareja izquierda/derecha cuenta como una serie cuando se registra al menos un lado. Los lados pendientes se conservan y aparecen identificados en el historial.
+
+Antes de finalizar, registra, omite o quita los ejercicios pendientes. Quitar un ejercicio elimina únicamente sus datos de la sesión en curso, con confirmación. Una sesión puede quedar vacía y recuperarse para añadir ejercicios después.
+
 ## Próxima etapa
 
-Probar la V1.2 durante entrenamientos reales y ajustar el constructor de sesiones. IndexedDB, HTTPS y sincronización continúan fuera de esta versión.
+Probar la V1.3 en Safari de un iPhone físico, especialmente el desplazamiento de la rueda y el teclado decimal. IndexedDB, HTTPS y sincronización continúan fuera de esta versión.

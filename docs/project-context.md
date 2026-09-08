@@ -40,6 +40,16 @@ Sterk es una aplicación personal para registrar el progreso en el gimnasio desd
 - **Legs:** Power Squat, Leg Extension, Leg Curl, Calf Raise.
 - El usuario puede combinar, ordenar y añadir ejercicios personalizados.
 
+## V1.3 — ajustes tras uso real
+
+- Catálogo ampliado a 57 ejercicios, incluyendo Bayesian Curl, con búsqueda por nombre y alias en español e inglés sin distinguir acentos.
+- Entrenamientos editables durante la sesión: añadir, crear, quitar y reordenar ejercicios conservando tiempo y registros.
+- Finalización explícita para poder iniciar con un solo ejercicio y decidir los siguientes durante el entrenamiento.
+- Registro opcional por lado: izquierda/derecha con peso, repeticiones y marcado independientes; copia de valores entre lados sin marcar automáticamente el destino.
+- Control compacto de peso que abre una rueda de 2,5 lb y permite escribir decimales manualmente.
+- Historial y respaldos preservan los lados; los datos antiguos permanecen sin lado asignado.
+- Las pruebas automatizadas cubren persistencia, migraciones, totales, edición, recuperación y cierre explícito. La interacción táctil final debe revisarse en un iPhone físico.
+
 ## Arquitectura
 
 Actual:

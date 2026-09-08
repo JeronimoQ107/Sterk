@@ -1,4 +1,5 @@
 import { DEFAULT_EXERCISES, LEGACY_ROUTINES } from "./data.js";
+import { normalizeSet, setReps, setVolume, parts } from "./sets.js";
 
 const KEYS = Object.freeze({
   entries: "sterk:v1:workout-entries",
@@ -38,11 +39,7 @@ function findExercise(value, catalog = catalogWith()) {
 
 function normalizeSets(entry) {
   if (Array.isArray(entry?.sets) && entry.sets.length) {
-    return entry.sets.map((set, index) => ({
-      weight: Math.max(0, Number(set.weight) || 0),
-      reps: Math.max(0, Number(set.reps) || 0),
-      completed: set.completed ?? entry.completedSets?.[index] ?? true,
-    }));
+    return entry.sets.map((set, index) => normalizeSet(set, entry.completedSets?.[index] ?? true));
   }
   const reps = Array.isArray(entry?.reps) && entry.reps.length ? entry.reps : [10, 10, 10];
   return reps.map((value, index) => ({
@@ -65,8 +62,9 @@ function normalizeEntry(entry, catalog = catalogWith()) {
     weight: sets[0]?.weight ?? 0,
     reps: sets.map((set) => set.reps),
     completedSets: sets.map((set) => set.completed),
-    setCount: sets.length,
-    volume: sets.reduce((sum, set) => sum + set.weight * set.reps, 0),
+    setCount: sets.filter((set) => parts(set).some((part) => part.completed)).length,
+    repCount: sets.reduce((sum, set) => sum + setReps(set), 0),
+    volume: sets.reduce((sum, set) => sum + setVolume(set), 0),
   };
 }
 
@@ -125,8 +123,8 @@ export const storage = {
   getExerciseHistory(exerciseId, exerciseName) {
     return this.getEntries().filter((entry) => entry.exerciseId === exerciseId || entry.exercise === exerciseName).sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
   },
-  getLastExerciseEntry(exerciseId, exerciseName) {
-    return this.getExerciseHistory(exerciseId, exerciseName)[0] || null;
+  getLastExerciseEntry(exerciseId, exerciseName, excludeSessionId = null) {
+    return this.getExerciseHistory(exerciseId, exerciseName).find((entry) => !excludeSessionId || entry.sessionId !== excludeSessionId) || null;
   },
   saveWorkoutEntry(entry) {
     const entries = this.getEntries();
@@ -161,11 +159,11 @@ export const storage = {
   getSettings() { return { trackingMode: "exercise", ...read(KEYS.settings, {}) }; },
   saveSettings(settings) { return write(KEYS.settings, { ...this.getSettings(), ...settings }); },
   exportData() {
-    return { app: "Sterk", version: 3, exportedAt: new Date().toISOString(), entries: this.getEntries(), completedSessions: this.getCompletedSessions(), activeSession: this.getActiveSession(), settings: this.getSettings(), customExercises: read(KEYS.customExercises, []) };
+    return { app: "Sterk", version: 4, exportedAt: new Date().toISOString(), entries: this.getEntries(), completedSessions: this.getCompletedSessions(), activeSession: this.getActiveSession(), settings: this.getSettings(), customExercises: read(KEYS.customExercises, []) };
   },
   importData(data) {
-    if (!data || data.app !== "Sterk" || ![1, 2, 3].includes(data.version) || !Array.isArray(data.entries)) throw new Error("El archivo no es un respaldo válido de Sterk.");
-    const customExercises = data.version === 3 && Array.isArray(data.customExercises) ? data.customExercises : [];
+    if (!data || data.app !== "Sterk" || ![1, 2, 3, 4].includes(data.version) || !Array.isArray(data.entries)) throw new Error("El archivo no es un respaldo válido de Sterk.");
+    const customExercises = data.version >= 3 && Array.isArray(data.customExercises) ? data.customExercises : [];
     const catalog = catalogWith(customExercises);
     write(KEYS.customExercises, customExercises);
     write(KEYS.entries, data.entries.map((entry) => normalizeEntry(entry, catalog)));
