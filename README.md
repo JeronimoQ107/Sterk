@@ -18,7 +18,7 @@ Abre `http://localhost:8080`. En iPhone, una publicación HTTPS permitirá insta
 - añadir, crear, quitar y reordenar ejercicios durante una sesión activa
 - finalización explícita: registrar el último ejercicio deja abierta la sesión
 - registro opcional por lado con peso, repeticiones y marcado independientes
-- peso compacto con rueda vertical de 2,5 lb y entrada decimal manual
+- peso compacto con deslizamiento vertical directo en pasos de 2,5 lb y entrada decimal con un toque
 - respaldo JSON V4 con importación compatible con V1, V2 y V3
 
 - constructor de sesiones con selección y orden libre de ejercicios
@@ -51,7 +51,7 @@ icons/                  Iconos SVG y PNG
 src/data.js             Catálogo, grupos musculares y categorías
 src/storage.js          Persistencia y respaldos
 src/sets.js             Series bilaterales/unilaterales y cálculo de totales
-src/weight-picker.js    Selector de peso con rueda y escritura
+src/weight-picker.js    Entrada manual de peso
 src/app.js              Vistas e interacciones
 src/styles.css          Diseño mobile-first
 docs/project-context.md Fuente principal de contexto
@@ -83,4 +83,4 @@ Antes de finalizar, registra, omite o quita los ejercicios pendientes. Quitar un
 
 ## Próxima etapa
 
-Probar la V1.3 en Safari de un iPhone físico, especialmente el desplazamiento de la rueda y el teclado decimal. IndexedDB, HTTPS y sincronización continúan fuera de esta versión.
+Probar la V1.3 en Safari de un iPhone físico, especialmente el deslizamiento directo sobre el peso y el teclado decimal. IndexedDB, HTTPS y sincronización continúan fuera de esta versión.

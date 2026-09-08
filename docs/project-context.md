@@ -46,7 +46,7 @@ Sterk es una aplicación personal para registrar el progreso en el gimnasio desd
 - Entrenamientos editables durante la sesión: añadir, crear, quitar y reordenar ejercicios conservando tiempo y registros.
 - Finalización explícita para poder iniciar con un solo ejercicio y decidir los siguientes durante el entrenamiento.
 - Registro opcional por lado: izquierda/derecha con peso, repeticiones y marcado independientes; copia de valores entre lados sin marcar automáticamente el destino.
-- Control compacto de peso que abre una rueda de 2,5 lb y permite escribir decimales manualmente.
+- Control compacto de peso que permite deslizar directamente en pasos de 2,5 lb o tocar una vez para escribir decimales.
 - Historial y respaldos preservan los lados; los datos antiguos permanecen sin lado asignado.
 - Las pruebas automatizadas cubren persistencia, migraciones, totales, edición, recuperación y cierre explícito. La interacción táctil final debe revisarse en un iPhone físico.
 

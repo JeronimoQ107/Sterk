@@ -14,7 +14,9 @@ localStorage
 - `src/app.js`: estado de interfaz, navegación y sesión.
 - `src/storage.js`: entradas, sesiones, ajustes y respaldos.
 - `src/sets.js`: normalización, copia y cálculo de series bilaterales y por lado.
-- `src/weight-picker.js`: diálogo de peso, rueda vertical y entrada manual.
+- `src/weight-picker.js`: diálogo compacto de entrada manual de peso.
+- `src/weight-control.js`: ajuste directo con arrastre vertical, rueda del mouse y teclado; persistencia por cada cambio sin reconstruir el control durante el gesto.
+- `src/icons.js`: iconos SVG compartidos, independientes de la fuente del dispositivo.
 - `service-worker.js`: shell offline y actualización de recursos.
 
 La UI consume métodos públicos de `storage`; no accede directamente a claves de `localStorage`.

@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import fs from 'node:fs';
 import * as data from '../src/data.js';
 import * as sets from '../src/sets.js';
+import { icon } from '../src/icons.js';
 
 const memory = new Map();
 globalThis.localStorage = { getItem: (key) => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, value), removeItem: (key) => memory.delete(key) };
@@ -14,7 +15,7 @@ function setup() {
   const handlers = {}, notices = [], dialogs = [];
   const app = { innerHTML: '', addEventListener: (type, fn) => { handlers[type] = fn; } };
   const dummy = { addEventListener() {}, classList: { add() {}, remove() {} } };
-  const context = vm.createContext({ ...data, ...sets, storage, structuredClone, console, crypto: globalThis.crypto,
+  const context = vm.createContext({ ...data, ...sets, icon, bindWeightControl() {}, storage, structuredClone, console, crypto: globalThis.crypto,
     document: { querySelector: (selector) => selector === '#app' ? app : dummy, querySelectorAll: () => [], body: { append() {} },
       createElement: () => { const dialog = { handlers: {}, innerHTML: '', setAttribute() {}, addEventListener(type, fn) { this.handlers[type] = fn; }, showModal() {}, close() {}, remove() {} }; dialogs.push(dialog); return dialog; } },
     navigator: {}, window: { setInterval() {}, setTimeout() {}, scrollTo() {} }, confirm: () => true, alert: (text) => notices.push(text), openWeightPicker() {},
