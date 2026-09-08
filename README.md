@@ -12,7 +12,15 @@ python -m http.server 8080
 
 Abre `http://localhost:8080`. En iPhone, una publicación HTTPS permitirá instalar Sterk mediante **Safari → Compartir → Añadir a pantalla de inicio**.
 
-## Funcionalidades V1.3
+## Funcionalidades V1.4
+
+- Inicio con actividad de los últimos siete días y acceso al último entrenamiento
+- sección Progreso con periodos de 30 días, 90 días o todo el historial
+- entrenamientos, series completadas y días activos del periodo
+- gráfica de carga máxima por sesión y repeticiones de la misma serie, por ejercicio y lado
+- tabla de datos y estados explicativos cuando faltan registros
+- Ajustes agrupados por modo de registro, biblioteca, respaldos y borrado
+- catálogo compacto por grupos desplegables y selección visible antes del listado
 
 - 57 ejercicios predeterminados y búsqueda por nombres y alias en español e inglés
 - añadir, crear, quitar y reordenar ejercicios durante una sesión activa
@@ -52,6 +60,8 @@ src/data.js             Catálogo, grupos musculares y categorías
 src/storage.js          Persistencia y respaldos
 src/sets.js             Series bilaterales/unilaterales y cálculo de totales
 src/weight-picker.js    Entrada manual de peso
+src/progress.js         Cálculos de actividad y series de progreso
+src/dashboard.js        Vistas de Inicio, Ajustes y Progreso
 src/app.js              Vistas e interacciones
 src/styles.css          Diseño mobile-first
 docs/project-context.md Fuente principal de contexto
@@ -83,4 +93,4 @@ Antes de finalizar, registra, omite o quita los ejercicios pendientes. Quitar un
 
 ## Próxima etapa
 
-Probar la V1.3 en Safari de un iPhone físico, especialmente el deslizamiento directo sobre el peso y el teclado decimal. IndexedDB, HTTPS y sincronización continúan fuera de esta versión.
+Probar la V1.4 en Safari de un iPhone físico. IndexedDB y sincronización siguen pendientes; Progreso usa el historial local actual. La publicación existente en GitHub Pages puede servir la PWA por HTTPS.

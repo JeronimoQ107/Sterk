@@ -52,6 +52,14 @@ Sterk es una aplicación personal para registrar el progreso en el gimnasio desd
 
 ## Arquitectura
 
+### V1.4 — actividad y primer análisis
+
+- Por petición del usuario, se adelanta Progreso sin esperar a IndexedDB.
+- Inicio muestra actividad reciente y el último entrenamiento; Ajustes organiza preferencias y datos en tarjetas.
+- Progreso incluye métricas de actividad, filtros temporales y carga máxima por sesión, con repeticiones y selección de lado.
+- El catálogo se explora mediante grupos desplegables; la búsqueda abre coincidencias y la selección queda antes del listado.
+- El historial local sigue siendo la fuente de datos. No se mezcla la sesión activa con el análisis.
+
 Actual:
 
 ```text

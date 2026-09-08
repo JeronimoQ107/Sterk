@@ -1,4 +1,4 @@
-const CACHE_NAME = "sterk-v1-3-ui-2";
+const CACHE_NAME = "sterk-v1-4-2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -10,6 +10,8 @@ const APP_SHELL = [
   "./src/weight-picker.js",
   "./src/weight-control.js",
   "./src/icons.js",
+  "./src/dashboard.js",
+  "./src/progress.js",
   "./src/storage.js",
   "./icons/icon.svg",
   "./icons/apple-touch-icon.svg",

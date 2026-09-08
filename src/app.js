@@ -4,6 +4,7 @@ import { storage } from "./storage.js";
 import { SIDES, parts, setReps, resetSet, finishSet } from "./sets.js";
 import { openWeightPicker } from "./weight-picker.js";
 import { bindWeightControl } from "./weight-control.js";
+import { homeDashboard, progressDashboard, settingsDashboard } from "./dashboard.js";
 import { icon } from "./icons.js";
 
 const app = document.querySelector("#app");
@@ -118,12 +119,18 @@ function handleSessionClick(event) {
   return false;
 }
 
+app.addEventListener("toggle", (event) => {
+  if (!event.target.matches?.(".catalog-group") || state.builderQuery) return;
+  state.builderOpen ||= {}; state.builderOpen[event.target.dataset.group] = event.target.open;
+}, true);
+
 app.addEventListener("input", (event) => {
   if (event.target.id !== "exercise-search") return;
   state.builderQuery = event.target.value;
   const catalog = storage.getExerciseCatalog();
   const items = [...app.querySelectorAll("[data-catalog-id]")];
   items.forEach((item) => { item.hidden = !matchesExercise(catalog.find((exercise) => exercise.id === item.dataset.catalogId), state.builderQuery); });
+  app.querySelectorAll(".catalog-group").forEach((group) => { group.hidden = ![...group.querySelectorAll("[data-catalog-id]")].some((item) => !item.hidden); group.open = Boolean(state.builderQuery || state.builderOpen?.[group.dataset.group]); });
   app.querySelector("#search-empty").hidden = items.some((item) => !item.hidden);
   app.querySelector(".custom-exercise input[name=name]").value = state.builderQuery;
 });
@@ -166,7 +173,7 @@ function brand() { return `<header class="brand-lockup"><span class="brand-mark"
 function timer(startedAt, className = "") { return `<span class="session-timer ${className}" data-session-start="${escapeHtml(startedAt)}">${formatDuration(elapsedSeconds(startedAt))}</span>`; }
 
 function renderShell(content, active = "") {
-  app.innerHTML = `${content}${!["exercise", "complete", "builder"].includes(state.view) ? `<nav class="bottom-nav" aria-label="Navegación principal"><button data-view="home" class="${active === "home" ? "active" : ""}"><span>${icon("home")}</span>Inicio</button><button data-view="history" class="${active === "history" ? "active" : ""}"><span>${icon("history")}</span>Historial</button><button data-view="settings" class="${active === "settings" ? "active" : ""}"><span>${icon("edit")}</span>Ajustes</button></nav>` : ""}`;
+  app.innerHTML = `${content}${!["exercise", "complete", "builder"].includes(state.view) ? `<nav class="bottom-nav" aria-label="Navegación principal"><button data-view="home" class="${active === "home" ? "active" : ""}"><span>${icon("home")}</span>Inicio</button><button data-view="history" class="${active === "history" ? "active" : ""}"><span>${icon("history")}</span>Historial</button><button data-view="progress" class="${active === "progress" ? "active" : ""}"><span>${icon("chart")}</span>Progreso</button><button data-view="settings" class="${active === "settings" ? "active" : ""}"><span>${icon("edit")}</span>Ajustes</button></nav>` : ""}`;
   updateTimers();
 }
 
@@ -174,18 +181,24 @@ function renderHome() {
   const active = storage.getActiveSession();
   const activeLabel = active ? categoryLabel(uniqueCategories(active.exercises)) : "";
   const current = active?.exercises?.[Math.min(active.exerciseIndex || 0, active.exercises.length - 1)];
-  renderShell(`<section class="screen home-screen">${brand()}${state.updateWaiting ? `<button class="update-banner" data-action="update-app">Nueva versión disponible · Actualizar</button>` : ""}${active ? `<section class="resume-card"><div><span>SESIÓN EN CURSO</span><strong>${escapeHtml(activeLabel)}</strong><small>${escapeHtml(current?.exercise || "")}</small>${timer(active.startedAt, "resume-timer")}</div><button data-action="resume">Continuar ${icon("right")}</button><button class="text-button danger" data-action="discard-session">Descartar sesión</button></section>` : ""}<div class="home-copy"><p class="eyebrow">FUERZA, SIN DISTRACCIONES</p><h2>¿Qué entrenas hoy?</h2></div><button class="new-session-card" data-action="new-session"><span><strong>Crear entrenamiento</strong><small>Elige y combina tus ejercicios</small></span><i>${icon("plus")}</i></button><p class="local-note"><span>●</span> Tus datos permanecen en este dispositivo</p></section>`, "home");
+  renderShell(`<section class="screen home-screen">${brand()}${state.updateWaiting ? `<button class="update-banner" data-action="update-app">Nueva versión disponible · Actualizar</button>` : ""}${active ? `<section class="resume-card"><div><span>SESIÓN EN CURSO</span><strong>${escapeHtml(activeLabel)}</strong><small>${escapeHtml(current?.exercise || "")}</small>${timer(active.startedAt, "resume-timer")}</div><button data-action="resume">Continuar ${icon("right")}</button><button class="text-button danger" data-action="discard-session">Descartar sesión</button></section>` : ""}${homeDashboard(getHistorySessions())}</section>`, "home");
 }
 
 function renderBuilder() {
   const catalog = storage.getExerciseCatalog();
-  const groups = [...new Set(catalog.map((exercise) => exercise.muscleGroup))];
-  const visible = catalog.filter((exercise) => (state.builderFilter === "all" || exercise.muscleGroup === state.builderFilter) && (!state.adding || !state.session.exercises.some((item) => item.exerciseId === exercise.id)));
+  const visible = catalog.filter((exercise) => !state.adding || !state.session.exercises.some((item) => item.exerciseId === exercise.id));
+  const groups = [...new Set(visible.map((exercise) => exercise.muscleGroup))];
   const selected = selectedExercises();
-  const filters = [{ id: "all", label: "Todos" }, ...groups.map((id) => ({ id, label: MUSCLE_GROUPS[id] || id }))];
-  renderShell(`<section class="screen builder-screen"><header class="detail-header"><button class="icon-button" data-action="cancel-builder">${icon("left")}</button><span>${state.adding ? "AÑADIR EJERCICIOS" : "NUEVO ENTRENAMIENTO"}</span></header><div class="builder-heading"><p class="eyebrow">${selected.length ? categoryLabel(uniqueCategories(selected)).toLocaleUpperCase() : "SELECCIÓN LIBRE"}</p><h1>Elige tus ejercicios</h1></div><label class="search-label">Buscar ejercicio<input id="exercise-search" type="search" placeholder="Nombre en español o inglés" value="${escapeHtml(state.builderQuery)}" autocomplete="off"></label><button class="create-shortcut" data-action="create-custom">${icon("plus")} Crear ejercicio personalizado</button><div class="muscle-filters">${filters.map((filter) => `<button data-filter="${escapeHtml(filter.id)}" class="${state.builderFilter === filter.id ? "active" : ""}">${escapeHtml(filter.label)}</button>`).join("")}</div><div class="exercise-catalog"><p class="empty-state" id="search-empty" ${visible.some((exercise) => matchesExercise(exercise, state.builderQuery)) ? "hidden" : ""}>No hay resultados. Puedes crear tu ejercicio.</p>${visible.map((exercise) => { const isSelected = state.builderSelection.includes(exercise.id); return `<article data-catalog-id="${escapeHtml(exercise.id)}" ${matchesExercise(exercise, state.builderQuery) ? "" : "hidden"} class="catalog-item ${isSelected ? "selected" : ""}"><button class="catalog-select" data-select-exercise="${escapeHtml(exercise.id)}"><span class="selection-mark">${isSelected ? icon("check") : icon("plus")}</span><span><strong>${escapeHtml(exercise.name)}</strong><small>${escapeHtml(MUSCLE_GROUPS[exercise.muscleGroup] || exercise.muscleGroup)} · ${escapeHtml(CATEGORY_LABELS[exercise.category])}</small></span></button>${exercise.custom ? `<button class="catalog-archive" data-archive-exercise="${escapeHtml(exercise.id)}" aria-label="Archivar ${escapeHtml(exercise.name)}">${icon("close")}</button>` : ""}</article>`; }).join("")}</div><details class="custom-exercise"><summary>${icon("plus")} Crear ejercicio personalizado</summary><form id="custom-exercise-form"><label>Nombre<input name="name" required maxlength="50" autocomplete="off" value="${escapeHtml(state.builderQuery)}"></label><label>Grupo muscular<select name="muscleGroup">${Object.entries(MUSCLE_GROUPS).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></label><label>Categoría<select name="category">${CATEGORY_ORDER.map((id) => `<option value="${id}">${CATEGORY_LABELS[id]}</option>`).join("")}</select></label><button type="submit">Guardar ejercicio</button></form></details>${selected.length ? `<section class="selected-exercises"><div class="section-heading"><h2>Tu entrenamiento</h2><span>${selected.length} ${selected.length === 1 ? "EJERCICIO" : "EJERCICIOS"}</span></div>${selected.map((exercise, index) => `<div class="selected-row"><span>${index + 1}</span><strong>${escapeHtml(exercise.name)}</strong><button data-move-exercise="${index}" data-direction="-1" ${index === 0 ? "disabled" : ""} aria-label="Subir">${icon("up")}</button><button data-move-exercise="${index}" data-direction="1" ${index === selected.length - 1 ? "disabled" : ""} aria-label="Bajar">${icon("down")}</button><button data-remove-exercise="${escapeHtml(exercise.id)}" aria-label="Quitar">${icon("close")}</button></div>`).join("")}</section>` : ""}<footer class="builder-action"><button class="primary-button" data-action="start-session" ${selected.length ? "" : "disabled"}>${state.adding ? "Añadir a la sesión" : "Comenzar entrenamiento"} <span>${icon("right")}</span></button></footer></section>`);
+  const rows = (items) => items.map((exercise) => {
+    const isSelected = state.builderSelection.includes(exercise.id);
+    return `<article class="catalog-item ${isSelected ? 'selected' : ''}" data-catalog-id="${escapeHtml(exercise.id)}" ${matchesExercise(exercise, state.builderQuery) ? '' : 'hidden'}><button class="catalog-select" data-select-exercise="${escapeHtml(exercise.id)}" aria-pressed="${isSelected}"><span class="selection-mark">${icon(isSelected ? 'check' : 'plus')}</span><span><strong>${escapeHtml(exercise.name)}</strong><small>${escapeHtml(CATEGORY_LABELS[exercise.category])}</small></span></button>${exercise.custom ? `<button class="catalog-archive" data-archive-exercise="${escapeHtml(exercise.id)}" aria-label="Archivar ${escapeHtml(exercise.name)}">${icon('close')}</button>` : ''}</article>`;
+  }).join('');
+  renderShell(`<section class="screen builder-screen"><header class="detail-header"><button class="icon-button" data-action="cancel-builder" aria-label="Volver">${icon('left')}</button><span>${state.adding ? 'AÑADIR EJERCICIOS' : 'NUEVO ENTRENAMIENTO'}</span></header><div class="builder-heading"><h1>Elige tus ejercicios</h1><p class="section-description">Busca un nombre o explora por grupo muscular.</p></div><label class="search-label">Buscar ejercicio<input id="exercise-search" type="search" placeholder="Nombre en español o inglés" value="${escapeHtml(state.builderQuery)}" autocomplete="off"></label><button class="create-shortcut" data-action="create-custom">${icon('plus')} Crear ejercicio</button>
+  ${selected.length ? `<details class="selection-preview" open><summary>Tu selección <span>${selected.length} ejercicios</span>${icon('down')}</summary>${selected.map((exercise, index) => `<div class="selected-row"><span>${index + 1}</span><strong>${escapeHtml(exercise.name)}</strong><button data-move-exercise="${index}" data-direction="-1" ${index === 0 ? 'disabled' : ''} aria-label="Subir ${escapeHtml(exercise.name)}">${icon('up')}</button><button data-move-exercise="${index}" data-direction="1" ${index === selected.length - 1 ? 'disabled' : ''} aria-label="Bajar ${escapeHtml(exercise.name)}">${icon('down')}</button><button data-remove-exercise="${escapeHtml(exercise.id)}" aria-label="Quitar ${escapeHtml(exercise.name)}">${icon('close')}</button></div>`).join('')}</details>` : ''}
+  <div class="exercise-catalog grouped-catalog"><p class="empty-state" id="search-empty" ${visible.some((exercise) => matchesExercise(exercise, state.builderQuery)) ? 'hidden' : ''}>No hay resultados. Puedes crear tu ejercicio.</p>${groups.map((group) => { const items = visible.filter((exercise) => exercise.muscleGroup === group); return `<details class="catalog-group" data-group="${escapeHtml(group)}" ${state.builderQuery || state.builderOpen?.[group] ? 'open' : ''} ${items.some((exercise) => matchesExercise(exercise, state.builderQuery)) ? '' : 'hidden'}><summary><strong>${escapeHtml(MUSCLE_GROUPS[group] || group)}</strong><span>${items.length} ejercicios</span>${icon('down')}</summary><div>${rows(items)}</div></details>`; }).join('')}</div>
+  <details class="custom-exercise"><summary>${icon('plus')} Crear ejercicio personalizado</summary><form id="custom-exercise-form"><label>Nombre<input name="name" required maxlength="50" autocomplete="off" value="${escapeHtml(state.builderQuery)}"></label><label>Grupo muscular<select name="muscleGroup">${Object.entries(MUSCLE_GROUPS).map(([id, label]) => `<option value="${id}">${label}</option>`).join('')}</select></label><label>Categoría<select name="category">${CATEGORY_ORDER.map((id) => `<option value="${id}">${CATEGORY_LABELS[id]}</option>`).join('')}</select></label><button type="submit">Guardar ejercicio</button></form></details>
+  <footer class="builder-action"><button class="primary-button" data-action="start-session" ${selected.length ? '' : 'disabled'}>${state.adding ? 'Añadir a la sesión' : 'Comenzar entrenamiento'}${selected.length ? ` (${selected.length})` : ''}${icon('right')}</button></footer></section>`);
 }
-
 function renderPrevious(previous) {
   if (!previous) return `<div class="previous-compact empty"><span>Primera vez con este ejercicio</span></div>`;
   const summary = entrySets(previous).map((set) => setDescription(set)).join(" · ");
@@ -281,10 +294,15 @@ function renderHistoryDetail() {
 
 function renderSettings() {
   const settings = storage.getSettings();
-  renderShell(`<section class="screen page-screen">${brand()}<div class="page-title"><p class="eyebrow">PREFERENCIAS Y DATOS</p><h2>Ajustes</h2></div><section class="settings-section"><h3>Modo de registro</h3><p>Elige cómo quieres confirmar las series.</p><div class="segmented"><button data-mode="exercise" class="${settings.trackingMode === "exercise" ? "active" : ""}"><strong>Por ejercicio</strong><small>Guarda todas juntas</small></button><button data-mode="set" class="${settings.trackingMode === "set" ? "active" : ""}"><strong>Por serie</strong><small>Marca cada serie</small></button></div></section><section class="settings-section"><h3>Copia de seguridad</h3><p>Exporta tus datos a un archivo o restaura un respaldo anterior.</p><div class="settings-actions"><button data-action="export">Exportar datos</button><button data-action="import">Importar respaldo</button></div></section><section class="settings-section danger-zone"><h3>Borrar datos</h3><p>Elimina historial, sesiones, ejercicios personalizados y preferencias.</p><button data-action="clear-data">Borrar todos los datos</button></section><p class="version">Sterk · Versión 1.3</p></section>`, "settings");
+  renderShell(`<section class="screen page-screen settings-screen">${brand()}${settingsDashboard(settings, getHistorySessions(), storage.getExerciseCatalog().filter((exercise) => exercise.custom).length)}</section>`, "settings");
+}
+
+function renderProgress() {
+  renderShell(`<section class="screen page-screen progress-screen">${brand()}${progressDashboard(getHistorySessions(), state)}</section>`, "progress");
 }
 
 function render() {
+  if (state.view === "progress") renderProgress();
   if (state.view === "home") renderHome();
   if (state.view === "builder") renderBuilder();
   if (state.view === "exercise") renderExercise();
@@ -311,6 +329,11 @@ function exportData() {
   showToast("Respaldo exportado");
 }
 
+app.addEventListener("change", (event) => {
+  if (event.target.id === "progress-exercise") { state.progressExercise = event.target.value; renderProgress(); }
+  if (event.target.id === "progress-side") { state.progressSide = event.target.value; renderProgress(); }
+});
+
 app.addEventListener("submit", (event) => {
   if (event.target.id !== "custom-exercise-form") return;
   event.preventDefault();
@@ -329,6 +352,8 @@ app.addEventListener("submit", (event) => {
 });
 
 app.addEventListener("click", (event) => {
+  const periodButton = event.target.closest("[data-period]");
+  if (periodButton) { state.progressPeriod = periodButton.dataset.period; return renderProgress(); }
   const viewButton = event.target.closest("[data-view]");
   if (viewButton) { state.view = viewButton.dataset.view; return render(); }
   const filterButton = event.target.closest("[data-filter]");
@@ -382,7 +407,7 @@ app.addEventListener("click", (event) => {
 importInput.addEventListener("change", async () => {
   const file = importInput.files[0];
   if (!file) return;
-  try { storage.importData(JSON.parse(await file.text())); goHome(); showToast("Respaldo restaurado"); }
+  try { const backup = JSON.parse(await file.text()); if (!confirm("¿Restaurar esta copia? Reemplazará el historial, la sesión activa y las preferencias actuales.")) return; storage.importData(backup); goHome(); showToast("Respaldo restaurado"); }
   catch (error) { alert(error.message); }
   finally { importInput.value = ""; }
 });

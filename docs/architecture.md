@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-## V1.3 actual
+## V1.4 actual
 
 ```text
 PWA Sterk
@@ -17,6 +17,8 @@ localStorage
 - `src/weight-picker.js`: diálogo compacto de entrada manual de peso.
 - `src/weight-control.js`: ajuste directo con arrastre vertical, rueda del mouse y teclado; persistencia por cada cambio sin reconstruir el control durante el gesto.
 - `src/icons.js`: iconos SVG compartidos, independientes de la fuente del dispositivo.
+- `src/progress.js`: filtros por periodo, totales de actividad y carga máxima por sesión para cada ejercicio/lado.
+- `src/dashboard.js`: presentación de Inicio, Ajustes y Progreso, incluida gráfica SVG y tabla accesible.
 - `service-worker.js`: shell offline y actualización de recursos.
 
 La UI consume métodos públicos de `storage`; no accede directamente a claves de `localStorage`.
@@ -54,4 +56,10 @@ PWA Sterk → IndexedDB → sincronización opcional → base de datos remota
                               exportación CSV/XLSX
 ```
 
-La V1.3 continúa con `localStorage`, sin backend, autenticación, IndexedDB ni bases de datos externas.
+La V1.4 continúa con `localStorage`, sin backend, autenticación, IndexedDB ni bases de datos externas. El análisis consume las sesiones del historial, que excluye la sesión activa. No requiere una migración de datos.
+
+## Progreso
+
+Los periodos incluyen hoy y los 29/89 días de calendario anteriores, según la zona horaria del dispositivo. Los días activos se deduplican por fecha local. Solo las series con alguna parte completada y repeticiones positivas cuentan en las métricas de actividad.
+
+Cada punto de la gráfica representa la mayor carga de una serie completada en una sesión; en empates se muestran las mayores repeticiones con esa misma carga. Los registros sin lado, izquierdos y derechos se consultan separadamente. La diferencia se calcula entre las dos últimas observaciones del periodo seleccionado. Una sola observación se presenta sin tendencia. No se calculan 1RM ni se infiere una mejora de fuerza a partir de la carga.
