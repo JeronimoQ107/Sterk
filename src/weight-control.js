@@ -10,6 +10,9 @@ export function bindWeightControl(root, readWeight, writeWeight) {
     if (value === readWeight(button)) return;
     writeWeight(button, value);
     button.querySelector('[data-weight-number]').textContent = value.toLocaleString('es-CO', { useGrouping: false, maximumFractionDigits: 10 });
+    const format = (weight) => weight.toLocaleString('es-CO', { useGrouping: false, maximumFractionDigits: 10 });
+    button.querySelector('[data-weight-previous]').textContent = value >= 2.5 ? format(value - 2.5) : '';
+    button.querySelector('[data-weight-next]').textContent = format(value + 2.5);
     button.setAttribute('aria-valuenow', String(value));
     button.setAttribute('aria-valuetext', `${value} libras`);
   };

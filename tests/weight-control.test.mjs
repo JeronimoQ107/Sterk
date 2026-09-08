@@ -6,18 +6,20 @@ function setup() {
   const listeners = {}, writes = [];
   let weight = 25;
   const number = { textContent: '' }, attributes = {};
-  const button = { closest: () => button, setPointerCapture() {}, classList: { add() {}, remove() {} }, querySelector: () => number, setAttribute: (name, value) => { attributes[name] = value; } };
+  const previous = { textContent: '' }, next = { textContent: '' };
+  const button = { closest: () => button, setPointerCapture() {}, classList: { add() {}, remove() {} }, querySelector: (selector) => selector === '[data-weight-previous]' ? previous : selector === '[data-weight-next]' ? next : number, setAttribute: (name, value) => { attributes[name] = value; } };
   bindWeightControl({ addEventListener: (name, fn) => { listeners[name] = fn; } }, () => weight, (_, value) => { weight = value; writes.push(value); });
   const send = (name, extra = {}) => {
     const event = { target: button, pointerId: 1, isPrimary: true, button: 0, clientY: 100, preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; }, ...extra };
     listeners[name](event); return event;
   };
-  return { send, writes, attributes, number, weight: () => weight };
+  return { send, writes, attributes, number, previous, next, weight: () => weight };
 }
 test('dragging upward changes weight in 2.5 lb steps without opening manual entry', () => {
   const t = setup();
   t.send('pointerdown'); t.send('pointermove', { clientY: 59 }); t.send('pointerup', { clientY: 59 });
   assert.equal(t.weight(), 30); assert.equal(t.number.textContent, '30');
+  assert.equal(t.previous.textContent, '27,5'); assert.equal(t.next.textContent, '32,5');
   assert.equal(t.attributes['aria-valuenow'], '30');
   assert.equal(t.send('click').stopped, true);
 });
@@ -38,6 +40,7 @@ test('a cancelled drag preserves its latest persisted value and never creates ne
   const t = setup();
   t.send('pointerdown'); t.send('pointermove', { clientY: 800 }); t.send('pointercancel');
   assert.equal(t.weight(), 0); assert.deepEqual(t.writes, [0]);
+  assert.equal(t.previous.textContent, ''); assert.equal(t.next.textContent, '2,5');
   t.send('pointermove', { clientY: 0 }); assert.equal(t.weight(), 0);
   assert.equal(scrubWeight(26.25, 20), 28.75);
 });

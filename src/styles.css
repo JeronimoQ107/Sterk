@@ -425,3 +425,11 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .selection-preview { border: 1px solid var(--accent); border-radius: .8rem; margin-bottom: 1rem; padding: 0 .5rem; }
 .selection-preview summary { padding-inline: .25rem; font-size: .8rem; }
 .selection-preview .selected-row:last-child { border: 0; }
+
+/* Three visible positions, without changing the row height or touch target. */
+.weight-value { display: grid; grid-template-rows: 10px 22px 10px; align-content: center; justify-content: stretch; gap: 0; padding: 0 4px; }
+.weight-value > span { display: block; width: 100%; pointer-events: none; text-align: center; }
+.weight-value .weight-neighbor { height: 10px; overflow: hidden; font-size: .65rem; line-height: 10px; font-weight: 500; color: var(--muted); opacity: .48; }
+.weight-value [data-weight-previous] { mask-image: linear-gradient(to bottom, transparent, black 65%); -webkit-mask-image: linear-gradient(to bottom, transparent, black 65%); }
+.weight-value [data-weight-next] { mask-image: linear-gradient(to top, transparent, black 65%); -webkit-mask-image: linear-gradient(to top, transparent, black 65%); }
+.weight-value [data-weight-number] { height: 22px; line-height: 22px; border-radius: .3rem; background: rgba(183, 243, 74, .07); color: var(--accent); font-size: 1.15rem; }
