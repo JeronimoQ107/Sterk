@@ -3,17 +3,21 @@ import assert from 'node:assert/strict';
 import { bindWeightControl, scrubWeight } from '../src/weight-control.js';
 
 function setup() {
+  const frames = new Map(); let frameId = 0;
+  globalThis.requestAnimationFrame = (fn) => { frames.set(++frameId, fn); return frameId; };
+  globalThis.cancelAnimationFrame = (id) => frames.delete(id);
   const listeners = {}, writes = [];
   let weight = 25;
   const number = { textContent: '' }, attributes = {};
   const previous = { textContent: '' }, next = { textContent: '' };
-  const button = { closest: () => button, setPointerCapture() {}, classList: { add() {}, remove() {} }, querySelector: (selector) => selector === '[data-weight-previous]' ? previous : selector === '[data-weight-next]' ? next : number, setAttribute: (name, value) => { attributes[name] = value; } };
+  const rows = [{}, previous, number, next, {}].map((row, index) => Object.assign(row, { dataset: { weightOffset: String(index - 2) }, style: {} }));
+  const button = { isConnected: true, closest: () => button, setPointerCapture() {}, classList: { add() {}, remove() {} }, querySelectorAll: () => rows, querySelector: (selector) => selector === '[data-weight-previous]' ? previous : selector === '[data-weight-next]' ? next : number, setAttribute: (name, value) => { attributes[name] = value; } };
   bindWeightControl({ addEventListener: (name, fn) => { listeners[name] = fn; } }, () => weight, (_, value) => { weight = value; writes.push(value); });
   const send = (name, extra = {}) => {
     const event = { target: button, pointerId: 1, isPrimary: true, button: 0, clientY: 100, preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; }, ...extra };
     listeners[name](event); return event;
   };
-  return { send, writes, attributes, number, previous, next, weight: () => weight };
+  return { send, writes, attributes, number, previous, next, rows, frames, weight: () => weight };
 }
 test('dragging upward changes weight in 2.5 lb steps without opening manual entry', () => {
   const t = setup();
@@ -43,4 +47,24 @@ test('a cancelled drag preserves its latest persisted value and never creates ne
   assert.equal(t.previous.textContent, ''); assert.equal(t.next.textContent, '2,5');
   t.send('pointermove', { clientY: 0 }); assert.equal(t.weight(), 0);
   assert.equal(scrubWeight(26.25, 20), 28.75);
+});
+
+test('sub-step movement displaces the visible numbers and releasing animates into the center', () => {
+  const t = setup();
+  t.send('pointerdown'); t.send('pointermove', { clientY: 92 });
+  assert.equal(t.weight(), 25);
+  assert.match(t.number.style.transform, /translateY\(-6.4px\)/);
+  t.send('pointerup'); assert.equal(t.frames.size, 1);
+  const callback = [...t.frames.values()][0]; callback(performance.now() + 200);
+  assert.match(t.number.style.transform, /translateY\(0px\)/);
+});
+
+test('a new wheel event continues from the displayed position during animation', () => {
+  const t = setup();
+  t.send('wheel', { deltaY: -40, deltaMode: 0 });
+  const before = t.number.style.transform;
+  t.send('wheel', { deltaY: -40, deltaMode: 0 });
+  assert.equal(t.number.style.transform, before);
+  assert.equal(t.weight(), 30);
+  assert.equal(t.frames.size, 1);
 });
