@@ -25,6 +25,31 @@ function write(key, value) {
   return value;
 }
 
+function parseLocalDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+  if (!match) return null;
+  const [, year, month, day] = match.map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+    ? { year, month, day }
+    : null;
+}
+
+function moveToLocalDate(value, localDate) {
+  const target = parseLocalDate(localDate);
+  const original = new Date(value);
+  if (!target || Number.isNaN(original.getTime())) return null;
+  return new Date(target.year, target.month - 1, target.day, original.getHours(), original.getMinutes(), original.getSeconds(), original.getMilliseconds()).toISOString();
+}
+
+function localizedEntryDate(value) {
+  const date = new Date(value);
+  return {
+    date: date.toLocaleDateString("es-CO"),
+    time: date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }),
+  };
+}
+
 function catalogWith(customExercises = read(KEYS.customExercises, [])) {
   return [...DEFAULT_EXERCISES, ...(Array.isArray(customExercises) ? customExercises : [])];
 }
@@ -150,6 +175,40 @@ export const storage = {
     if (index >= 0) sessions[index] = session;
     else sessions.push(session);
     return write(KEYS.sessions, sessions);
+  },
+  changeSessionDate(sessionId, localDate, entryIds = []) {
+    if (!parseLocalDate(localDate)) throw new Error("La fecha del entrenamiento no es válida.");
+    const ids = new Set(entryIds);
+
+    const entries = this.getEntries().map((entry) => {
+      if (entry.sessionId !== sessionId && !ids.has(entry.id)) return entry;
+      const recordedAt = moveToLocalDate(entry.recordedAt, localDate);
+      return recordedAt ? { ...entry, recordedAt, ...localizedEntryDate(recordedAt) } : entry;
+    });
+    write(KEYS.entries, entries);
+
+    const sessions = this.getCompletedSessions().map((session) => {
+      if (session.id !== sessionId) return session;
+      const startedAt = moveToLocalDate(session.startedAt, localDate);
+      if (!startedAt) return session;
+      const durationSeconds = Math.max(0, Number(session.durationSeconds ?? Number(session.durationMinutes || 0) * 60));
+      const endedAt = durationSeconds
+        ? new Date(new Date(startedAt).getTime() + durationSeconds * 1000).toISOString()
+        : moveToLocalDate(session.endedAt, localDate) || startedAt;
+      return { ...session, startedAt, endedAt };
+    });
+    write(KEYS.sessions, sessions);
+
+    const active = this.getActiveSession();
+    if (active?.id === sessionId) {
+      const startedAt = moveToLocalDate(active.startedAt, localDate);
+      if (startedAt) write(KEYS.activeSession, normalizeActiveSession({ ...active, clockStartedAt: active.clockStartedAt || active.startedAt, startedAt }));
+    }
+
+    return {
+      activeSession: this.getActiveSession(),
+      completedSession: this.getCompletedSessions().find((session) => session.id === sessionId) || null,
+    };
   },
   deleteSession(sessionId, entryIds = []) {
     const ids = new Set(entryIds);

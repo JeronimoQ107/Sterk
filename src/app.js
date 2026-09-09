@@ -17,6 +17,16 @@ const escapeHtml = (value) => String(value).replaceAll("&", "&amp;").replaceAll(
 const formatNumber = (value) => Number(value).toLocaleString("es-CO", { useGrouping: false, maximumFractionDigits: 10 });
 const formatDate = (value) => new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
 const formatTime = (value) => new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+const inputDate = (value) => {
+  const date = new Date(value);
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+};
+const todayInputDate = () => inputDate(new Date());
+const dateTimeOnWorkoutDate = (time, workoutDate) => {
+  const clock = new Date(time);
+  const date = new Date(workoutDate);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), clock.getHours(), clock.getMinutes(), clock.getSeconds(), clock.getMilliseconds()).toISOString();
+};
 const elapsedSeconds = (startedAt, endedAt = Date.now()) => Math.max(0, Math.floor((new Date(endedAt) - new Date(startedAt)) / 1000));
 const formatDuration = (seconds) => {
   const hours = Math.floor(seconds / 3600);
@@ -52,15 +62,26 @@ function sessionControls() {
   return `<div class="session-tools"><button data-action="add-exercises">${icon("plus")} Añadir ejercicio</button><button data-action="manage-session">${icon("edit")} Editar</button><button data-action="finish-session">Finalizar</button></div>`;
 }
 function renderEmptySession() {
-  renderShell(`<section class="screen exercise-screen"><header class="detail-header"><button class="icon-button" data-action="leave-session" aria-label="Volver al inicio">${icon("left")}</button>${timer(state.session.startedAt)}</header><h1>Tu sesión sigue abierta</h1><p>Añade el próximo ejercicio cuando estés listo.</p>${sessionControls()}</section>`);
+  renderShell(`<section class="screen exercise-screen"><header class="detail-header"><button class="icon-button" data-action="leave-session" aria-label="Volver al inicio">${icon("left")}</button>${timer(state.session.clockStartedAt || state.session.startedAt)}</header><h1>Tu sesión sigue abierta</h1><p>Añade el próximo ejercicio cuando estés listo.</p>${sessionControls()}</section>`);
 }
 function openSessionEditor() {
   const dialog = document.createElement("dialog");
   dialog.className = "session-editor";
   dialog.setAttribute("aria-label", "Editar entrenamiento");
   const draw = () => {
-    dialog.innerHTML = `<h2>Tu entrenamiento</h2>${state.session.exercises.map((exercise, index) => `<div class="selected-row"><span>${index + 1}</span><strong>${escapeHtml(exercise.exercise)}</strong><button data-move="${index}" data-direction="-1" ${index === 0 ? "disabled" : ""} aria-label="Subir ${escapeHtml(exercise.exercise)}">${icon("up")}</button><button data-move="${index}" data-direction="1" ${index === state.session.exercises.length - 1 ? "disabled" : ""} aria-label="Bajar ${escapeHtml(exercise.exercise)}">${icon("down")}</button><button data-remove="${index}" aria-label="Quitar ${escapeHtml(exercise.exercise)}">${icon("close")}</button></div>`).join("") || "<p>No hay ejercicios. Puedes añadir más.</p>"}<button class="primary-button static" data-close>Listo</button>`;
+    dialog.innerHTML = `<h2>Tu entrenamiento</h2><label class="session-date-field"><span>Fecha del entrenamiento</span><input type="date" data-session-date value="${inputDate(state.session.startedAt)}" max="${todayInputDate()}"><small>Úsala para registrar un entrenamiento anterior.</small></label>${state.session.exercises.map((exercise, index) => `<div class="selected-row"><span>${index + 1}</span><strong>${escapeHtml(exercise.exercise)}</strong><button data-move="${index}" data-direction="-1" ${index === 0 ? "disabled" : ""} aria-label="Subir ${escapeHtml(exercise.exercise)}">${icon("up")}</button><button data-move="${index}" data-direction="1" ${index === state.session.exercises.length - 1 ? "disabled" : ""} aria-label="Bajar ${escapeHtml(exercise.exercise)}">${icon("down")}</button><button data-remove="${index}" aria-label="Quitar ${escapeHtml(exercise.exercise)}">${icon("close")}</button></div>`).join("") || "<p>No hay ejercicios. Puedes añadir más.</p>"}<button class="primary-button static" data-close>Listo</button>`;
   };
+  dialog.addEventListener("change", (event) => {
+    if (!event.target.matches?.("[data-session-date]")) return;
+    try {
+      changeActiveSessionDate(event.target.value);
+      draw();
+      showToast("Fecha actualizada");
+    } catch (error) {
+      alert(error.message);
+      draw();
+    }
+  });
   dialog.addEventListener("click", (event) => {
     if (event.target.closest("[data-close]")) return dialog.close();
     const move = event.target.closest("[data-move]");
@@ -153,7 +174,8 @@ function persistSession() {
 function startSession() {
   const selected = selectedExercises();
   if (!selected.length) return;
-  state.session = { id: uid(), startedAt: new Date().toISOString(), categoryTags: uniqueCategories(selected), trackingMode: storage.getSettings().trackingMode, exerciseIndex: 0, exercises: selected.map(newExerciseDraft) };
+  const startedAt = new Date().toISOString();
+  state.session = { id: uid(), startedAt, clockStartedAt: startedAt, categoryTags: uniqueCategories(selected), trackingMode: storage.getSettings().trackingMode, exerciseIndex: 0, exercises: selected.map(newExerciseDraft) };
   state.exerciseIndex = 0;
   state.view = "exercise";
   persistSession();
@@ -172,6 +194,12 @@ function goHome() { state.view = "home"; state.session = null; state.completion 
 function brand() { return `<header class="brand-lockup"><span class="brand-mark" aria-hidden="true">S</span><h1>Sterk</h1></header>`; }
 function timer(startedAt, className = "") { return `<span class="session-timer ${className}" data-session-start="${escapeHtml(startedAt)}">${formatDuration(elapsedSeconds(startedAt))}</span>`; }
 
+function changeActiveSessionDate(localDate) {
+  if (!localDate || localDate > todayInputDate()) throw new Error("Elige una fecha válida que no esté en el futuro.");
+  storage.changeSessionDate(state.session.id, localDate);
+  state.session = storage.getActiveSession();
+}
+
 function renderShell(content, active = "") {
   app.innerHTML = `${content}${!["exercise", "complete", "builder"].includes(state.view) ? `<nav class="bottom-nav" aria-label="Navegación principal"><button data-view="home" class="${active === "home" ? "active" : ""}"><span>${icon("home")}</span>Inicio</button><button data-view="history" class="${active === "history" ? "active" : ""}"><span>${icon("history")}</span>Historial</button><button data-view="progress" class="${active === "progress" ? "active" : ""}"><span>${icon("chart")}</span>Progreso</button><button data-view="settings" class="${active === "settings" ? "active" : ""}"><span>${icon("edit")}</span>Ajustes</button></nav>` : ""}`;
   updateTimers();
@@ -181,7 +209,7 @@ function renderHome() {
   const active = storage.getActiveSession();
   const activeLabel = active ? categoryLabel(uniqueCategories(active.exercises)) : "";
   const current = active?.exercises?.[Math.min(active.exerciseIndex || 0, active.exercises.length - 1)];
-  renderShell(`<section class="screen home-screen">${brand()}${state.updateWaiting ? `<button class="update-banner" data-action="update-app">Nueva versión disponible · Actualizar</button>` : ""}${active ? `<section class="resume-card"><div><span>SESIÓN EN CURSO</span><strong>${escapeHtml(activeLabel)}</strong><small>${escapeHtml(current?.exercise || "")}</small>${timer(active.startedAt, "resume-timer")}</div><button data-action="resume">Continuar ${icon("right")}</button><button class="text-button danger" data-action="discard-session">Descartar sesión</button></section>` : ""}${homeDashboard(getHistorySessions())}</section>`, "home");
+  renderShell(`<section class="screen home-screen">${brand()}${state.updateWaiting ? `<button class="update-banner" data-action="update-app">Nueva versión disponible · Actualizar</button>` : ""}${active ? `<section class="resume-card"><div><span>SESIÓN EN CURSO · ${formatDate(active.startedAt)}</span><strong>${escapeHtml(activeLabel)}</strong><small>${escapeHtml(current?.exercise || "")}</small>${timer(active.clockStartedAt || active.startedAt, "resume-timer")}</div><button data-action="resume">Continuar ${icon("right")}</button><button class="text-button danger" data-action="discard-session">Descartar sesión</button></section>` : ""}${homeDashboard(getHistorySessions())}</section>`, "home");
 }
 
 function renderBuilder() {
@@ -212,7 +240,7 @@ function renderExercise() {
   const setMode = state.session.trackingMode === "set";
   const completed = current.sets.filter((set) => set.completed).length;
   const setRows = current.sets.map((set, index) => renderSet(set, index, setMode)).join("");
-  renderShell(`<section class="screen exercise-screen"><header class="exercise-header"><button class="icon-button" data-action="leave-session" aria-label="Volver al inicio">${icon("left")}</button><div class="progress-copy"><span>${categoryLabel(uniqueCategories(state.session.exercises))}</span><strong>${state.exerciseIndex + 1} de ${state.session.exercises.length}</strong></div><div class="workout-clock"><small>SESIÓN</small>${timer(state.session.startedAt)}</div><div class="progress-track"><i style="width:${((state.exerciseIndex + 1) / state.session.exercises.length) * 100}%"></i></div></header><div class="exercise-jump" aria-label="Ejercicios">${state.session.exercises.map((exercise, index) => `<button data-jump="${index}" class="${index === state.exerciseIndex ? "active" : ""} ${exercise.status}"><span>${index + 1}</span><small>${escapeHtml(exercise.exercise)}</small></button>`).join("")}</div><div class="exercise-title"><p class="eyebrow">${current.status === "skipped" ? "EJERCICIO OMITIDO" : `${escapeHtml(MUSCLE_GROUPS[current.muscleGroup] || current.muscleGroup)} · ${escapeHtml(CATEGORY_LABELS[current.category])}`}</p><h1>${escapeHtml(current.exercise)}</h1></div>${sessionControls()}${renderPrevious(previous)}<section class="control-section sets-section"><div class="section-heading"><h2>Series</h2><label class="side-option"><input type="checkbox" aria-label="Registrar por lado" data-action="toggle-unilateral" ${current.unilateral ? "checked" : ""}> Por lado</label><span>${setMode ? `${completed}/${current.sets.length} HECHAS` : `${current.sets.length} TOTAL`}</span></div><p class="weight-help" id="weight-help">Desliza el peso para ajustar · Toca para escribir</p><div class="sets-list">${setRows}</div><div class="set-actions"><button data-action="remove-set" ${current.sets.length <= 1 ? "disabled" : ""}>${icon("minus")} Eliminar última</button><button data-action="add-set">${icon("plus")} Añadir serie</button></div><button class="copy-weight" data-action="copy-first-weight" ${current.sets.length <= 1 ? "disabled" : ""}>Copiar peso de la primera serie</button></section><div class="exercise-secondary-actions"><button data-action="previous" ${state.exerciseIndex === 0 ? "disabled" : ""}>${icon("left")} Anterior</button><button data-action="skip">${current.status === "skipped" ? "Recuperar" : "Omitir"}</button><button data-action="next" ${state.exerciseIndex === state.session.exercises.length - 1 ? "disabled" : ""}>Siguiente ${icon("right")}</button></div><footer class="sticky-action"><button class="primary-button" data-action="save">${current.entryId ? "Actualizar ejercicio" : "Registrar ejercicio"}<span>${icon("right")}</span></button></footer></section>`);
+  renderShell(`<section class="screen exercise-screen"><header class="exercise-header"><button class="icon-button" data-action="leave-session" aria-label="Volver al inicio">${icon("left")}</button><div class="progress-copy"><span>${categoryLabel(uniqueCategories(state.session.exercises))}</span><strong>${state.exerciseIndex + 1} de ${state.session.exercises.length}</strong></div><div class="workout-clock"><small>${inputDate(state.session.startedAt) === todayInputDate() ? "SESIÓN" : formatDate(state.session.startedAt)}</small>${timer(state.session.clockStartedAt || state.session.startedAt)}</div><div class="progress-track"><i style="width:${((state.exerciseIndex + 1) / state.session.exercises.length) * 100}%"></i></div></header><div class="exercise-jump" aria-label="Ejercicios">${state.session.exercises.map((exercise, index) => `<button data-jump="${index}" class="${index === state.exerciseIndex ? "active" : ""} ${exercise.status}"><span>${index + 1}</span><small>${escapeHtml(exercise.exercise)}</small></button>`).join("")}</div><div class="exercise-title"><p class="eyebrow">${current.status === "skipped" ? "EJERCICIO OMITIDO" : `${escapeHtml(MUSCLE_GROUPS[current.muscleGroup] || current.muscleGroup)} · ${escapeHtml(CATEGORY_LABELS[current.category])}`}</p><h1>${escapeHtml(current.exercise)}</h1></div>${sessionControls()}${renderPrevious(previous)}<section class="control-section sets-section"><div class="section-heading"><h2>Series</h2><label class="side-option"><input type="checkbox" aria-label="Registrar por lado" data-action="toggle-unilateral" ${current.unilateral ? "checked" : ""}> Por lado</label><span>${setMode ? `${completed}/${current.sets.length} HECHAS` : `${current.sets.length} TOTAL`}</span></div><p class="weight-help" id="weight-help">Desliza el peso para ajustar · Toca para escribir</p><div class="sets-list">${setRows}</div><div class="set-actions"><button data-action="remove-set" ${current.sets.length <= 1 ? "disabled" : ""}>${icon("minus")} Eliminar última</button><button data-action="add-set">${icon("plus")} Añadir serie</button></div><button class="copy-weight" data-action="copy-first-weight" ${current.sets.length <= 1 ? "disabled" : ""}>Copiar peso de la primera serie</button></section><div class="exercise-secondary-actions"><button data-action="previous" ${state.exerciseIndex === 0 ? "disabled" : ""}>${icon("left")} Anterior</button><button data-action="skip">${current.status === "skipped" ? "Recuperar" : "Omitir"}</button><button data-action="next" ${state.exerciseIndex === state.session.exercises.length - 1 ? "disabled" : ""}>Siguiente ${icon("right")}</button></div><footer class="sticky-action"><button class="primary-button" data-action="save">${current.entryId ? "Actualizar ejercicio" : "Registrar ejercicio"}<span>${icon("right")}</span></button></footer></section>`);
 }
 
 function saveExercise() {
@@ -220,7 +248,10 @@ function saveExercise() {
   const now = new Date();
   const sets = current.sets.map((set) => state.session.trackingMode === "exercise" ? finishSet(set) : structuredClone(set));
   if (!sets.some((set) => parts(set).some((part) => part.completed))) { showToast("Marca al menos una serie o lado"); return; }
-  const entry = { id: current.entryId || uid(), sessionId: state.session.id, recordedAt: now.toISOString(), date: now.toLocaleDateString("es-CO"), time: now.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }), exerciseId: current.exerciseId, exercise: current.exercise, muscleGroup: current.muscleGroup, category: current.category, unilateral: current.unilateral, sets, trackingMode: state.session.trackingMode };
+  const previousEntry = current.entryId ? storage.getEntries().find((entry) => entry.id === current.entryId) : null;
+  const recordedAt = previousEntry?.recordedAt || dateTimeOnWorkoutDate(now, state.session.startedAt);
+  const recordedDate = new Date(recordedAt);
+  const entry = { id: current.entryId || uid(), sessionId: state.session.id, recordedAt, date: recordedDate.toLocaleDateString("es-CO"), time: recordedDate.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }), exerciseId: current.exerciseId, exercise: current.exercise, muscleGroup: current.muscleGroup, category: current.category, unilateral: current.unilateral, sets, trackingMode: state.session.trackingMode };
   storage.saveWorkoutEntry(entry);
   current.sets = sets;
   current.entryId = entry.id;
@@ -234,13 +265,13 @@ function saveExercise() {
 
 function completeSession() {
   const entries = storage.getEntries().filter((entry) => entry.sessionId === state.session.id);
-  const endedAt = new Date();
-  const durationSeconds = elapsedSeconds(state.session.startedAt, endedAt);
+  const durationSeconds = elapsedSeconds(state.session.clockStartedAt || state.session.startedAt);
+  const endedAt = new Date(new Date(state.session.startedAt).getTime() + durationSeconds * 1000);
   const categoryTags = uniqueCategories(entries);
   const label = categoryLabel(categoryTags);
   const summary = { id: state.session.id, categoryTags, categoryLabel: label, startedAt: state.session.startedAt, endedAt: endedAt.toISOString(), durationSeconds, durationMinutes: Math.max(1, Math.round(durationSeconds / 60)), exerciseCount: entries.length, skippedCount: state.session.exercises.filter((item) => item.status === "skipped").length, setCount: entries.reduce((sum, entry) => sum + entry.setCount, 0), repCount: entries.reduce((sum, entry) => sum + entry.sets.reduce((total, set) => total + setReps(set), 0), 0), volume: entries.reduce((sum, entry) => sum + entry.volume, 0) };
   const key = categoryKey(categoryTags);
-  const previous = storage.getCompletedSessions().filter((item) => categoryKey(item.categoryTags || [item.routineId].filter(Boolean)) === key).at(-1) || null;
+  const previous = storage.getCompletedSessions().filter((item) => categoryKey(item.categoryTags || [item.routineId].filter(Boolean)) === key && new Date(item.startedAt) < new Date(summary.startedAt)).sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt)).at(-1) || null;
   storage.saveCompletedSession(summary);
   storage.clearActiveSession();
   state.completion = { summary, previous };
@@ -289,7 +320,7 @@ function renderHistoryDetail() {
   const session = getHistorySessions().find((item) => item.id === state.historySessionId);
   if (!session) { state.view = "history"; return render(); }
   const entries = session.entries.sort((a, b) => new Date(a.recordedAt) - new Date(b.recordedAt));
-  renderShell(`<section class="screen page-screen"><header class="detail-header"><button class="icon-button" data-view="history">${icon("left")}</button><span>${formatDate(session.startedAt)}</span></header><div class="page-title"><p class="eyebrow">ENTRENAMIENTO COMPLETO</p><h2>${escapeHtml(session.label)}</h2><p class="session-detail-meta">${formatTime(session.startedAt)}${session.durationSeconds ? ` · ${formatDuration(session.durationSeconds)}` : ""} · ${formatNumber(session.volume)} lb</p></div><div class="session-entry-list">${entries.map((entry) => `<article class="session-entry"><header><div><strong>${escapeHtml(entry.exercise)}</strong><small>${escapeHtml(MUSCLE_GROUPS[entry.muscleGroup] || entry.muscleGroup)}</small></div><span>${formatNumber(entry.volume)} lb</span></header><div class="history-set-list">${entry.sets.map((set, index) => `<div><span>Serie ${index + 1}</span><strong class="history-set-description">${setDescription(set)}</strong></div>`).join("")}</div></article>`).join("")}</div><button class="delete-session" data-action="delete-session">Eliminar entrenamiento</button></section>`);
+  renderShell(`<section class="screen page-screen"><header class="detail-header"><button class="icon-button" data-view="history">${icon("left")}</button><span>${formatDate(session.startedAt)}</span></header><div class="page-title"><p class="eyebrow">ENTRENAMIENTO COMPLETO</p><h2>${escapeHtml(session.label)}</h2><p class="session-detail-meta">${formatTime(session.startedAt)}${session.durationSeconds ? ` · ${formatDuration(session.durationSeconds)}` : ""} · ${formatNumber(session.volume)} lb</p></div><form id="history-date-form" class="history-date-form"><label for="history-date">Fecha del entrenamiento</label><div><input id="history-date" name="date" type="date" value="${inputDate(session.startedAt)}" max="${todayInputDate()}" required><button type="submit">Guardar</button></div><small>También puedes corregir entrenamientos ya guardados.</small></form><div class="session-entry-list">${entries.map((entry) => `<article class="session-entry"><header><div><strong>${escapeHtml(entry.exercise)}</strong><small>${escapeHtml(MUSCLE_GROUPS[entry.muscleGroup] || entry.muscleGroup)}</small></div><span>${formatNumber(entry.volume)} lb</span></header><div class="history-set-list">${entry.sets.map((set, index) => `<div><span>Serie ${index + 1}</span><strong class="history-set-description">${setDescription(set)}</strong></div>`).join("")}</div></article>`).join("")}</div><button class="delete-session" data-action="delete-session">Eliminar entrenamiento</button></section>`);
 }
 
 function renderSettings() {
@@ -335,6 +366,17 @@ app.addEventListener("change", (event) => {
 });
 
 app.addEventListener("submit", (event) => {
+  if (event.target.id === "history-date-form") {
+    event.preventDefault();
+    const localDate = String(new FormData(event.target).get("date") || "");
+    if (!localDate || localDate > todayInputDate()) return alert("Elige una fecha válida que no esté en el futuro.");
+    const session = getHistorySessions().find((item) => item.id === state.historySessionId);
+    storage.changeSessionDate(state.historySessionId, localDate, session?.entries.map((entry) => entry.id));
+    if (session?.synthetic) state.view = "history";
+    renderHistoryDetail();
+    showToast("Fecha actualizada");
+    return;
+  }
   if (event.target.id !== "custom-exercise-form") return;
   event.preventDefault();
   const data = new FormData(event.target);

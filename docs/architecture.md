@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-## V1.4 actual
+## V1.5 actual
 
 ```text
 PWA Sterk
@@ -56,7 +56,9 @@ PWA Sterk → IndexedDB → sincronización opcional → base de datos remota
                               exportación CSV/XLSX
 ```
 
-La V1.4 continúa con `localStorage`, sin backend, autenticación, IndexedDB ni bases de datos externas. El análisis consume las sesiones del historial, que excluye la sesión activa. No requiere una migración de datos.
+La V1.5 continúa con `localStorage`, sin backend, autenticación, IndexedDB ni bases de datos externas. El análisis consume las sesiones del historial, que excluye la sesión activa. No requiere una migración de datos.
+
+La fecha atribuida a un entrenamiento puede cambiarse durante una sesión o desde su detalle histórico. `clockStartedAt` conserva el inicio real del cronómetro mientras `startedAt` representa la fecha y hora histórica, evitando duraciones infladas al registrar una sesión pasada. El cambio se propaga a todas las entradas de la sesión.
 
 ## Progreso
 

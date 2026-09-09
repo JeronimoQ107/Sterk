@@ -101,3 +101,12 @@ test('previous reference excludes this session', () => {
   const sessionId = storage.getActiveSession().id;
   assert.equal(storage.getLastExerciseEntry('bayesian-curl', 'Bayesian Curl', sessionId).id, 'past');
 });
+test('a past workout uses its chosen date while its timer keeps the real session clock', () => {
+  const { run } = setup();
+  run('state.builderSelection = ["bayesian-curl"]; startSession(); changeActiveSessionDate("2020-03-14"); saveExercise(); completeSession();');
+  const entry = storage.getEntries()[0];
+  const session = storage.getCompletedSessions()[0];
+  assert.equal(run(`inputDate("${entry.recordedAt}")`), '2020-03-14');
+  assert.equal(run(`inputDate("${session.startedAt}")`), '2020-03-14');
+  assert(session.durationSeconds < 60);
+});

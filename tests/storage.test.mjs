@@ -51,3 +51,18 @@ test('empty active sessions survive reload; removing a current entry preserves o
   storage.deleteWorkoutEntry('current');
   assert.deepEqual(storage.getEntries().map((entry) => entry.id), ['older']);
 });
+test('changing a workout date moves its summary and entries without changing duration', () => {
+  storage.clearAll();
+  storage.saveWorkoutEntry({ id: 'entry', sessionId: 'dated-session', exerciseId: 'bayesian-curl', recordedAt: '2026-09-08T15:30:00.000Z', sets: [{ weight: 10, reps: 8 }] });
+  storage.saveCompletedSession({ id: 'dated-session', startedAt: '2026-09-08T15:00:00.000Z', endedAt: '2026-09-08T16:00:00.000Z', durationSeconds: 3600 });
+
+  storage.changeSessionDate('dated-session', '2026-01-12');
+
+  const entry = storage.getEntries()[0];
+  const session = storage.getCompletedSessions()[0];
+  assert.equal(new Date(entry.recordedAt).getDate(), 12);
+  assert.equal(new Date(entry.recordedAt).getMonth(), 0);
+  assert.equal(new Date(session.startedAt).getDate(), 12);
+  assert.equal(new Date(session.endedAt) - new Date(session.startedAt), 3600 * 1000);
+  assert.throws(() => storage.changeSessionDate('dated-session', '2026-02-30'), /no es válida/);
+});
