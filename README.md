@@ -12,12 +12,15 @@ python -m http.server 8080
 
 Abre `http://localhost:8080`. En iPhone, una publicación HTTPS permitirá instalar Sterk mediante **Safari → Compartir → Añadir a pantalla de inicio**.
 
-## Funcionalidades V1.5
+## Funcionalidades V1.6
 
 - Inicio con actividad de los últimos siete días y acceso al último entrenamiento
 - sección Progreso con periodos de 30 días, 90 días o todo el historial
 - entrenamientos, series completadas y días activos del periodo
-- gráfica de carga máxima por sesión y repeticiones de la misma serie, por ejercicio y lado
+- análisis independiente para registros bilaterales, lado izquierdo y lado derecho
+- rendimiento estimado combinando peso y repeticiones, volumen y repeticiones totales por sesión
+- gráfica seleccionable por rendimiento, volumen o repeticiones, récords del periodo y series por grupo muscular
+- ayuda de métricas concentrada en un diálogo para mantener limpia la pantalla principal
 - tabla de datos y estados explicativos cuando faltan registros
 - Ajustes agrupados por modo de registro, biblioteca, respaldos y borrado
 - catálogo compacto por grupos desplegables y selección visible antes del listado
@@ -74,7 +77,8 @@ docs/architecture.md    Arquitectura y decisiones
 - los datos continúan ligados al navegador y dispositivo actual
 - no hay sincronización, cuentas ni recuperación remota
 - la duración de la sesión se registra automáticamente
-- no hay gráficas, PR ni estimaciones de 1RM
+- el rendimiento es una estimación comparativa, no una medición real de 1RM
+- todavía no se registra esfuerzo percibido, RIR ni velocidad de ejecución
 - la publicación HTTPS aún debe configurarse
 
 ## Desarrollo y pruebas
@@ -94,4 +98,4 @@ Antes de finalizar, registra, omite o quita los ejercicios pendientes. Quitar un
 
 ## Próxima etapa
 
-Probar la V1.5 en Safari de un iPhone físico. IndexedDB y sincronización siguen pendientes; Progreso usa el historial local actual. La publicación existente en GitHub Pages puede servir la PWA por HTTPS.
+Probar la V1.6 en Safari de un iPhone físico. IndexedDB y sincronización siguen pendientes; Progreso usa el historial local actual. La publicación existente en GitHub Pages puede servir la PWA por HTTPS.

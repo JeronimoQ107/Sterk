@@ -60,6 +60,12 @@ Sterk es una aplicación personal para registrar el progreso en el gimnasio desd
 - El catálogo se explora mediante grupos desplegables; la búsqueda abre coincidencias y la selección queda antes del listado.
 - El historial local sigue siendo la fuente de datos. No se mezcla la sesión activa con el análisis.
 
+### V1.6 — progreso multidimensional
+
+- El rendimiento por ejercicio combina peso y repeticiones de la misma serie mediante una estimación comparable entre sesiones.
+- La gráfica alterna rendimiento, volumen y repeticiones; también se muestran récords del periodo y series por grupo muscular.
+- La pantalla principal conserva solo indicadores accionables. Fórmulas, límites e interpretación se consultan mediante el botón de información.
+
 Actual:
 
 ```text
@@ -82,7 +88,8 @@ Excel se conserva como posible formato de exportación, no como base de datos. L
 - Excel y OneDrive
 - bases de datos externas
 - temporizadores manuales de ejercicios o descansos
-- métricas avanzadas, PR, gráficas y 1RM
+- RIR/RPE y velocidad de ejecución
+- medición real de 1RM y analítica predictiva avanzada
 
 ## Registro de decisiones
 

@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-## V1.5 actual
+## V1.6 actual
 
 ```text
 PWA Sterk
@@ -17,7 +17,7 @@ localStorage
 - `src/weight-picker.js`: diálogo compacto de entrada manual de peso.
 - `src/weight-control.js`: ajuste directo con arrastre vertical, rueda del mouse y teclado; persistencia por cada cambio sin reconstruir el control durante el gesto.
 - `src/icons.js`: iconos SVG compartidos, independientes de la fuente del dispositivo.
-- `src/progress.js`: filtros por periodo, totales de actividad y carga máxima por sesión para cada ejercicio/lado.
+- `src/progress.js`: filtros, actividad, rendimiento estimado, volumen, repeticiones, récords y distribución de series para cada ejercicio/lado.
 - `src/dashboard.js`: presentación de Inicio, Ajustes y Progreso, incluida gráfica SVG y tabla accesible.
 - `service-worker.js`: shell offline y actualización de recursos.
 
@@ -56,12 +56,16 @@ PWA Sterk → IndexedDB → sincronización opcional → base de datos remota
                               exportación CSV/XLSX
 ```
 
-La V1.5 continúa con `localStorage`, sin backend, autenticación, IndexedDB ni bases de datos externas. El análisis consume las sesiones del historial, que excluye la sesión activa. No requiere una migración de datos.
+La V1.6 continúa con `localStorage`, sin backend, autenticación, IndexedDB ni bases de datos externas. El análisis consume las sesiones del historial, que excluye la sesión activa. No requiere una migración de datos.
 
 La fecha atribuida a un entrenamiento puede cambiarse durante una sesión o desde su detalle histórico. `clockStartedAt` conserva el inicio real del cronómetro mientras `startedAt` representa la fecha y hora histórica, evitando duraciones infladas al registrar una sesión pasada. El cambio se propaga a todas las entradas de la sesión.
+
+Progreso deriva de los datos existentes el rendimiento estimado, volumen, repeticiones, récords y series por grupo muscular. La gráfica permite alternar la métrica sin mezclar registros bilaterales con lados independientes. Las definiciones y fórmulas viven en un diálogo de ayuda para no ocupar la vista principal.
 
 ## Progreso
 
 Los periodos incluyen hoy y los 29/89 días de calendario anteriores, según la zona horaria del dispositivo. Los días activos se deduplican por fecha local. Solo las series con alguna parte completada y repeticiones positivas cuentan en las métricas de actividad.
 
-Cada punto de la gráfica representa la mayor carga de una serie completada en una sesión; en empates se muestran las mayores repeticiones con esa misma carga. Los registros sin lado, izquierdos y derechos se consultan separadamente. La diferencia se calcula entre las dos últimas observaciones del periodo seleccionado. Una sola observación se presenta sin tendencia. No se calculan 1RM ni se infiere una mejora de fuerza a partir de la carga.
+Cada observación conserva las métricas de una sesión: mejor serie por rendimiento estimado, carga máxima, repeticiones máximas, repeticiones totales, volumen y series completadas. El rendimiento usa Epley (`peso × (1 + repeticiones / 30)`), con el peso real como resultado para una repetición. Es una referencia comparativa, no una medición real de 1RM.
+
+Los registros sin lado, izquierdos y derechos se consultan separadamente. La comparación principal usa las dos últimas observaciones del periodo y la gráfica alterna rendimiento, volumen y repeticiones. Una sola observación se presenta sin tendencia. Los récords respetan el filtro temporal.

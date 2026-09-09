@@ -110,3 +110,10 @@ test('a past workout uses its chosen date while its timer keeps the real session
   assert.equal(run(`inputDate("${session.startedAt}")`), '2020-03-14');
   assert(session.durationSeconds < 60);
 });
+test('progress explanations open only from the information dialog', () => {
+  const { run, dialogs } = setup();
+  run('openProgressInfo();');
+  assert.equal(dialogs.length, 1);
+  assert.match(dialogs[0].innerHTML, /peso × \(1 \+ repeticiones ÷ 30\)/);
+  assert.match(dialogs[0].innerHTML, /no una prueba real/);
+});

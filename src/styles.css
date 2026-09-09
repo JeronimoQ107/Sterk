@@ -415,6 +415,39 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .progress-records table { width: 100%; border-collapse: collapse; }
 .progress-records td, .progress-records th { text-align: right; padding: .6rem .2rem; border-bottom: 1px solid var(--line); }
 .progress-records td:first-child, .progress-records th:first-child { text-align: left; }
+.progress-title-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.progress-title-row .compact-title { flex: 1; }
+.info-button { display: grid; place-items: center; flex: 0 0 2.75rem; width: 2.75rem; height: 2.75rem; margin-top: .6rem; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--accent); }
+.info-button .ui-icon { width: 1.25rem; height: 1.25rem; }
+.muscle-summary .card-heading > span { color: var(--muted); font-size: .68rem; }
+.muscle-bars { display: grid; gap: .7rem; margin-top: 1rem; }
+.muscle-bars > div { display: grid; grid-template-columns: minmax(5rem, .9fr) minmax(5rem, 1.4fr) 1.5rem; align-items: center; gap: .65rem; font-size: .72rem; }
+.muscle-bars i { height: .35rem; overflow: hidden; border-radius: 1rem; background: var(--line); }
+.muscle-bars b { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+.muscle-bars strong { text-align: right; }
+.session-work { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin: 1rem 0; padding: .85rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.session-work div { display: grid; gap: .25rem; padding-left: .65rem; border-left: 1px solid var(--line); }
+.session-work div:first-child { padding-left: 0; border: 0; }
+.session-work strong { font-size: 1rem; }
+.session-work span { color: var(--muted); font-size: .6rem; line-height: 1.35; }
+.metric-filter { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .25rem; padding: .2rem; border-radius: .7rem; background: var(--bg); }
+.metric-filter button { min-width: 0; min-height: 2.5rem; padding: .3rem; border: 0; border-radius: .5rem; background: transparent; color: var(--muted); font-size: .68rem; }
+.metric-filter button[aria-pressed=true] { background: var(--surface-2); color: var(--accent); }
+.personal-records { margin-top: 1rem; }
+.personal-records h3 { margin: 0 0 .65rem; font-size: .8rem; }
+.personal-records > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+.personal-records article { display: grid; gap: .2rem; min-width: 0; padding: .75rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface-2); }
+.personal-records small, .personal-records span { overflow: hidden; color: var(--muted); font-size: .62rem; text-overflow: ellipsis; white-space: nowrap; }
+.personal-records strong { overflow: hidden; font-size: .95rem; text-overflow: ellipsis; white-space: nowrap; }
+.records-scroll { overflow-x: auto; }
+.progress-records table { min-width: 28rem; }
+.progress-info-dialog section { padding: .75rem 0; border-top: 1px solid var(--line); }
+.progress-info-dialog section:first-of-type { border-top: 0; }
+.progress-info-dialog h3 { margin: 0; font-size: .85rem; }
+.progress-info-dialog p { margin: .3rem 0 0; font-size: .78rem; }
+.dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.dialog-heading h2 { margin: 0; }
+.dialog-heading button { display: grid; place-items: center; flex: 0 0 2.75rem; width: 2.75rem; height: 2.75rem; border: 0; background: transparent; color: var(--muted); }
 .text-link { min-height: 2.75rem; color: var(--accent); background: transparent; border: 0; padding: 0; }
 .grouped-catalog { gap: .5rem; }
 .catalog-group { border: 1px solid var(--line); border-radius: .8rem; background: var(--surface); overflow: hidden; }

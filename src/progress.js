@@ -33,15 +33,58 @@ export function availableSides(sessions, exerciseId) {
   }
   return ['both', 'left', 'right'].filter((side) => result.has(side));
 }
-// One observation per session: highest completed load, with reps from that same set.
-// Never combine an old unspecified side with left/right records.
+
+export function estimatedOneRepMax(weight, reps) {
+  const load = Math.max(0, Number(weight) || 0);
+  const repetitions = Math.max(0, Number(reps) || 0);
+  if (!load || !repetitions) return 0;
+  return repetitions === 1 ? load : load * (1 + repetitions / 30);
+}
+
+// One observation per session and registration type. Bilateral and sided records never mix.
 export function exerciseSeries(sessions, exerciseId, side = 'both') {
   return sessions.flatMap((session) => {
     const candidates = session.entries.filter((entry) => entry.exerciseId === exerciseId).flatMap((entry) => entry.sets.flatMap((set) => {
       const part = side === 'both' ? (!set.sides ? set : null) : set.sides?.[side];
       return part?.completed && part.reps > 0 ? [part] : [];
     }));
-    candidates.sort((a, b) => b.weight - a.weight || b.reps - a.reps);
-    return candidates.length ? [{ date: session.startedAt, sessionId: session.id, weight: candidates[0].weight, reps: candidates[0].reps }] : [];
+    if (!candidates.length) return [];
+    const best = [...candidates].sort((a, b) => estimatedOneRepMax(b.weight, b.reps) - estimatedOneRepMax(a.weight, a.reps) || b.weight - a.weight)[0];
+    const heaviest = [...candidates].sort((a, b) => b.weight - a.weight || b.reps - a.reps)[0];
+    const mostReps = [...candidates].sort((a, b) => b.reps - a.reps || b.weight - a.weight)[0];
+    return [{
+      date: session.startedAt,
+      sessionId: session.id,
+      weight: best.weight,
+      reps: best.reps,
+      estimatedOneRepMax: estimatedOneRepMax(best.weight, best.reps),
+      maxWeight: heaviest.weight,
+      maxWeightReps: heaviest.reps,
+      maxReps: mostReps.reps,
+      maxRepsWeight: mostReps.weight,
+      volume: candidates.reduce((sum, part) => sum + part.weight * part.reps, 0),
+      totalReps: candidates.reduce((sum, part) => sum + part.reps, 0),
+      setCount: candidates.length,
+    }];
   }).sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+export function personalRecords(points) {
+  if (!points.length) return null;
+  const highest = (field) => [...points].sort((a, b) => b[field] - a[field])[0];
+  return {
+    performance: highest('estimatedOneRepMax'),
+    weight: highest('maxWeight'),
+    reps: highest('maxReps'),
+    volume: highest('volume'),
+  };
+}
+
+export function muscleGroupSets(sessions) {
+  const groups = new Map();
+  for (const session of sessions) for (const entry of session.entries) {
+    const completed = entry.sets.filter((set) => completedParts(set).length).length;
+    if (completed) groups.set(entry.muscleGroup || 'other', (groups.get(entry.muscleGroup || 'other') || 0) + completed);
+  }
+  return [...groups].map(([id, sets]) => ({ id, sets })).sort((a, b) => b.sets - a.sets || a.id.localeCompare(b.id));
 }

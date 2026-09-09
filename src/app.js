@@ -332,6 +332,17 @@ function renderProgress() {
   renderShell(`<section class="screen page-screen progress-screen">${brand()}${progressDashboard(getHistorySessions(), state)}</section>`, "progress");
 }
 
+function openProgressInfo() {
+  const dialog = document.createElement("dialog");
+  dialog.className = "progress-info-dialog";
+  dialog.setAttribute("aria-labelledby", "progress-info-title");
+  dialog.innerHTML = `<div class="dialog-heading"><h2 id="progress-info-title">Cómo leer tu progreso</h2><button data-close aria-label="Cerrar">${icon("close")}</button></div><section><h3>Rendimiento estimado</h3><p>Combina el peso y las repeticiones de tu mejor serie completada. Se estima con <strong>peso × (1 + repeticiones ÷ 30)</strong>; es una referencia para comparar sesiones, no una prueba real de repetición máxima.</p></section><section><h3>Volumen</h3><p>Suma peso × repeticiones de todas las series completadas del ejercicio. Mide trabajo realizado y puede cambiar si haces más o menos series.</p></section><section><h3>Repeticiones</h3><p>Suma las repeticiones completadas. Úsala junto con el peso y el volumen.</p></section><section><h3>Récords</h3><p>Destaca el mejor rendimiento estimado, la mayor carga, el máximo de repeticiones y el mayor volumen dentro del periodo elegido.</p></section><section><h3>Series por grupo</h3><p>Agrupa las series completadas por músculo. Los registros izquierdo y derecho se mantienen separados en el análisis por ejercicio.</p></section><button class="primary-button static" data-close>Entendido</button>`;
+  dialog.addEventListener("click", (event) => { if (event.target.closest("[data-close]")) dialog.close(); });
+  dialog.addEventListener("close", () => dialog.remove());
+  document.body.append(dialog);
+  dialog.showModal();
+}
+
 function render() {
   if (state.view === "progress") renderProgress();
   if (state.view === "home") renderHome();
@@ -394,6 +405,8 @@ app.addEventListener("submit", (event) => {
 });
 
 app.addEventListener("click", (event) => {
+  const progressMetric = event.target.closest("[data-progress-metric]");
+  if (progressMetric) { state.progressMetric = progressMetric.dataset.progressMetric; return renderProgress(); }
   const periodButton = event.target.closest("[data-period]");
   if (periodButton) { state.progressPeriod = periodButton.dataset.period; return renderProgress(); }
   const viewButton = event.target.closest("[data-view]");
@@ -426,6 +439,7 @@ app.addEventListener("click", (event) => {
   const modeButton = event.target.closest("[data-mode]");
   if (modeButton) { storage.saveSettings({ trackingMode: modeButton.dataset.mode }); showToast("Preferencia guardada"); return render(); }
   const action = event.target.closest("[data-action]")?.dataset.action;
+  if (action === "progress-info") openProgressInfo();
   if (action === "new-session") { const active = storage.getActiveSession(); if (active && !confirm("Esto reemplazará la sesión en curso. ¿Continuar?")) return; if (active) storage.deleteSession(active.id); storage.clearActiveSession(); state.adding = false; state.builderQuery = ""; state.builderSelection = []; state.builderFilter = "all"; state.view = "builder"; render(); }
   if (action === "cancel-builder") { if (state.adding) { state.adding = false; state.view = "exercise"; render(); } else goHome(); }
   if (action === "start-session") { if (state.adding) { const selected = selectedExercises(); if (!selected.length) return; const first = state.session.exercises.length; state.session.exercises.push(...selected.map(newExerciseDraft)); state.adding = false; state.view = "exercise"; goToExercise(first); } else startSession(); }
