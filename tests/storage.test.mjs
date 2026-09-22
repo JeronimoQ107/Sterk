@@ -9,8 +9,8 @@ const { storage } = await import('../src/storage.js');
 const unilateral = { sides: { left: { weight: 15, reps: 10, completed: true }, right: { weight: 15, reps: 12, completed: false } } };
 
 test('catalog IDs remain unique; names and Spanish aliases are searchable', () => {
-  assert.equal(DEFAULT_EXERCISES.length, 57);
-  assert.equal(new Set(DEFAULT_EXERCISES.map((e) => e.id)).size, 57);
+  assert.equal(DEFAULT_EXERCISES.length, 60);
+  assert.equal(new Set(DEFAULT_EXERCISES.map((e) => e.id)).size, 60);
   assert(matchesExercise(DEFAULT_EXERCISES.find((e) => e.id === 'bayesian-curl'), 'bayesiano'));
   assert(matchesExercise(DEFAULT_EXERCISES[0], 'PÉCHO banca'));
 });

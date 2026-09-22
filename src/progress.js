@@ -21,7 +21,7 @@ export function exerciseOptions(sessions) {
   for (const session of sessions) for (const entry of session.entries) {
     if (entry.sets.some((set) => completedParts(set).length)) options.set(entry.exerciseId, entry.exercise);
   }
-  return [...options].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  return [...options].map(([id, name]) => ({ id, name }));
 }
 export function availableSides(sessions, exerciseId) {
   const result = new Set();

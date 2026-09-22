@@ -1,4 +1,4 @@
-const CACHE_NAME = "sterk-v1-6-0";
+const CACHE_NAME = "sterk-v1-7-0";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,6 +9,8 @@ const APP_SHELL = [
   "./src/sets.js",
   "./src/weight-picker.js",
   "./src/weight-control.js",
+  "./src/reps-control.js",
+  "./src/reps-picker.js",
   "./src/icons.js",
   "./src/dashboard.js",
   "./src/progress.js",
@@ -18,6 +20,7 @@ const APP_SHELL = [
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
+  "./assets/exercises/pec-deck.png",
 ];
 
 self.addEventListener("install", (event) => {

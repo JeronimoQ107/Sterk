@@ -7,10 +7,31 @@ const date = (value) => new Date(value).toLocaleDateString('es-CO', { day: 'nume
 const sideNames = { both: 'Sin lado asignado', left: 'Izquierdo', right: 'Derecho' };
 const metrics = (stats) => `<div class="overview-metrics"><div><strong>${stats.sessions}</strong><span>Entrenamientos</span></div><div><strong>${stats.sets}</strong><span>Series hechas</span></div><div><strong>${stats.days}</strong><span>Días activos</span></div></div>`;
 
-export function homeDashboard(sessions) {
-  const stats = overview(inPeriod(sessions, 7));
+function homeInsight(sessions) {
   const last = sessions[0];
-  return `<div class="home-intro"><p class="eyebrow">TU ESPACIO DE ENTRENAMIENTO</p><h2>Cada sesión cuenta.</h2><p>Registra hoy. Mira cómo avanzas.</p></div><button class="new-session-card" data-action="new-session"><span><strong>Crear entrenamiento</strong><small>Empieza con un ejercicio y sigue a tu ritmo</small></span><i>${icon('plus')}</i></button><section class="dashboard-card"><div class="card-heading"><h2>Últimos 7 días</h2><button data-view="progress" aria-label="Ver progreso">${icon('chart')}</button></div>${metrics(stats)}</section><section class="home-recent"><div class="card-heading"><h2>Último entrenamiento</h2><button data-view="history">Ver historial</button></div>${last ? `<button class="recent-session" data-history-session="${escape(last.id)}"><div><small>${date(last.startedAt)}</small><strong>${escape(last.label)}</strong><p>${escape(last.entries.map((entry) => entry.exercise).join(' · '))}</p></div>${icon('right')}</button>` : `<div class="quiet-empty"><strong>Tu historia empieza aquí</strong><p>Completa tu primer entrenamiento para ver aquí tu actividad y progreso.</p></div>`}</section>`;
+  if (!last) return null;
+  const previous = sessions.slice(1);
+  for (const entry of last.entries) {
+    for (const set of entry.sets) {
+      const candidates = set.sides ? [['left', set.sides.left], ['right', set.sides.right]] : [['both', set]];
+      for (const [side, part] of candidates) {
+        if (!part?.completed || part.reps <= 0) continue;
+        const prior = previous.flatMap((session) => session.entries.filter((item) => item.exerciseId === entry.exerciseId).flatMap((item) => item.sets.flatMap((old) => {
+          const oldPart = side === 'both' ? (!old.sides ? old : null) : old.sides?.[side];
+          return oldPart?.completed && oldPart.weight === part.weight ? [oldPart.reps] : [];
+        })));
+        const best = Math.max(0, ...prior);
+        if (prior.length && part.reps > best) return { title: 'Más repeticiones con el mismo peso', detail: `${entry.exercise} · ${number(part.weight)} lb`, value: `+${part.reps - best} rep${part.reps - best === 1 ? '' : 's'}` };
+      }
+    }
+  }
+  return { title: 'Tu sesión más reciente', detail: `${last.exerciseCount} ejercicios · ${last.setCount} series`, value: `${number(last.volume)} lb` };
+}
+
+export function homeDashboard(sessions) {
+  const last = sessions[0];
+  const insight = homeInsight(sessions);
+  return `<div class="home-intro"><p class="eyebrow">ENTRENA A TU MANERA</p><h2>Tu próximo<br><em>entrenamiento.</em></h2></div><button class="new-session-card" data-action="new-session"><span><strong>Empezar entrenamiento</strong><small>Elige ejercicios y registra tus series</small></span><i>${icon('plus')}</i></button>${insight ? `<section class="home-insight"><div><span class="eyebrow">EN TU ÚLTIMA SESIÓN</span><h3>${escape(insight.title)}</h3><p>${escape(insight.detail)}</p></div><strong>${escape(insight.value)}</strong><button data-view="progress">Ver progreso ${icon('right')}</button></section>` : `<section class="home-insight empty"><span class="eyebrow">AQUÍ EMPIEZA</span><h3>Tu primer registro</h3><p>Los detalles de tus entrenamientos aparecerán aquí.</p></section>`}<section class="home-recent"><div class="card-heading"><h2>Actividad reciente</h2><button data-view="history">Ver historial</button></div>${last ? `<button class="recent-session" data-history-session="${escape(last.id)}"><div><small>${date(last.startedAt)}</small><strong>${escape(last.label)}</strong><p>${escape(last.entries.slice(0, 3).map((entry) => entry.exercise).join(' · '))}</p></div>${icon('right')}</button>` : `<div class="quiet-empty">No hay entrenamientos guardados.</div>`}</section>`;
 }
 
 const metricDefinitions = {
@@ -52,5 +73,5 @@ export function progressDashboard(sessions, state) {
 }
 
 export function settingsDashboard(settings, sessions, customCount) {
-  return `<div class="page-title compact-title"><p class="eyebrow">A TU MANERA</p><h2>Ajustes</h2><p>Tu forma de registrar. Tus datos bajo control.</p></div><section class="dashboard-card"><div class="card-heading"><h2>Cómo entrenas</h2>${icon('edit')}</div><p class="section-description">Modo de registro para los próximos entrenamientos. La sesión actual conserva su modo.</p><div class="mode-options">${[['exercise', 'Por ejercicio', 'Edita las series y guárdalas juntas.'], ['set', 'Por serie', 'Marca cada serie o lado al terminar.']].map(([id, label, copy]) => `<button data-mode="${id}" aria-pressed="${settings.trackingMode === id}"><span class="mode-indicator">${settings.trackingMode === id ? icon('check') : ''}</span><span><strong>${label}</strong><small>${copy}</small></span></button>`).join('')}</div></section><section class="dashboard-card"><div class="card-heading"><h2>Tu biblioteca</h2>${icon('history')}</div><div class="library-summary"><span><strong>${sessions.length}</strong> entrenamientos</span><span><strong>${customCount}</strong> ejercicios propios</span></div><p class="section-description">Se guarda en este navegador. Exporta una copia para conservarla fuera del dispositivo.</p><div class="backup-actions"><button data-action="export"><strong>Exportar copia</strong><small>Guardar un archivo JSON</small>${icon('right')}</button><button data-action="import"><strong>Restaurar copia</strong><small>Reemplaza los datos actuales</small>${icon('right')}</button></div></section><details class="danger-settings"><summary>Administrar borrado</summary><p>Elimina historial, sesión activa, ejercicios propios y preferencias de este navegador.</p><button data-action="clear-data">Borrar todos los datos</button></details><p class="version">Sterk · Versión 1.6<br>Hecho para entrenar a tu ritmo.</p>`;
+  return `<div class="page-title compact-title"><p class="eyebrow">A TU MANERA</p><h2>Ajustes</h2><p>Tu forma de registrar. Tus datos bajo control.</p></div><section class="dashboard-card"><div class="card-heading"><h2>Cómo entrenas</h2>${icon('edit')}</div><p class="section-description">Modo de registro para los próximos entrenamientos. La sesión actual conserva su modo.</p><div class="mode-options">${[['exercise', 'Por ejercicio', 'Edita las series y guárdalas juntas.'], ['set', 'Por serie', 'Marca cada serie o lado al terminar.']].map(([id, label, copy]) => `<button data-mode="${id}" aria-pressed="${settings.trackingMode === id}"><span class="mode-indicator">${settings.trackingMode === id ? icon('check') : ''}</span><span><strong>${label}</strong><small>${copy}</small></span></button>`).join('')}</div></section><section class="dashboard-card"><div class="card-heading"><h2>Tu biblioteca</h2>${icon('history')}</div><div class="library-summary"><span><strong>${sessions.length}</strong> entrenamientos</span><span><strong>${customCount}</strong> ejercicios propios</span></div><p class="section-description">Se guarda en este navegador. Exporta una copia para conservarla fuera del dispositivo.</p><div class="backup-actions"><button data-action="export"><strong>Exportar copia</strong><small>Guardar un archivo JSON</small>${icon('right')}</button><button data-action="import"><strong>Restaurar copia</strong><small>Reemplaza los datos actuales</small>${icon('right')}</button></div></section><details class="danger-settings"><summary>Administrar borrado</summary><p>Elimina historial, sesión activa, ejercicios propios y preferencias de este navegador.</p><button data-action="clear-data">Borrar todos los datos</button></details><p class="version">Sterk · Versión 1.7<br>Hecho para entrenar a tu ritmo.</p>`;
 }

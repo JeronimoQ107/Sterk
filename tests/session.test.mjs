@@ -6,6 +6,7 @@ import * as data from '../src/data.js';
 import * as sets from '../src/sets.js';
 import { icon } from '../src/icons.js';
 import { homeDashboard, progressDashboard, settingsDashboard } from '../src/dashboard.js';
+import { exerciseOptions } from '../src/progress.js';
 
 const memory = new Map();
 globalThis.localStorage = { getItem: (key) => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, value), removeItem: (key) => memory.delete(key) };
@@ -14,12 +15,12 @@ const source = fs.readFileSync(new URL('../src/app.js', import.meta.url), 'utf8'
 function setup() {
   storage.clearAll();
   const handlers = {}, notices = [], dialogs = [];
-  const app = { innerHTML: '', addEventListener: (type, fn) => { handlers[type] = fn; } };
+  const app = { innerHTML: '', addEventListener: (type, fn) => { handlers[type] = fn; }, querySelector: () => null };
   const dummy = { addEventListener() {}, classList: { add() {}, remove() {} } };
-  const context = vm.createContext({ ...data, ...sets, icon, homeDashboard, progressDashboard, settingsDashboard, bindWeightControl() {}, storage, structuredClone, console, crypto: globalThis.crypto,
+  const context = vm.createContext({ ...data, ...sets, icon, homeDashboard, progressDashboard, settingsDashboard, exerciseOptions, bindWeightControl() {}, bindRepsControl() {}, storage, structuredClone, console, crypto: globalThis.crypto,
     document: { querySelector: (selector) => selector === '#app' ? app : dummy, querySelectorAll: () => [], body: { append() {} },
       createElement: () => { const dialog = { handlers: {}, innerHTML: '', setAttribute() {}, addEventListener(type, fn) { this.handlers[type] = fn; }, showModal() {}, close() {}, remove() {} }; dialogs.push(dialog); return dialog; } },
-    navigator: {}, window: { setInterval() {}, setTimeout() {}, scrollTo() {} }, confirm: () => true, alert: (text) => notices.push(text), openWeightPicker() {},
+    navigator: {}, window: { setInterval() {}, setTimeout() {}, scrollTo() {} }, confirm: () => true, alert: (text) => notices.push(text), openWeightPicker() {}, openRepsPicker() {},
   });
   vm.runInContext(source, context);
   const run = (code) => vm.runInContext(code, context);
@@ -47,6 +48,37 @@ test('start with one exercise, save without closing, append and recover with sam
   assert.equal(recovered.exercises.length, 2);
   assert.equal(run('draft().exerciseId'), 'hammer-curl');
   assert.equal(recovered.exercises[0].status, 'registered');
+});
+
+test('the final completed set registers its exercise but does not finish the workout', () => {
+  const { run, click } = setup();
+  storage.saveSettings({ trackingMode: 'set' });
+  run('state.builderSelection = ["pec-deck"]; startSession();');
+  click({ toggleSet: '0' });
+  click({ toggleSet: '1' });
+  assert.equal(storage.getEntries().length, 0);
+  click({ toggleSet: '2' });
+  assert.equal(storage.getEntries().length, 1);
+  assert.equal(storage.getActiveSession().exercises[0].status, 'registered');
+  assert.equal(storage.getCompletedSessions().length, 0);
+});
+
+test('the catalog shows the Pec Deck illustration and the added forearm group', () => {
+  const { run, app } = setup();
+  run('state.view = "builder"; render();');
+  assert.match(app.innerHTML, /assets\/exercises\/pec-deck\.png/);
+  assert.match(app.innerHTML, /Antebrazos/);
+  assert.match(app.innerHTML, /Reverse Wrist Curl/);
+});
+
+test('history keeps mixed workouts in their own filter', () => {
+  const { run, app } = setup();
+  run('state.builderSelection = ["pec-deck", "bayesian-curl"]; startSession(); saveExercise(); saveExercise(); completeSession();');
+  run('state.historyFilter = "mixed"; renderHistory();');
+  assert.match(app.innerHTML, /data-history-session=/);
+  assert.match(app.innerHTML, /Pec Deck · Bayesian Curl/);
+  run('state.historyFilter = "push"; renderHistory();');
+  assert.doesNotMatch(app.innerHTML, /data-history-session=/);
 });
 test('unilateral series mode persists asymmetric values and only counts completed sides', () => {
   const { run, click } = setup();

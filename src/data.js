@@ -13,6 +13,7 @@ export const MUSCLE_GROUPS = Object.freeze({
   rearDelts: "Hombro posterior",
   triceps: "Tríceps",
   biceps: "Bíceps",
+  forearms: "Antebrazos",
   quadriceps: "Cuádriceps",
   hamstrings: "Isquiotibiales",
   glutes: "Glúteos",
@@ -40,6 +41,9 @@ export const DEFAULT_EXERCISES = Object.freeze([
     ["cable-curl", "Cable Curl", "biceps", "pull", "curl polea cable"],
     ["concentration-curl", "Concentration Curl", "biceps", "pull", "curl concentrado"],
     ["ez-bar-curl", "EZ Bar Curl", "biceps", "pull", "curl barra z"],
+    ["wrist-curl", "Wrist Curl", "forearms", "pull", "curl muñeca flexion antebrazo"],
+    ["reverse-wrist-curl", "Reverse Wrist Curl", "forearms", "pull", "extension muñeca antebrazo"],
+    ["reverse-curl", "Reverse Curl", "forearms", "pull", "curl inverso barra antebrazo braquiorradial"],
     ["dumbbell-bench-press", "Dumbbell Bench Press", "chest", "push", "press banca mancuernas plano"],
     ["incline-dumbbell-press", "Incline Dumbbell Press", "chest", "push", "press inclinado mancuernas"],
     ["chest-press-machine", "Chest Press Machine", "chest", "push", "press pecho maquina"],
@@ -80,6 +84,9 @@ export const DEFAULT_EXERCISES = Object.freeze([
     ["standing-calf-raise", "Standing Calf Raise", "calves", "legs", "elevacion pantorrillas de pie gemelos"],
   ].map(([id, name, muscleGroup, category, aliases]) => ({ id, name, muscleGroup, category, aliases })),
 ]);
+
+// Images are optional: a catalog entry can be illustrated without changing saved workouts.
+export const EXERCISE_IMAGES = Object.freeze({ "pec-deck": "./assets/exercises/pec-deck.png" });
 
 const LEGACY_ALIASES = {
   "bench-press": "press banca pecho plano barra", "incline-press": "press inclinado pecho",
