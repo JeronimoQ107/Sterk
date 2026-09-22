@@ -3,17 +3,20 @@ import assert from 'node:assert/strict';
 import { bindRepsControl, scrubReps } from '../src/reps-control.js';
 
 function setup() {
+  const frames = new Map(); let frameId = 0;
+  globalThis.requestAnimationFrame = (handler) => { frames.set(++frameId, handler); return frameId; };
+  globalThis.cancelAnimationFrame = (id) => frames.delete(id);
   const listeners = {}, values = [];
   let reps = 10;
-  const rows = [-2, -1, 0, 1, 2].map((offset) => ({ dataset: { repsOffset: String(offset) }, textContent: '' }));
+  const rows = [-2, -1, 0, 1, 2].map((offset) => ({ dataset: { repsOffset: String(offset) }, textContent: '', style: {} }));
   const attributes = {};
-  const button = { closest: () => button, setPointerCapture() {}, classList: { add() {}, remove() {} }, querySelectorAll: () => rows, setAttribute: (key, value) => { attributes[key] = value; } };
+  const button = { isConnected: true, closest: () => button, setPointerCapture() {}, classList: { add() {}, remove() {} }, querySelectorAll: () => rows, setAttribute: (key, value) => { attributes[key] = value; } };
   bindRepsControl({ addEventListener: (type, handler) => { listeners[type] = handler; } }, () => reps, (_, value) => { reps = value; values.push(value); });
   const send = (type, overrides = {}) => {
     const event = { target: button, pointerId: 1, isPrimary: true, button: 0, clientY: 100, deltaY: 0, deltaMode: 0, key: '', preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; }, ...overrides };
     listeners[type](event); return event;
   };
-  return { send, rows, attributes, values, reps: () => reps };
+  return { send, rows, attributes, values, frames, reps: () => reps };
 }
 
 test('vertical drag adjusts repetitions and suppresses the tap after dragging', () => {
@@ -39,4 +42,17 @@ test('a tap leaves the value unchanged, while keyboard and wheel can adjust it',
   assert.equal(control.reps(), 9);
   assert.equal(scrubReps(0, -100), 0);
   assert.equal(scrubReps(998, 100), 999);
+});
+
+test('the numbers move between steps and settle smoothly after release', () => {
+  const control = setup();
+  control.send('pointerdown');
+  control.send('pointermove', { clientY: 90 });
+  assert.equal(control.reps(), 11);
+  assert.equal(control.rows[2].style.transform, 'translateY(8px) scale(0.85)');
+  control.send('pointerup', { clientY: 90 });
+  assert.equal(control.frames.size, 1);
+  const frame = [...control.frames.values()][0];
+  frame(performance.now() + 200);
+  assert.equal(control.rows[2].style.transform, 'translateY(0px) scale(1)');
 });

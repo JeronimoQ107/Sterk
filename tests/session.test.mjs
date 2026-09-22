@@ -36,6 +36,7 @@ test('start with one exercise, save without closing, append and recover with sam
   const { run, click } = setup();
   run('state.builderSelection = ["bayesian-curl"]; startSession();');
   const initial = storage.getActiveSession();
+  click({ toggleSet: '0' });
   run('saveExercise();');
   assert.equal(storage.getActiveSession().id, initial.id);
   assert.equal(storage.getCompletedSessions().length, 0);
@@ -52,8 +53,8 @@ test('start with one exercise, save without closing, append and recover with sam
 
 test('the final completed set registers its exercise but does not finish the workout', () => {
   const { run, click } = setup();
-  storage.saveSettings({ trackingMode: 'set' });
   run('state.builderSelection = ["pec-deck"]; startSession();');
+  run('state.session.trackingMode = "exercise"; persistSession();');
   click({ toggleSet: '0' });
   click({ toggleSet: '1' });
   assert.equal(storage.getEntries().length, 0);
@@ -63,17 +64,46 @@ test('the final completed set registers its exercise but does not finish the wor
   assert.equal(storage.getCompletedSessions().length, 0);
 });
 
+test('the settings selector is gone and legacy preferences cannot disable set checks', () => {
+  const { run, click, app } = setup();
+  storage.saveSettings({ trackingMode: 'exercise' });
+  run('state.builderSelection = ["pec-deck"]; startSession();');
+  assert.equal(storage.getActiveSession().trackingMode, 'set');
+  const row = run('renderSet(draft().sets[0], 0)');
+  assert(row.indexOf('class="set-number"') < row.indexOf('class="set-body"'));
+  assert(row.indexOf('class="set-body"') < row.indexOf('class="set-check"'));
+  click({ toggleSet: '0' });
+  assert.equal(storage.getActiveSession().exercises[0].sets[0].completed, true);
+  run('state.view = "settings"; render();');
+  assert.doesNotMatch(app.innerHTML, /data-mode=|Por ejercicio|Por serie/);
+});
+
+test('the right-hand set check completes both sides of a unilateral set', () => {
+  const { run, click } = setup();
+  run('state.builderSelection = ["bayesian-curl"]; startSession();');
+  click({ action: 'toggle-unilateral' });
+  click({ toggleSet: '0' });
+  const sides = storage.getActiveSession().exercises[0].sets[0].sides;
+  assert.equal(sides.left.completed, true);
+  assert.equal(sides.right.completed, true);
+  click({ toggleSet: '0' });
+  assert.equal(storage.getActiveSession().exercises[0].sets[0].completed, false);
+});
+
 test('the catalog shows the Pec Deck illustration and the added forearm group', () => {
   const { run, app } = setup();
   run('state.view = "builder"; render();');
   assert.match(app.innerHTML, /assets\/exercises\/pec-deck\.png/);
+  assert.match(app.innerHTML, /catalog-item illustrated/);
   assert.match(app.innerHTML, /Antebrazos/);
   assert.match(app.innerHTML, /Reverse Wrist Curl/);
 });
 
 test('history keeps mixed workouts in their own filter', () => {
-  const { run, app } = setup();
-  run('state.builderSelection = ["pec-deck", "bayesian-curl"]; startSession(); saveExercise(); saveExercise(); completeSession();');
+  const { run, click, app } = setup();
+  run('state.builderSelection = ["pec-deck", "bayesian-curl"]; startSession();');
+  click({ toggleSet: '0' }); run('saveExercise();');
+  click({ toggleSet: '0' }); run('saveExercise(); completeSession();');
   run('state.historyFilter = "mixed"; renderHistory();');
   assert.match(app.innerHTML, /data-history-session=/);
   assert.match(app.innerHTML, /Pec Deck · Bayesian Curl/);
@@ -82,7 +112,6 @@ test('history keeps mixed workouts in their own filter', () => {
 });
 test('unilateral series mode persists asymmetric values and only counts completed sides', () => {
   const { run, click } = setup();
-  storage.saveSettings({ trackingMode: 'set' });
   run('state.builderSelection = ["bayesian-curl"]; startSession();');
   click({ action: 'toggle-unilateral' });
   click({ setReps: '0', side: 'right', delta: '2' });
@@ -98,7 +127,8 @@ test('unilateral series mode persists asymmetric values and only counts complete
 });
 test('finalization blocks unsaved edits, then writes completed summary on explicit action', () => {
   const { run, click, notices } = setup();
-  run('state.builderSelection = ["bayesian-curl"]; startSession(); saveExercise();');
+  run('state.builderSelection = ["bayesian-curl"]; startSession();');
+  click({ toggleSet: '0' }); click({ toggleSet: '1' }); click({ toggleSet: '2' });
   click({ setReps: '0', delta: '2' });
   click({ action: 'finish-session' });
   assert.equal(notices.length, 1);
@@ -110,7 +140,8 @@ test('finalization blocks unsaved edits, then writes completed summary on explic
 });
 test('reorder preserves current draft; removing exercises can leave a recoverable empty session', () => {
   const { run, click, dialogs } = setup();
-  run('state.builderSelection = ["bayesian-curl", "hammer-curl"]; startSession(); saveExercise();');
+  run('state.builderSelection = ["bayesian-curl", "hammer-curl"]; startSession();');
+  click({ toggleSet: '0' }); run('saveExercise();');
   const currentId = run('draft().exerciseId');
   click({ action: 'manage-session' });
   const dialog = dialogs[0];
@@ -127,15 +158,17 @@ test('reorder preserves current draft; removing exercises can leave a recoverabl
   assert.equal(storage.getActiveSession().exercises.length, 0);
 });
 test('previous reference excludes this session', () => {
-  const { run } = setup();
+  const { run, click } = setup();
   storage.saveWorkoutEntry({ id: 'past', sessionId: 'past-session', exerciseId: 'bayesian-curl', recordedAt: '2026-01-01', sets: [{ weight: 10, reps: 8 }] });
-  run('state.builderSelection = ["bayesian-curl"]; startSession(); saveExercise();');
+  run('state.builderSelection = ["bayesian-curl"]; startSession();');
+  click({ toggleSet: '0' }); run('saveExercise();');
   const sessionId = storage.getActiveSession().id;
   assert.equal(storage.getLastExerciseEntry('bayesian-curl', 'Bayesian Curl', sessionId).id, 'past');
 });
 test('a past workout uses its chosen date while its timer keeps the real session clock', () => {
-  const { run } = setup();
-  run('state.builderSelection = ["bayesian-curl"]; startSession(); changeActiveSessionDate("2020-03-14"); saveExercise(); completeSession();');
+  const { run, click } = setup();
+  run('state.builderSelection = ["bayesian-curl"]; startSession(); changeActiveSessionDate("2020-03-14");');
+  click({ toggleSet: '0' }); run('saveExercise(); completeSession();');
   const entry = storage.getEntries()[0];
   const session = storage.getCompletedSessions()[0];
   assert.equal(run(`inputDate("${entry.recordedAt}")`), '2020-03-14');

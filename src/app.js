@@ -1,7 +1,7 @@
 import { CATEGORY_LABELS, CATEGORY_ORDER, DEFAULT_ENTRY, EXERCISE_IMAGES, MUSCLE_GROUPS, categoryLabel, matchesExercise, searchText } from "./data.js";
 import { storage } from "./storage.js";
 
-import { SIDES, parts, setReps, resetSet, finishSet } from "./sets.js";
+import { SIDES, parts, setReps, resetSet } from "./sets.js";
 import { openWeightPicker } from "./weight-picker.js";
 import { bindWeightControl } from "./weight-control.js";
 import { bindRepsControl } from "./reps-control.js";
@@ -57,9 +57,11 @@ function markEdited() {
   current.status = "pending";
   current.sets.forEach((set) => { if (set.sides) set.completed = SIDES.every((side) => set.sides[side].completed); });
 }
-function renderSet(set, index, setMode) {
-  const controls = (part, side = "") => `<div class="side-row">${side ? `<div class="side-heading"><strong>${sideLabel(side)}</strong><div class="side-utilities"><button class="copy-side" data-copy-side="${index}" data-side="${side}" aria-label="Copiar valores de ${sideLabel(side)} al otro lado" title="Copiar al otro lado">${icon("copy")}</button>${setMode ? `<button class="set-check" data-toggle-set="${index}" data-side="${side}" aria-label="${part.completed ? "Desmarcar" : "Completar"} ${sideLabel(side)} serie ${index + 1}" aria-pressed="${part.completed}">${part.completed ? icon("check") : ""}</button>` : ""}</div></div>` : ""}<div class="set-controls"><div><small>PESO · LB</small><button class="weight-value" role="spinbutton" aria-valuemin="0" aria-valuenow="${part.weight}" aria-valuetext="${part.weight} libras" aria-describedby="weight-help" data-edit-weight="${index}" data-side="${side}" aria-label="Editar peso ${side ? sideLabel(side) : ""} serie ${index + 1}"><span class="weight-neighbor" data-weight-offset="-2" aria-hidden="true">${part.weight >= 5 ? formatNumber(part.weight - 5) : ""}</span><span class="weight-neighbor" data-weight-offset="-1" data-weight-previous aria-hidden="true">${part.weight >= 2.5 ? formatNumber(part.weight - 2.5) : ""}</span><span data-weight-offset="0" data-weight-number>${formatNumber(part.weight)}</span><span class="weight-neighbor" data-weight-offset="1" data-weight-next aria-hidden="true">${formatNumber(part.weight + 2.5)}</span><span class="weight-neighbor" data-weight-offset="2" aria-hidden="true">${formatNumber(part.weight + 5)}</span></button></div><div><small>REPETICIONES</small><button class="reps-value" role="spinbutton" aria-valuemin="0" aria-valuemax="999" aria-valuenow="${part.reps}" aria-valuetext="${part.reps} repeticiones" aria-describedby="weight-help" data-edit-reps="${index}" data-side="${side}" aria-label="Editar repeticiones ${side ? sideLabel(side) : ""} serie ${index + 1}"><span data-reps-offset="-2" aria-hidden="true">${part.reps >= 2 ? part.reps - 2 : ""}</span><span data-reps-offset="-1" aria-hidden="true">${part.reps >= 1 ? part.reps - 1 : ""}</span><span data-reps-offset="0">${part.reps}</span><span data-reps-offset="1" aria-hidden="true">${part.reps + 1}</span><span data-reps-offset="2" aria-hidden="true">${part.reps + 2}</span></button></div></div></div>`;
-  return `<article class="set-card ${set.completed ? "done" : ""}"><div class="set-card-heading">${setMode && !set.sides ? `<button class="set-check" data-toggle-set="${index}" aria-label="Completar serie ${index + 1}" aria-pressed="${set.completed}">${set.completed ? icon("check") : index + 1}</button>` : `<span class="set-label">SERIE ${index + 1}</span>`}<span>${set.completed ? "COMPLETADA" : ""}</span></div>${set.sides ? SIDES.map((side) => controls(set.sides[side], side)).join("") : controls(set)}</article>`;
+function renderSet(set, index) {
+  const controls = (part, side = "") => `<div class="side-row">${side ? `<div class="side-heading"><strong>${sideLabel(side)}</strong><div class="side-utilities"><button class="copy-side" data-copy-side="${index}" data-side="${side}" aria-label="Copiar valores de ${sideLabel(side)} al otro lado" title="Copiar al otro lado">${icon("copy")}</button><button class="side-check" data-toggle-set="${index}" data-side="${side}" aria-label="${part.completed ? "Desmarcar" : "Completar"} ${sideLabel(side)} serie ${index + 1}" aria-pressed="${part.completed}">${part.completed ? icon("check") : ""}</button></div></div>` : ""}<div class="set-controls"><div><small>PESO · LB</small><button class="weight-value" role="spinbutton" aria-valuemin="0" aria-valuenow="${part.weight}" aria-valuetext="${part.weight} libras" aria-describedby="weight-help" data-edit-weight="${index}" data-side="${side}" aria-label="Editar peso ${side ? sideLabel(side) : ""} serie ${index + 1}"><span class="weight-neighbor" data-weight-offset="-2" aria-hidden="true">${part.weight >= 5 ? formatNumber(part.weight - 5) : ""}</span><span class="weight-neighbor" data-weight-offset="-1" data-weight-previous aria-hidden="true">${part.weight >= 2.5 ? formatNumber(part.weight - 2.5) : ""}</span><span data-weight-offset="0" data-weight-number>${formatNumber(part.weight)}</span><span class="weight-neighbor" data-weight-offset="1" data-weight-next aria-hidden="true">${formatNumber(part.weight + 2.5)}</span><span class="weight-neighbor" data-weight-offset="2" aria-hidden="true">${formatNumber(part.weight + 5)}</span></button></div><div><small>REPETICIONES</small><button class="reps-value" role="spinbutton" aria-valuemin="0" aria-valuemax="999" aria-valuenow="${part.reps}" aria-valuetext="${part.reps} repeticiones" aria-describedby="weight-help" data-edit-reps="${index}" data-side="${side}" aria-label="Editar repeticiones ${side ? sideLabel(side) : ""} serie ${index + 1}"><span data-reps-offset="-2" aria-hidden="true">${part.reps >= 2 ? part.reps - 2 : ""}</span><span data-reps-offset="-1" aria-hidden="true">${part.reps >= 1 ? part.reps - 1 : ""}</span><span data-reps-offset="0">${part.reps}</span><span data-reps-offset="1" aria-hidden="true">${part.reps < 999 ? part.reps + 1 : ""}</span><span data-reps-offset="2" aria-hidden="true">${part.reps < 998 ? part.reps + 2 : ""}</span></button></div></div></div>`;
+  const completed = parts(set).every((part) => part.completed);
+  const partial = !completed && parts(set).some((part) => part.completed);
+  return `<article class="set-card ${completed ? "done" : partial ? "partial" : ""} ${set.sides ? "unilateral" : ""}"><span class="set-number" aria-label="Serie ${index + 1}">${index + 1}</span><div class="set-body">${set.sides ? SIDES.map((side) => controls(set.sides[side], side)).join("") : controls(set)}</div><button class="set-check" data-toggle-set="${index}" aria-label="${completed ? "Desmarcar" : "Completar"} serie ${index + 1}${set.sides ? " en ambos lados" : ""}" aria-pressed="${completed}">${icon("check")}</button></article>`;
 }
 function sessionControls() {
   return `<div class="session-tools"><button data-action="add-exercises">${icon("plus")} Añadir ejercicio</button><button data-action="manage-session">${icon("edit")} Editar</button><button data-action="finish-session">Finalizar</button></div>`;
@@ -186,7 +188,7 @@ function startSession() {
   const selected = selectedExercises();
   if (!selected.length) return;
   const startedAt = new Date().toISOString();
-  state.session = { id: uid(), startedAt, clockStartedAt: startedAt, categoryTags: uniqueCategories(selected), trackingMode: storage.getSettings().trackingMode, exerciseIndex: 0, exercises: selected.map(newExerciseDraft) };
+  state.session = { id: uid(), startedAt, clockStartedAt: startedAt, categoryTags: uniqueCategories(selected), trackingMode: "set", exerciseIndex: 0, exercises: selected.map(newExerciseDraft) };
   state.exerciseIndex = 0;
   state.view = "exercise";
   persistSession();
@@ -231,7 +233,7 @@ function renderBuilder() {
   const rows = (items) => items.map((exercise) => {
     const isSelected = state.builderSelection.includes(exercise.id);
     const image = EXERCISE_IMAGES[exercise.id];
-    return `<article class="catalog-item ${isSelected ? 'selected' : ''}" data-catalog-id="${escapeHtml(exercise.id)}" ${matchesExercise(exercise, state.builderQuery) ? '' : 'hidden'}><button class="catalog-select" data-select-exercise="${escapeHtml(exercise.id)}" aria-pressed="${isSelected}"><span class="catalog-thumbnail">${image ? `<img src="${image}" alt="" loading="lazy">` : escapeHtml((MUSCLE_GROUPS[exercise.muscleGroup] || exercise.muscleGroup).slice(0, 2).toUpperCase())}</span><span class="catalog-copy"><strong>${escapeHtml(exercise.name)}</strong><small>${escapeHtml(CATEGORY_LABELS[exercise.category])}</small></span><span class="selection-mark">${icon(isSelected ? 'check' : 'plus')}</span></button>${exercise.custom ? `<button class="catalog-archive" data-archive-exercise="${escapeHtml(exercise.id)}" aria-label="Archivar ${escapeHtml(exercise.name)}">${icon('close')}</button>` : ''}</article>`;
+    return `<article class="catalog-item ${image ? 'illustrated' : ''} ${isSelected ? 'selected' : ''}" data-catalog-id="${escapeHtml(exercise.id)}" ${matchesExercise(exercise, state.builderQuery) ? '' : 'hidden'}><button class="catalog-select" data-select-exercise="${escapeHtml(exercise.id)}" aria-pressed="${isSelected}"><span class="catalog-thumbnail">${image ? `<img src="${image}" alt="" loading="lazy">` : escapeHtml((MUSCLE_GROUPS[exercise.muscleGroup] || exercise.muscleGroup).slice(0, 2).toUpperCase())}</span><span class="catalog-copy"><strong>${escapeHtml(exercise.name)}</strong><small>${escapeHtml(CATEGORY_LABELS[exercise.category])}</small></span><span class="selection-mark">${icon(isSelected ? 'check' : 'plus')}</span></button>${exercise.custom ? `<button class="catalog-archive" data-archive-exercise="${escapeHtml(exercise.id)}" aria-label="Archivar ${escapeHtml(exercise.name)}">${icon('close')}</button>` : ''}</article>`;
   }).join('');
   renderShell(`<section class="screen builder-screen"><header class="detail-header"><button class="icon-button" data-action="cancel-builder" aria-label="Volver">${icon('left')}</button><span>${state.adding ? 'AÑADIR EJERCICIOS' : 'NUEVO ENTRENAMIENTO'}</span></header><div class="builder-heading"><h1>Elige tus ejercicios</h1><p class="section-description">Busca un nombre o explora por grupo muscular.</p></div><label class="search-label">Buscar ejercicio<input id="exercise-search" type="search" placeholder="Nombre en español o inglés" value="${escapeHtml(state.builderQuery)}" autocomplete="off"></label><button class="create-shortcut" data-action="create-custom">${icon('plus')} Crear ejercicio</button>
   ${selected.length ? `<details class="selection-preview" open><summary>Tu selección <span>${selected.length} ejercicios</span>${icon('down')}</summary>${selected.map((exercise, index) => `<div class="selected-row"><span>${index + 1}</span><strong>${escapeHtml(exercise.name)}</strong><button data-move-exercise="${index}" data-direction="-1" ${index === 0 ? 'disabled' : ''} aria-label="Subir ${escapeHtml(exercise.name)}">${icon('up')}</button><button data-move-exercise="${index}" data-direction="1" ${index === selected.length - 1 ? 'disabled' : ''} aria-label="Bajar ${escapeHtml(exercise.name)}">${icon('down')}</button><button data-remove-exercise="${escapeHtml(exercise.id)}" aria-label="Quitar ${escapeHtml(exercise.name)}">${icon('close')}</button></div>`).join('')}</details>` : ''}
@@ -249,9 +251,9 @@ function renderExercise() {
   const current = draft();
   if (!current) return renderEmptySession();
   const previous = storage.getLastExerciseEntry(current.exerciseId, current.exercise, state.session.id);
-  const setMode = state.session.trackingMode === "set";
+  const setMode = true;
   const completed = current.sets.filter((set) => set.completed).length;
-  const setRows = current.sets.map((set, index) => renderSet(set, index, setMode)).join("");
+  const setRows = current.sets.map((set, index) => renderSet(set, index)).join("");
   renderShell(`<section class="screen exercise-screen"><header class="exercise-header"><button class="icon-button" data-action="leave-session" aria-label="Volver al inicio">${icon("left")}</button><div class="progress-copy"><span>${categoryLabel(uniqueCategories(state.session.exercises))}</span><strong>${state.exerciseIndex + 1} de ${state.session.exercises.length}</strong></div><div class="workout-clock"><small>${inputDate(state.session.startedAt) === todayInputDate() ? "SESIÓN" : formatDate(state.session.startedAt)}</small>${timer(state.session.clockStartedAt || state.session.startedAt)}</div><div class="progress-track"><i style="width:${((state.exerciseIndex + 1) / state.session.exercises.length) * 100}%"></i></div></header><div class="exercise-jump" aria-label="Ejercicios">${state.session.exercises.map((exercise, index) => `<button data-jump="${index}" class="${index === state.exerciseIndex ? "active" : ""} ${exercise.status}"><span>${index + 1}</span><small>${escapeHtml(exercise.exercise)}</small></button>`).join("")}</div><div class="exercise-title"><p class="eyebrow">${current.status === "skipped" ? "EJERCICIO OMITIDO" : `${escapeHtml(MUSCLE_GROUPS[current.muscleGroup] || current.muscleGroup)} · ${escapeHtml(CATEGORY_LABELS[current.category])}`}</p><h1>${escapeHtml(current.exercise)}</h1></div>${sessionControls()}${renderPrevious(previous)}<section class="control-section sets-section"><div class="section-heading"><h2>Series</h2><label class="side-option"><input type="checkbox" aria-label="Registrar por lado" data-action="toggle-unilateral" ${current.unilateral ? "checked" : ""}> Por lado</label><span>${setMode ? `${completed}/${current.sets.length} HECHAS` : `${current.sets.length} TOTAL`}</span></div><p class="weight-help" id="weight-help">Desliza el peso para ajustar · Toca para escribir</p><div class="sets-list">${setRows}</div><div class="set-actions"><button data-action="remove-set" ${current.sets.length <= 1 ? "disabled" : ""}>${icon("minus")} Eliminar última</button><button data-action="add-set">${icon("plus")} Añadir serie</button></div><button class="copy-weight" data-action="copy-first-weight" ${current.sets.length <= 1 ? "disabled" : ""}>Copiar peso de la primera serie</button></section><div class="exercise-secondary-actions"><button data-action="previous" ${state.exerciseIndex === 0 ? "disabled" : ""}>${icon("left")} Anterior</button><button data-action="skip">${current.status === "skipped" ? "Recuperar" : "Omitir"}</button><button data-action="next" ${state.exerciseIndex === state.session.exercises.length - 1 ? "disabled" : ""}>Siguiente ${icon("right")}</button></div><footer class="sticky-action"><button class="primary-button" data-action="save">${current.entryId ? "Actualizar ejercicio" : "Registrar ejercicio"}<span>${icon("right")}</span></button></footer></section>`);
   const help = app.querySelector("#weight-help");
   if (help) help.textContent = "Desliza peso o repeticiones · Toca para escribir";
@@ -260,12 +262,12 @@ function renderExercise() {
 function saveExercise() {
   const current = draft();
   const now = new Date();
-  const sets = current.sets.map((set) => state.session.trackingMode === "exercise" ? finishSet(set) : structuredClone(set));
+  const sets = current.sets.map((set) => structuredClone(set));
   if (!sets.some((set) => parts(set).some((part) => part.completed))) { showToast("Marca al menos una serie o lado"); return; }
   const previousEntry = current.entryId ? storage.getEntries().find((entry) => entry.id === current.entryId) : null;
   const recordedAt = previousEntry?.recordedAt || dateTimeOnWorkoutDate(now, state.session.startedAt);
   const recordedDate = new Date(recordedAt);
-  const entry = { id: current.entryId || uid(), sessionId: state.session.id, recordedAt, date: recordedDate.toLocaleDateString("es-CO"), time: recordedDate.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }), exerciseId: current.exerciseId, exercise: current.exercise, muscleGroup: current.muscleGroup, category: current.category, unilateral: current.unilateral, sets, trackingMode: state.session.trackingMode };
+  const entry = { id: current.entryId || uid(), sessionId: state.session.id, recordedAt, date: recordedDate.toLocaleDateString("es-CO"), time: recordedDate.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }), exerciseId: current.exerciseId, exercise: current.exercise, muscleGroup: current.muscleGroup, category: current.category, unilateral: current.unilateral, sets, trackingMode: "set" };
   storage.saveWorkoutEntry(entry);
   current.sets = sets;
   current.entryId = entry.id;
@@ -346,8 +348,7 @@ function renderHistoryDetail() {
 }
 
 function renderSettings() {
-  const settings = storage.getSettings();
-  renderShell(`<section class="screen page-screen settings-screen">${brand()}${settingsDashboard(settings, getHistorySessions(), storage.getExerciseCatalog().filter((exercise) => exercise.custom).length)}</section>`, "settings");
+  renderShell(`<section class="screen page-screen settings-screen">${brand()}${settingsDashboard(getHistorySessions(), storage.getExerciseCatalog().filter((exercise) => exercise.custom).length)}</section>`, "settings");
 }
 
 function renderProgress() {
@@ -489,10 +490,13 @@ app.addEventListener("click", (event) => {
   if (repButton) { const set = editablePart(Number(repButton.dataset.setReps), repButton.dataset.side); set.reps = Math.max(0, set.reps + Number(repButton.dataset.delta)); markEdited(); persistSession(); return render(); }
   const setButton = event.target.closest("[data-toggle-set]");
   if (setButton) {
-    const set = editablePart(Number(setButton.dataset.toggleSet), setButton.dataset.side);
-    set.completed = !set.completed;
+    const set = draft().sets[Number(setButton.dataset.toggleSet)];
+    const side = setButton.dataset.side;
+    const wasCompleted = side ? set.sides[side].completed : parts(set).every((part) => part.completed);
+    if (side) set.sides[side].completed = !wasCompleted;
+    else parts(set).forEach((part) => { part.completed = !wasCompleted; });
     markEdited(); persistSession();
-    if (set.completed && state.session.trackingMode === "set" && draft().sets.every((item) => parts(item).every((part) => part.completed && part.reps > 0))) return saveExercise();
+    if (!wasCompleted && draft().sets.every((item) => parts(item).every((part) => part.completed && part.reps > 0))) return saveExercise();
     return render();
   }
   const jumpButton = event.target.closest("[data-jump]");
@@ -501,8 +505,6 @@ app.addEventListener("click", (event) => {
   if (editWeight) { const set = editablePart(Number(editWeight.dataset.editWeight), editWeight.dataset.side); openWeightPicker(set.weight, (weight) => { set.weight = weight; markEdited(); persistSession(); render(); }); return; }
   const editReps = event.target.closest("[data-edit-reps]");
   if (editReps) { const set = editablePart(Number(editReps.dataset.editReps), editReps.dataset.side); openRepsPicker(set.reps, (reps) => { set.reps = reps; markEdited(); persistSession(); render(); }); return; }
-  const modeButton = event.target.closest("[data-mode]");
-  if (modeButton) { storage.saveSettings({ trackingMode: modeButton.dataset.mode }); showToast("Preferencia guardada"); return render(); }
   const action = event.target.closest("[data-action]")?.dataset.action;
   if (action === "progress-info") openProgressInfo();
   if (action === "progress-picker") openProgressPicker();
