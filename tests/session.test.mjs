@@ -90,11 +90,12 @@ test('the right-hand set check completes both sides of a unilateral set', () => 
   assert.equal(storage.getActiveSession().exercises[0].sets[0].completed, false);
 });
 
-test('the catalog shows the Pec Deck illustration and the added forearm group', () => {
+test('the catalog keeps image slots for illustrated and pending exercises', () => {
   const { run, app } = setup();
   run('state.view = "builder"; render();');
   assert.match(app.innerHTML, /assets\/exercises\/pec-deck\.png/);
   assert.match(app.innerHTML, /catalog-item illustrated/);
+  assert.match(app.innerHTML, /catalog-thumbnail image-pending">BP<\/span>/);
   assert.match(app.innerHTML, /Antebrazos/);
   assert.match(app.innerHTML, /Reverse Wrist Curl/);
 });

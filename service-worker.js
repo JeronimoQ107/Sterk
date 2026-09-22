@@ -1,4 +1,4 @@
-const CACHE_NAME = "sterk-v1-7-2";
+const CACHE_NAME = "sterk-v1-7-3";
 const APP_SHELL = [
   "./",
   "./index.html",
