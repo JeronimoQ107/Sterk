@@ -1,87 +1,8 @@
 # Sterk
 
-PWA personal y mobile-first para registrar entrenamientos desde un iPhone con pocos toques.
+PWA personal para registrar entrenamientos desde un iPhone con pocos toques. Versión actual: **1.7.3**. HTML, CSS y JavaScript vanilla, con datos locales en el navegador.
 
-## Ejecutar localmente
-
-Sirve la carpeta por HTTP para habilitar módulos y service worker:
-
-```powershell
-python -m http.server 8080
-```
-
-Abre `http://localhost:8080`. En iPhone, una publicación HTTPS permitirá instalar Sterk mediante **Safari → Compartir → Añadir a pantalla de inicio**.
-
-## Funcionalidades V1.6
-
-- Inicio con actividad de los últimos siete días y acceso al último entrenamiento
-- sección Progreso con periodos de 30 días, 90 días o todo el historial
-- entrenamientos, series completadas y días activos del periodo
-- análisis independiente para registros bilaterales, lado izquierdo y lado derecho
-- rendimiento estimado combinando peso y repeticiones, volumen y repeticiones totales por sesión
-- gráfica seleccionable por rendimiento, volumen o repeticiones, récords del periodo y series por grupo muscular
-- ayuda de métricas concentrada en un diálogo para mantener limpia la pantalla principal
-- tabla de datos y estados explicativos cuando faltan registros
-- Ajustes agrupados por modo de registro, biblioteca, respaldos y borrado
-- catálogo compacto por grupos desplegables y selección visible antes del listado
-
-- 57 ejercicios predeterminados y búsqueda por nombres y alias en español e inglés
-- añadir, crear, quitar y reordenar ejercicios durante una sesión activa
-- finalización explícita: registrar el último ejercicio deja abierta la sesión
-- registro opcional por lado con peso, repeticiones y marcado independientes
-- peso compacto con deslizamiento vertical directo en pasos de 2,5 lb y entrada decimal con un toque
-- respaldo JSON V4 con importación compatible con V1, V2 y V3
-
-- constructor de sesiones con selección y orden libre de ejercicios
-- catálogo filtrable por grupo muscular
-- clasificación automática Push, Pull, Legs, combinada o Full Body
-- creación y archivo de ejercicios personalizados
-- modos de registro por ejercicio y por serie
-- peso y repeticiones independientes por serie con controles táctiles
-- controles táctiles sin zoom accidental por doble toque
-- referencia compacta y expandible del entrenamiento anterior
-- duración automática de la sesión desde el inicio hasta su finalización
-- recuperación automática de una sesión activa
-- navegación anterior, siguiente y salto directo entre ejercicios
-- omisión y recuperación de ejercicios
-- historial agrupado por entrenamiento con detalle de ejercicios y series
-- fecha editable durante el registro y desde el historial para cargar entrenamientos pasados
-- resumen de ejercicios, series, reps, volumen, duración aproximada y omitidos
-- comparación de volumen con la sesión anterior
-- exportación e importación JSON
-- borrado completo con confirmación
-- migración automática del historial de la V0
-- PWA con recursos offline e iconos para iPhone
-
-## Estructura
-
-```text
-index.html              Entrada y metadatos PWA
-manifest.json           Instalación de Sterk
-service-worker.js       Caché offline
-icons/                  Iconos SVG y PNG
-src/data.js             Catálogo, grupos musculares y categorías
-src/storage.js          Persistencia y respaldos
-src/sets.js             Series bilaterales/unilaterales y cálculo de totales
-src/weight-picker.js    Entrada manual de peso
-src/progress.js         Cálculos de actividad y series de progreso
-src/dashboard.js        Vistas de Inicio, Ajustes y Progreso
-src/app.js              Vistas e interacciones
-src/styles.css          Diseño mobile-first
-docs/project-context.md Fuente principal de contexto
-docs/architecture.md    Arquitectura y decisiones
-```
-
-## Limitaciones
-
-- los datos continúan ligados al navegador y dispositivo actual
-- no hay sincronización, cuentas ni recuperación remota
-- la duración de la sesión se registra automáticamente
-- el rendimiento es una estimación comparativa, no una medición real de 1RM
-- todavía no se registra esfuerzo percibido, RIR ni velocidad de ejecución
-- la publicación HTTPS aún debe configurarse
-
-## Desarrollo y pruebas
+## Ejecutar y comprobar
 
 Con Node.js instalado, sin instalar dependencias:
 
@@ -90,12 +11,66 @@ npm start
 npm test
 ```
 
-El servidor de desarrollo abre `http://127.0.0.1:8083`. Las pruebas usan almacenamiento en memoria y no modifican los datos del navegador.
+Abre `http://127.0.0.1:8083`. Las pruebas usan almacenamiento y entorno simulados; no modifican los datos del navegador ni sustituyen la revisión en un iPhone físico. Para instalar la PWA en iPhone, abrir una publicación HTTPS y usar **Safari → Compartir → Añadir a pantalla de inicio**.
 
-En el modo por serie, solo los lados o series marcados contribuyen al volumen y a las repeticiones. Una pareja izquierda/derecha cuenta como una serie cuando se registra al menos un lado. Los lados pendientes se conservan y aparecen identificados en el historial.
+## Funciones actuales
 
-Antes de finalizar, registra, omite o quita los ejercicios pendientes. Quitar un ejercicio elimina únicamente sus datos de la sesión en curso, con confirmación. Una sesión puede quedar vacía y recuperarse para añadir ejercicios después.
+- Inicio con acceso al último entrenamiento y resumen reciente.
+- Catálogo de 60 ejercicios, grupos desplegables, tarjetas en dos columnas y búsqueda por nombres y alias en español e inglés.
+- Selección y orden libre; añadir, crear, quitar o reordenar ejercicios durante una sesión.
+- Registro por serie con peso, repeticiones y marcado de completado. No hay selector de modo de registro en Ajustes.
+- Registro opcional por lado, con valores y marcado independientes para izquierda/derecha.
+- Controles táctiles de peso y repeticiones, entrada manual y referencia al entrenamiento anterior.
+- Navegación entre ejercicios, omisión y recuperación de una sesión activa.
+- Duración automática y finalización explícita del entrenamiento. Registrar el último ejercicio deja abierta la sesión.
+- Historial por entrenamiento, detalle de series y edición de fecha durante el registro o desde el historial.
+- Progreso por 30 días, 90 días o todo el historial; análisis bilateral o por lado; gráficas de rendimiento estimado, volumen y repeticiones.
+- Biblioteca de ejercicios personalizados, archivo de ejercicios y borrado de datos con confirmación.
+- Respaldo JSON V4, importación compatible con V1–V4 y migración del historial de V0.
+- Manifest, iconos y service worker con precaché de recursos para la PWA.
 
-## Próxima etapa
+Pec Deck es el único ejercicio con ilustración; los demás muestran iniciales. El detalle del historial permite ajustar la fecha y eliminar datos, pero aún no editar peso y repeticiones guardados.
 
-Probar la V1.6 en Safari de un iPhone físico. IndexedDB y sincronización siguen pendientes; Progreso usa el historial local actual. La publicación existente en GitHub Pages puede servir la PWA por HTTPS.
+## Estructura actual
+
+```text
+index.html                 Entrada y metadatos PWA
+manifest.json              Instalación de Sterk
+service-worker.js          Caché de recursos
+assets/exercises/          Ilustraciones del catálogo
+icons/                     Iconos de la aplicación
+src/data.js                Catálogo, grupos y categorías
+src/storage.js             Persistencia, migraciones y respaldos
+src/sets.js                Series, lados y totales
+src/progress.js            Cálculos de progreso
+src/dashboard.js           Inicio, Ajustes y Progreso
+src/app.js                 Sesión, historial e interacciones
+src/weight-control.js      Control táctil de peso
+src/weight-picker.js       Entrada manual de peso
+src/reps-control.js        Control táctil de repeticiones
+src/reps-picker.js         Entrada manual de repeticiones
+src/icons.js               Iconos SVG de la interfaz
+src/styles.css             Diseño para móvil
+tests/                     Pruebas automatizadas
+scripts/serve.cjs          Servidor local
+AGENTS.md                  Instrucciones para Codex
+docs/                      Contexto, arquitectura y trabajo pendiente
+```
+
+## Contexto y flujo de desarrollo
+
+| Documento | Para qué sirve |
+| --- | --- |
+| [AGENTS.md](AGENTS.md) | Instrucciones comunes para los chats y agentes que trabajen en el proyecto. |
+| [Contexto](docs/project-context.md) | Visión, alcance y decisiones confirmadas. |
+| [Arquitectura](docs/architecture.md) | Módulos, datos, comportamiento y límites técnicos. |
+| [Roadmap](docs/roadmap.md) | Problemas detectados y propuestas, con estado y criterios de aceptación. |
+| [Flujo de trabajo](docs/development-workflow.md) | Cómo usar chats, worktrees, ramas e integración sin perder el contexto. |
+
+El proyecto mantiene su estructura actual. Usa worktrees por objetivos cuando haga falta aislamiento y conserva decisiones en documentos versionados para que los siguientes chats puedan recuperarlas.
+
+## Límites y próximos pasos
+
+Los datos dependen del navegador y dispositivo actuales; no hay cuentas, sincronización ni recuperación remota. El rendimiento calculado es una estimación comparativa. IndexedDB, Excel, RIR y temporizadores de descanso son opciones futuras, con alcance por definir.
+
+Antes de ampliar funciones, se recomienda mejorar la seguridad de las restauraciones, unificar algunas métricas y comprobar instalación, actualizaciones, accesibilidad y uso offline en Safari. Las incidencias y sus comprobaciones están en el [roadmap](docs/roadmap.md); documentarlas no significa que ya estén corregidas.

@@ -1,71 +1,90 @@
 # Arquitectura de Sterk
 
-## V1.6 actual
+> Implementación revisada: **1.7.3, 2026-10-08**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+
+## Implementación actual
 
 ```text
-PWA Sterk
-    ↓
-capa storage
-    ↓
-localStorage
+iPhone / navegador → PWA vanilla → capa storage → localStorage
 ```
 
-- `src/data.js`: ejercicios predeterminados, grupos musculares, categorías y compatibilidad con rutinas antiguas.
-- `src/app.js`: estado de interfaz, navegación y sesión.
-- `src/storage.js`: entradas, sesiones, ajustes y respaldos.
-- `src/sets.js`: normalización, copia y cálculo de series bilaterales y por lado.
-- `src/weight-picker.js`: diálogo compacto de entrada manual de peso.
-- `src/weight-control.js`: ajuste directo con arrastre vertical, rueda del mouse y teclado; persistencia por cada cambio sin reconstruir el control durante el gesto.
-- `src/icons.js`: iconos SVG compartidos, independientes de la fuente del dispositivo.
-- `src/progress.js`: filtros, actividad, rendimiento estimado, volumen, repeticiones, récords y distribución de series para cada ejercicio/lado.
-- `src/dashboard.js`: presentación de Inicio, Ajustes y Progreso, incluida gráfica SVG y tabla accesible.
-- `service-worker.js`: shell offline y actualización de recursos.
+La aplicación utiliza HTML/CSS y módulos ES de JavaScript, sin framework, backend ni dependencias npm. `npm start` sirve la carpeta por HTTP y `npm test` ejecuta las pruebas con el runner de Node.
 
-La UI consume métodos públicos de `storage`; no accede directamente a claves de `localStorage`.
+| Archivo o carpeta | Responsabilidad |
+|---|---|
+| `index.html`, `manifest.json`, `icons/` | Entrada, metadatos e instalación PWA. |
+| `src/app.js` | Estado de UI, navegación, constructor, sesión, historial e interacciones. |
+| `src/dashboard.js` | Vistas de Inicio, Ajustes y Progreso, gráfica SVG y tabla. |
+| `src/data.js` | 60 ejercicios, grupos, categorías, alias, imágenes y compatibilidad con rutinas antiguas. |
+| `src/storage.js` | Persistencia, normalización, migración, catálogo personalizado y respaldos. |
+| `src/sets.js` | Normalización y cálculos de series bilaterales o por lado. |
+| `src/progress.js` | Filtros y cálculos de actividad, rendimiento, volumen, repeticiones y récords. |
+| `src/weight-control.js`, `src/reps-control.js` | Ajuste por arrastre, rueda y teclado, conservando el control durante el gesto. |
+| `src/weight-picker.js`, `src/reps-picker.js` | Diálogos de entrada manual con validación. |
+| `src/icons.js`, `src/styles.css` | Iconos SVG y presentación mobile-first. |
+| `assets/exercises/` | Una imagen disponible: `pec-deck.png`. |
+| `service-worker.js` | Caché del shell y recursos offline. |
+| `tests/`, `scripts/` | Pruebas con almacenamiento/DOM simulados y servidor local. |
 
-## Datos
+La UI consume la API pública de `storage`; no accede directamente a las claves de `localStorage`. Los cálculos de series y progreso están separados, pero `app.js` todavía reúne estado, vistas e interacciones. La organización en carpetas adicionales es una refactorización futura.
 
-Una entrada contiene identificadores de sesión, entrada y ejercicio, grupo muscular, categoría, series con peso y repeticiones independientes, volumen y modo de registro.
+## Datos y compatibilidad
 
-Una serie bilateral conserva `{ weight, reps, completed }`. Una serie unilateral contiene `{ sides: { left, right }, completed }`, donde cada lado tiene sus propios valores y estado. El estado agregado indica que ambos lados están completos. El volumen y las repeticiones suman únicamente las partes completadas; una pareja cuenta una sola vez como serie si al menos un lado está completado.
+`storage` conserva cinco conjuntos bajo claves `sterk:v1:*`: entradas, sesión activa, sesiones finalizadas, ajustes y ejercicios personalizados. Lee el historial `gym-tracker:v0:workout-entries` para migrarlo cuando todavía no existen entradas V1.
 
-El formato de respaldo pasa a V4. Se siguen aceptando V1–V3 y no se atribuye un lado a registros antiguos. Las claves de almacenamiento permanecen iguales. Las referencias anteriores excluyen los registros de la sesión activa.
+Una entrada identifica sesión, ejercicio, grupo muscular y categoría, e incluye series y totales derivados. Se conservan campos antiguos como `weight`, `reps`, `completedSets` y `trackingMode` para compatibilidad. Las entradas actuales se guardan con `trackingMode: "set"`; el ajuste legado puede seguir indicando `"exercise"`, pero la UI siempre ofrece marcado por serie y ya no muestra un selector de modo.
 
-La sesión activa guarda cada borrador y su estado (`pending`, `registered` o `skipped`). Cualquier cambio de peso, reps, series, navegación o marcado se persiste inmediatamente, permitiendo recuperar el entrenamiento tras una interrupción.
+```js
+// Serie bilateral
+{ weight, reps, completed }
 
-Las sesiones se construyen seleccionando ejercicios del catálogo. La categoría prevista y final se deriva de sus etiquetas Push, Pull y Legs. Las sesiones finalizadas almacenan su resumen para comparar volumen con la sesión anterior de la misma categoría.
-
-Durante una sesión se pueden añadir ejercicios con el constructor, crear ejercicios personalizados y reordenar o quitar los existentes con un diálogo. Se mantienen el identificador de sesión y la hora inicial. La sesión puede quedar vacía y continuar siendo recuperable. Registrar u omitir el último pendiente ya no finaliza automáticamente. La finalización es explícita y exige resolver los ejercicios pendientes; las modificaciones a un ejercicio registrado lo devuelven al estado pendiente para evitar cerrar con un registro desactualizado.
-
-## Modos de registro
-
-- **Por ejercicio:** editar y guardar todas las series juntas.
-- **Por serie:** marcar series terminadas individualmente y guardar el ejercicio al finalizar.
-
-La sesión registra automáticamente el tiempo transcurrido entre su inicio y finalización.
-
-## PWA
-
-El manifiesto incluye iconos PNG de 192 y 512 px. iOS utiliza un icono PNG de 180 px. El service worker almacena el shell y elimina cachés anteriores al activarse.
-
-## Arquitectura futura — no implementada
-
-```text
-PWA Sterk → IndexedDB → sincronización opcional → base de datos remota
-                                      ↓
-                              exportación CSV/XLSX
+// Serie por lado
+{ sides: { left: { weight, reps, completed }, right: { weight, reps, completed } }, completed }
 ```
 
-La V1.6 continúa con `localStorage`, sin backend, autenticación, IndexedDB ni bases de datos externas. El análisis consume las sesiones del historial, que excluye la sesión activa. No requiere una migración de datos.
+En una serie por lado, el estado agregado `completed` indica que ambos lados están completos. Los totales de peso × repeticiones y repeticiones suman solo las partes marcadas. El conteo de `storage` considera una pareja como una serie si al menos un lado está marcado; no exige repeticiones positivas. Los registros antiguos siguen sin lado asignado.
 
-La fecha atribuida a un entrenamiento puede cambiarse durante una sesión o desde su detalle histórico. `clockStartedAt` conserva el inicio real del cronómetro mientras `startedAt` representa la fecha y hora histórica, evitando duraciones infladas al registrar una sesión pasada. El cambio se propaga a todas las entradas de la sesión.
+El peso se presenta en libras, con ajuste directo de 2,5 lb y entrada decimal manual. Las repeticiones tienen control equivalente en pasos de una unidad y entrada manual de enteros de 0 a 999. `EXERCISE_IMAGES` relaciona identificadores con imágenes opcionales sin cambiar los entrenamientos guardados; actualmente solo incluye Pec Deck.
 
-Progreso deriva de los datos existentes el rendimiento estimado, volumen, repeticiones, récords y series por grupo muscular. La gráfica permite alternar la métrica sin mezclar registros bilaterales con lados independientes. Las definiciones y fórmulas viven en un diálogo de ayuda para no ocupar la vista principal.
+## Ciclo de la sesión
+
+- La sesión activa contiene identificador, fechas, categorías, índice de navegación y borradores con estados `pending`, `registered` o `skipped`.
+- Los cambios de valores, series, marcado y navegación se guardan inmediatamente. Si se edita un ejercicio registrado, vuelve a pendiente para exigir actualizar su entrada.
+- Se puede añadir, crear, quitar o reordenar ejercicios conservando el identificador y el cronómetro. Una sesión vacía sigue siendo recuperable.
+- Registrar un ejercicio exige al menos una serie o lado marcado. Al marcar la última parte, se registra automáticamente si todas las partes tienen repeticiones positivas; el entrenamiento permanece abierto.
+- La finalización es explícita y exige resolver los ejercicios pendientes. Guarda resumen y duración y compara volumen con la sesión anterior de la misma categoría, sin comprobar que coincidan ejercicios o series.
+- `clockStartedAt` conserva el inicio real del cronómetro; `startedAt` representa la fecha histórica. Cambiar la fecha modifica también las entradas asociadas y conserva la duración.
+
+El historial combina las sesiones finalizadas y registros antiguos sin sesión finalizada, excluyendo la sesión activa. La interfaz permite cambiar la fecha o eliminar un entrenamiento, pero no editar sus pesos, repeticiones ni series después de finalizarlo.
 
 ## Progreso
 
-Los periodos incluyen hoy y los 29/89 días de calendario anteriores, según la zona horaria del dispositivo. Los días activos se deduplican por fecha local. Solo las series con alguna parte completada y repeticiones positivas cuentan en las métricas de actividad.
+Los periodos de 30/90 días incluyen hoy y los 29/89 días de calendario anteriores, según la zona horaria del dispositivo. Los días activos se deduplican por fecha local. El resumen cuenta sesiones y días sin exigir repeticiones positivas; el conteo de series y las métricas por ejercicio usan partes marcadas con repeticiones mayores que cero.
 
-Cada observación conserva las métricas de una sesión: mejor serie por rendimiento estimado, carga máxima, repeticiones máximas, repeticiones totales, volumen y series completadas. El rendimiento usa Epley (`peso × (1 + repeticiones / 30)`), con el peso real como resultado para una repetición. Es una referencia comparativa, no una medición real de 1RM.
+Se genera una observación por sesión, ejercicio y tipo de registro: sin lado asignado, izquierdo o derecho. Conserva mejor serie por rendimiento, carga máxima, repeticiones máximas, volumen, repeticiones totales y series. El rendimiento usa Epley (`peso × (1 + repeticiones / 30)`), con el peso real para una repetición: es una estimación comparativa.
 
-Los registros sin lado, izquierdos y derechos se consultan separadamente. La comparación principal usa las dos últimas observaciones del periodo y la gráfica alterna rendimiento, volumen y repeticiones. Una sola observación se presenta sin tendencia. Los récords respetan el filtro temporal.
+La gráfica alterna rendimiento, volumen o repeticiones; compara las dos últimas observaciones del periodo y los récords respetan ese filtro. Una sola observación no muestra tendencia. Las fórmulas y límites se explican en un diálogo de ayuda.
+
+## Respaldos y PWA
+
+La exportación JSON V4 incluye entradas, sesiones finalizadas, sesión activa, ajustes y ejercicios personalizados. Se aceptan versiones V1–V4 y se normalizan sus datos. Importar reemplaza los datos locales mediante escrituras sucesivas, sin transacción ni rollback; la validación actual no verifica todo el contenido antes de escribir.
+
+El manifiesto incluye iconos PNG de 192/512 px e iOS usa uno de 180 px. El service worker precarga el shell, incluidos los controles de repeticiones y la imagen Pec Deck; elimina cachés anteriores al activarse. Su versión actual es `sterk-v1-7-3`. Cambiar recursos del shell requiere revisar la lista y la versión de caché.
+
+## Limitaciones verificadas y pendientes
+
+Estos comportamientos **siguen presentes** y se rastrean en [roadmap.md](roadmap.md):
+
+- Una serie marcada con cero repeticiones puede contar en el historial/resumen de `storage` y quedar excluida de Progreso.
+- En Progreso, el porcentaje comparativo sigue la métrica seleccionada, mientras la tarjeta mantiene el título y valor de “Rendimiento estimado”.
+- Una importación mal formada puede escribir parte de los datos antes de fallar. Otras operaciones que modifican varias claves tampoco son atómicas.
+- Cuando falla una petición GET, el service worker devuelve `index.html` como fallback incluso para recursos que requieren otro tipo de contenido, como JavaScript.
+- Las pruebas automatizadas simulan almacenamiento y DOM; no sustituyen validar Safari, instalación, modo avión, reanudación, actualización y accesibilidad en un iPhone físico.
+
+## Evolución propuesta — no implementada
+
+```text
+PWA → IndexedDB con migración segura → sincronización opcional → base remota
+```
+
+IndexedDB, backend, autenticación, sincronización y exportación CSV/XLSX siguen pendientes de decisión e implementación. La intención es conservar las reglas de dominio y la API de persistencia al sustituir `localStorage`. Las propuestas de refactorización o nuevas funcionalidades se priorizan en el roadmap antes de desarrollarlas.

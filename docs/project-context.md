@@ -1,107 +1,63 @@
 # Sterk — contexto del proyecto
 
-> Fuente principal para decisiones de producto, UX y arquitectura. Actualizar cuando cambie el alcance o se tome una decisión importante.
+> Contexto de producto y decisiones duraderas. Estado revisado: **1.7.3, 2026-10-08**. Actualizar cuando cambien el alcance o las decisiones; los pendientes viven en [roadmap.md](roadmap.md).
 
-## Visión
+## Visión y prioridades
 
-Sterk es una aplicación personal para registrar el progreso en el gimnasio desde un iPhone con la menor fricción posible. Se distribuye como PWA instalable mediante **Añadir a pantalla de inicio**.
+Sterk es una aplicación personal para registrar el progreso en el gimnasio desde un iPhone con la menor fricción posible. Es una PWA instalable mediante **Añadir a pantalla de inicio**.
 
-## Prioridades
+1. Minimizar toques y escritura y facilitar el uso con una mano.
+2. Mostrar el entrenamiento anterior y registrar peso y repeticiones por serie.
+3. Recuperar una sesión interrumpida y conservar el historial y sus respaldos.
+4. Mantener una arquitectura local-first; añadir sincronización solo cuando aporte valor.
+5. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
+6. Considerar Excel como exportación opcional para análisis, sin convertirlo en base de datos.
 
-1. Minimizar toques y escritura.
-2. Funcionar cómodamente con una mano.
-3. Mostrar el rendimiento anterior.
-4. Registrar peso y repeticiones individuales por serie.
-5. Recuperar una sesión interrumpida.
-6. Mantener historial y copias de seguridad bajo control del usuario.
-7. Mantener una arquitectura local-first y añadir sincronización solo cuando aporte valor.
-8. Usar Excel únicamente como exportación opcional para análisis.
-9. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
+## Estado implementado — 1.7.3
 
-## Decisiones confirmadas
+- HTML, CSS y JavaScript vanilla, sin frameworks ni backend. Persistencia mediante una capa `storage` sobre `localStorage`.
+- Catálogo de **60 ejercicios predeterminados**, búsqueda por nombres y alias en español e inglés sin distinguir acentos, grupos musculares y categorías Push/Pull/Legs. Se pueden crear y archivar ejercicios personalizados.
+- Una ilustración disponible: **Pec Deck**. Los demás ejercicios muestran iniciales; la biblioteca completa de imágenes está pendiente.
+- Sesiones construidas mediante selección y orden libre. Durante la sesión se pueden añadir, crear, quitar y reordenar ejercicios, navegar entre ellos y omitir o recuperar pendientes.
+- **Registro por serie obligatorio**: marcado independiente y peso/repeticiones por serie. El selector de modo se eliminó; los campos históricos `trackingMode` se conservan por compatibilidad, pero no permiten desactivar los checks.
+- Registro opcional por lado, con valores y marcado independientes para izquierda/derecha. Copiar valores no marca automáticamente el lado de destino. Los registros anteriores permanecen sin lado asignado.
+- Controles de peso y repeticiones por deslizamiento y entrada manual. El peso utiliza libras y pasos de 2,5 lb; las repeticiones admiten enteros de 0 a 999.
+- Referencia al entrenamiento anterior, persistencia de la sesión activa y duración automática. Completar todas las series válidas registra el ejercicio; el entrenamiento se termina mediante una acción explícita.
+- Historial por entrenamiento con detalles, cambio de fecha y eliminación. **Todavía no permite editar peso, repeticiones o series de una sesión finalizada**.
+- Inicio con acceso al último entrenamiento; Progreso con periodos de 30/90 días o todo el historial, actividad, rendimiento estimado, volumen, repeticiones, récords del periodo y series por grupo muscular.
+- Respaldo JSON **V4**, importación compatible con V1–V4 y migración del historial V0. Los defectos de validación y escrituras parciales siguen pendientes.
+- PWA con manifiesto, iconos y service worker para recursos offline. La validación completa en un iPhone físico sigue pendiente.
 
-- Nombre del producto y proyecto: **Sterk**.
-- Tecnología: HTML, CSS y JavaScript vanilla, sin frameworks.
-- Aplicación mobile-first y PWA.
-- Persistencia local abstraída mediante `localStorage` durante V0 y V1.
-- Dos modos disponibles: registro conjunto por ejercicio y marcado libre por serie.
-- La duración total de la sesión se mide automáticamente entre inicio y finalización.
-- La sesión activa debe persistir al cerrar, recargar o bloquear el teléfono.
-- La navegación durante la rutina permite avanzar, retroceder, saltar directamente y omitir ejercicios.
-- Los datos pueden exportarse e importarse mediante respaldo JSON.
-- Cada sesión se construye seleccionando y ordenando ejercicios libremente.
-- Cada ejercicio declara un grupo muscular y una categoría Push, Pull o Legs.
-- La categoría final de la sesión se deriva de los ejercicios registrados.
+## Reglas de producto
 
-## Catálogo inicial
-
-- **Push:** Bench Press, Incline Press, Shoulder Press, Triceps Extension.
-- **Pull:** Lat Pulldown, Seated Row, Biceps Curl, Rear Delt Fly.
-- **Legs:** Power Squat, Leg Extension, Leg Curl, Calf Raise.
-- El usuario puede combinar, ordenar y añadir ejercicios personalizados.
-
-## V1.3 — ajustes tras uso real
-
-- Catálogo ampliado a 57 ejercicios, incluyendo Bayesian Curl, con búsqueda por nombre y alias en español e inglés sin distinguir acentos.
-- Entrenamientos editables durante la sesión: añadir, crear, quitar y reordenar ejercicios conservando tiempo y registros.
-- Finalización explícita para poder iniciar con un solo ejercicio y decidir los siguientes durante el entrenamiento.
-- Registro opcional por lado: izquierda/derecha con peso, repeticiones y marcado independientes; copia de valores entre lados sin marcar automáticamente el destino.
-- Control compacto de peso que permite deslizar directamente en pasos de 2,5 lb o tocar una vez para escribir decimales.
-- Historial y respaldos preservan los lados; los datos antiguos permanecen sin lado asignado.
-- Las pruebas automatizadas cubren persistencia, migraciones, totales, edición, recuperación y cierre explícito. La interacción táctil final debe revisarse en un iPhone físico.
-
-## Arquitectura
-
-### V1.4 — actividad y primer análisis
-
-- Por petición del usuario, se adelanta Progreso sin esperar a IndexedDB.
-- Inicio muestra actividad reciente y el último entrenamiento; Ajustes organiza preferencias y datos en tarjetas.
-- Progreso incluye métricas de actividad, filtros temporales y carga máxima por sesión, con repeticiones y selección de lado.
-- El catálogo se explora mediante grupos desplegables; la búsqueda abre coincidencias y la selección queda antes del listado.
-- El historial local sigue siendo la fuente de datos. No se mezcla la sesión activa con el análisis.
-
-### V1.6 — progreso multidimensional
-
-- El rendimiento por ejercicio combina peso y repeticiones de la misma serie mediante una estimación comparable entre sesiones.
-- La gráfica alterna rendimiento, volumen y repeticiones; también se muestran récords del periodo y series por grupo muscular.
-- La pantalla principal conserva solo indicadores accionables. Fórmulas, límites e interpretación se consultan mediante el botón de información.
-
-Actual:
-
-```text
-iPhone → PWA Sterk → capa storage → localStorage
-```
-
-Futura, no implementada:
-
-```text
-iPhone → PWA Sterk → IndexedDB → sincronización opcional → base de datos remota
-```
-
-Excel se conserva como posible formato de exportación, no como base de datos. La interfaz, el dominio y la persistencia deben permanecer separados para poder sustituir `localStorage` sin reescribir la UI.
+- La categoría prevista se deriva de la selección; la categoría final se deriva de los ejercicios registrados.
+- La sesión activa debe conservarse al cerrar, recargar o bloquear el teléfono. El historial usado por Progreso excluye esa sesión.
+- Registrar u omitir el último ejercicio no cierra el entrenamiento. Para finalizar hay que registrar, omitir o quitar los ejercicios pendientes.
+- La fecha histórica y el comienzo real del cronómetro son conceptos distintos: cambiar la fecha no debe inflar la duración.
+- El rendimiento es una estimación comparativa basada en peso y repeticiones, no una medición real de 1RM.
+- Las discrepancias entre métricas y los riesgos de persistencia están documentados en [architecture.md](architecture.md) y [roadmap.md](roadmap.md). No se consideran resueltos por esta actualización documental.
 
 ## Fuera de alcance actual
 
-- backend y autenticación
-- Cloudflare Worker
-- Microsoft Graph
-- Excel y OneDrive
-- bases de datos externas
-- temporizadores manuales de ejercicios o descansos
-- RIR/RPE y velocidad de ejecución
-- medición real de 1RM y analítica predictiva avanzada
+Backend, autenticación, sincronización remota, Cloudflare Worker, Microsoft Graph, OneDrive, temporizadores manuales de ejercicio o descanso, RIR/RPE, velocidad de ejecución y analítica predictiva avanzada permanecen pospuestos. IndexedDB y la exportación CSV/XLSX son posibilidades futuras, no componentes implementados.
+
+Las propuestas del análisis de la aplicación —plantillas, edición del historial, unidades y mejores comparaciones, entre otras— **no constituyen aprobación para implementarlas**. Su prioridad y estado se consultan en el roadmap.
+
+## Organización del desarrollo
+
+El contexto compartido reside en archivos versionados: `AGENTS.md` orienta el trabajo, este documento conserva producto y decisiones, `architecture.md` describe la implementación y `roadmap.md` concentra pendientes. El flujo operativo está en [development-workflow.md](development-workflow.md).
+
+Una mejora puede afectar varias carpetas y seguir siendo un solo objetivo. Se utiliza un worktree por objetivo cuando aporte aislamiento; crear otro chat no sustituye la actualización de documentos ni la integración de código. Se conserva la estructura actual de la PWA y se pospone mover módulos hasta que una necesidad concreta lo justifique.
 
 ## Registro de decisiones
 
 | Fecha | Decisión | Estado |
 |---|---|---|
-| 2026-09-02 | Construir la aplicación como PWA vanilla. | Aprobada |
-| 2026-09-02 | Usar `localStorage` detrás de una abstracción sustituible. | Aprobada |
-| 2026-09-02 | Posponer backend, autenticación, Microsoft Graph y Excel. | Aprobada |
-| 2026-09-02 | Cambiar el nombre de Gym Tracker a Sterk. | Aprobada |
-| 2026-09-02 | Ofrecer registro por ejercicio y por serie. | Aprobada |
-| 2026-09-03 | Medir automáticamente la duración total sin controles manuales. | Aprobada |
-| 2026-09-03 | Permitir peso independiente por serie y agrupar el historial por sesión. | Aprobada |
-| 2026-09-03 | Construir sesiones libremente desde un catálogo clasificado. | Aprobada |
-| 2026-09-03 | Mantener Excel fuera del camino crítico y como exportación opcional. | Aprobada |
-| 2026-09-02 | Añadir recuperación de sesión, historial básico y respaldo JSON en V1. | Aprobada |
+| 2026-09-02 | Construir Sterk como PWA vanilla y usar `localStorage` detrás de una abstracción sustituible. | Vigente |
+| 2026-09-02 | Posponer backend, autenticación, Microsoft Graph y Excel; adoptar el nombre Sterk. | Vigente |
+| 2026-09-02 | Añadir recuperación de sesión, historial básico y respaldo JSON en V1. | Implementada |
+| 2026-09-02 | Ofrecer registro por ejercicio y por serie. | Histórica; el selector se retiró y el registro actual es por serie |
+| 2026-09-03 | Medir la duración automáticamente, permitir peso por serie y agrupar el historial por sesión. | Implementada |
+| 2026-09-03 | Construir sesiones libremente desde un catálogo clasificado. | Implementada |
+| 2026-09-03 | Mantener Excel fuera del camino crítico y como posible exportación. | Vigente |
+| 2026-10-08 | Organizar el desarrollo con `AGENTS.md`, documentos versionados y worktrees por objetivo cuando aporten aislamiento, conservando por ahora la estructura del código. | Aprobada |
