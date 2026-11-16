@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-> Implementación revisada: **1.7.3, 2026-10-08**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+> Implementación revisada: **1.7.4, 2026-11-16**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
 
 ## Implementación actual
 
@@ -24,13 +24,22 @@ La aplicación utiliza HTML/CSS y módulos ES de JavaScript, sin framework, back
 | `src/icons.js`, `src/styles.css` | Iconos SVG y presentación mobile-first. |
 | `assets/exercises/` | Una imagen disponible: `pec-deck.png`. |
 | `service-worker.js` | Caché del shell y recursos offline. |
-| `tests/`, `scripts/` | Pruebas con almacenamiento/DOM simulados y servidor local. |
+| `tests/`, `scripts/` | Pruebas con almacenamiento/DOM simulados y servidor local. `tests/fixtures/storage-v1.7.3.json` contiene un estado sintético escrito por 1.7.3 para comprobar compatibilidad (QA-03). |
 
 La UI consume la API pública de `storage`; no accede directamente a las claves de `localStorage`. Los cálculos de series y progreso están separados, pero `app.js` todavía reúne estado, vistas e interacciones. La organización en carpetas adicionales es una refactorización futura.
 
 ## Datos y compatibilidad
 
-`storage` conserva cinco conjuntos bajo claves `sterk:v1:*`: entradas, sesión activa, sesiones finalizadas, ajustes y ejercicios personalizados. Lee el historial `gym-tracker:v0:workout-entries` para migrarlo cuando todavía no existen entradas V1.
+`storage` conserva cinco conjuntos bajo claves `sterk:v1:*`: entradas, sesión activa, sesiones finalizadas, ajustes y ejercicios personalizados. Lee el historial `gym-tracker:v0:workout-entries` para migrarlo cuando la clave de entradas V1 está ausente; un error al leerla no cuenta como ausencia.
+
+### Claves ilegibles (DATA-02, desde 1.7.4)
+
+Cada lectura distingue tres casos: clave ausente, clave legible y clave ilegible (error de `getItem`, JSON inválido o un formato que no se puede normalizar, como una lista con `null`). Las lecturas para mostrar datos devuelven el valor por defecto y registran el problema; nunca escriben.
+
+- Toda escritura pasa por `commit`, que vuelve a leer cada clave afectada y lanza `StorageReadError` sin escribir nada si alguna es ilegible. Esto incluye guardar o borrar la sesión activa, restaurar un respaldo y borrar todos los datos: el valor original se conserva hasta que vuelva a leerse correctamente.
+- Las operaciones que modifican varias claves (cambio de fecha, eliminación de un entrenamiento, importación) leen todo antes de escribir y escriben juntas. Si una escritura falla, se restaura el texto original de todas las claves de la operación.
+- `storage.checkData()` revisa todas las claves; `storage.getStorageProblems()` devuelve los problemas detectados en las últimas lecturas. La interfaz muestra un aviso permanente con las claves afectadas y un botón para exportar, y un `alert` cuando una acción queda bloqueada.
+- Si hay claves ilegibles, la exportación añade `unreadableData` con su texto original para recuperarlo a mano. La importación ignora ese campo.
 
 Una entrada identifica sesión, ejercicio, grupo muscular y categoría, e incluye series y totales derivados. Se conservan campos antiguos como `weight`, `reps`, `completedSets` y `trackingMode` para compatibilidad. Las entradas actuales se guardan con `trackingMode: "set"`; el ajuste legado puede seguir indicando `"exercise"`, pero la UI siempre ofrece marcado por serie y ya no muestra un selector de modo.
 
@@ -67,9 +76,9 @@ La gráfica alterna rendimiento, volumen o repeticiones; compara las dos última
 
 ## Respaldos y PWA
 
-La exportación JSON V4 incluye entradas, sesiones finalizadas, sesión activa, ajustes y ejercicios personalizados. Se aceptan versiones V1–V4 y se normalizan sus datos. Importar reemplaza los datos locales mediante escrituras sucesivas, sin transacción ni rollback; la validación actual no verifica todo el contenido antes de escribir.
+La exportación JSON V4 incluye entradas, sesiones finalizadas, sesión activa, ajustes y ejercicios personalizados. Se aceptan versiones V1–V4 y se normalizan sus datos. Importar prepara todos los valores, se bloquea si alguna clave local es ilegible y restaura los datos anteriores si una escritura falla; la validación aún no verifica todo el contenido del respaldo (DATA-01).
 
-El manifiesto incluye iconos PNG de 192/512 px e iOS usa uno de 180 px. El service worker precarga el shell, incluidos los controles de repeticiones y la imagen Pec Deck; elimina cachés anteriores al activarse. Su versión actual es `sterk-v1-7-3`. Cambiar recursos del shell requiere revisar la lista y la versión de caché.
+El manifiesto incluye iconos PNG de 192/512 px e iOS usa uno de 180 px. El service worker precarga el shell, incluidos los controles de repeticiones y la imagen Pec Deck; elimina cachés anteriores al activarse. Su versión actual es `sterk-v1-7-4`. Cambiar recursos del shell requiere revisar la lista y la versión de caché.
 
 ## Limitaciones verificadas y pendientes
 
@@ -77,7 +86,7 @@ Estos comportamientos **siguen presentes** y se rastrean en [roadmap.md](roadmap
 
 - Una serie marcada con cero repeticiones puede contar en el historial/resumen de `storage` y quedar excluida de Progreso.
 - En Progreso, el porcentaje comparativo sigue la métrica seleccionada, mientras la tarjeta mantiene el título y valor de “Rendimiento estimado”.
-- Una importación mal formada puede escribir parte de los datos antes de fallar. Otras operaciones que modifican varias claves tampoco son atómicas.
+- Un respaldo con contenido mal formado puede importarse sin validación completa (DATA-01). Las escrituras de varias claves ya se revierten si una falla.
 - Cuando falla una petición GET, el service worker devuelve `index.html` como fallback incluso para recursos que requieren otro tipo de contenido, como JavaScript.
 - Las pruebas automatizadas simulan almacenamiento y DOM; no sustituyen validar Safari, instalación, modo avión, reanudación, actualización y accesibilidad en un iPhone físico.
 

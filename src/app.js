@@ -213,7 +213,15 @@ function changeActiveSessionDate(localDate) {
   state.session = storage.getActiveSession();
 }
 
+// DATA-02: aviso permanente mientras alguna clave guardada no se pueda leer.
+function storageWarning() {
+  const problems = storage.getStorageProblems();
+  if (!problems.length) return "";
+  return `<section class="storage-warning" aria-labelledby="storage-warning-title"><h2 id="storage-warning-title">No se pudieron leer algunos datos</h2><p>Afecta a: ${escapeHtml(problems.map((problem) => problem.label).join(", "))}. Sterk los conserva sin modificarlos, por eso algunas acciones quedan bloqueadas. Exporta una copia y no borres la app.</p><button data-action="export">Exportar copia</button></section>`;
+}
+
 function renderShell(content, active = "") {
+  content = content.replace(/^<section[^>]*>/, (opening) => `${opening}${storageWarning()}`);
   app.innerHTML = `${content}${!["exercise", "complete", "builder"].includes(state.view) ? `<nav class="bottom-nav" aria-label="Navegación principal"><button data-view="home" class="${active === "home" ? "active" : ""}"><span>${icon("home")}</span>Inicio</button><button data-view="history" class="${active === "history" ? "active" : ""}"><span>${icon("history")}</span>Historial</button><button data-view="progress" class="${active === "progress" ? "active" : ""}"><span>${icon("chart")}</span>Progreso</button><button data-view="settings" class="${active === "settings" ? "active" : ""}"><span>${icon("edit")}</span>Ajustes</button></nav>` : ""}`;
   updateTimers();
 }
@@ -558,5 +566,13 @@ bindRepsControl(app,
     const jump = app.querySelector(`[data-jump="${state.exerciseIndex}"]`);
     if (jump) { jump.classList.remove("registered", "skipped"); jump.classList.add("pending"); }
   });
+// Una acción bloqueada porque hay datos ilegibles no debe pasar en silencio.
+window.addEventListener("error", (event) => {
+  if (event.error?.name !== "StorageReadError") return;
+  event.preventDefault();
+  alert(event.error.message);
+  render();
+});
 window.setInterval(updateTimers, 1000);
+storage.checkData();
 render();

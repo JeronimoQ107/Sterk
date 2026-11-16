@@ -11,17 +11,118 @@ const KEYS = Object.freeze({
 
 const LEGACY_ENTRIES_KEY = "gym-tracker:v0:workout-entries";
 
-function read(key, fallback) {
-  try {
-    const value = localStorage.getItem(key);
-    return value === null ? fallback : JSON.parse(value);
-  } catch {
-    return fallback;
+const KEY_LABELS = Object.freeze({
+  [KEYS.entries]: "historial de ejercicios",
+  [KEYS.activeSession]: "sesión en curso",
+  [KEYS.sessions]: "entrenamientos finalizados",
+  [KEYS.settings]: "preferencias",
+  [KEYS.customExercises]: "ejercicios propios",
+});
+
+// DATA-02: una clave que no se puede leer no equivale a datos ausentes. Se conserva su valor
+// original y ninguna escritura la reemplaza hasta que vuelva a leerse correctamente.
+export class StorageReadError extends Error {
+  constructor(problems) {
+    const labels = problems.map((problem) => problem.label).join(", ");
+    super(`No se pudieron leer tus datos guardados (${labels}). Sterk no los modificará para no perderlos. Exporta una copia desde Ajustes y no borres la app.`);
+    this.name = "StorageReadError";
+    this.problems = problems;
   }
 }
 
+const problems = new Map();
+const isRecord = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+function invalidFormat() { throw new TypeError("Formato inesperado."); }
+const listOfRecords = (value) => (Array.isArray(value) && value.every(isRecord) ? value : invalidFormat());
+const SHAPES = {
+  [KEYS.entries]: (value) => listOfRecords(value).map((entry) => normalizeEntry(entry)),
+  [KEYS.activeSession]: (value) => (value === null || isRecord(value) ? normalizeActiveSession(value) : invalidFormat()),
+  [KEYS.sessions]: listOfRecords,
+  [KEYS.settings]: (value) => (isRecord(value) ? value : invalidFormat()),
+  [KEYS.customExercises]: listOfRecords,
+};
+
+// Lee y valida una clave. Un fallo de acceso, un JSON inválido o un formato que no se puede
+// normalizar se registra como problema y nunca se confunde con una clave vacía.
+function inspect(key) {
+  let raw;
+  try {
+    raw = localStorage.getItem(key);
+  } catch (error) {
+    return report(key, { reason: "access", error });
+  }
+  if (raw === null) {
+    problems.delete(key);
+    return { ok: true, raw, absent: true };
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    return report(key, { reason: "json", raw, error });
+  }
+  try {
+    const value = SHAPES[key] ? SHAPES[key](parsed) : parsed;
+    problems.delete(key);
+    return { ok: true, raw, value };
+  } catch (error) {
+    return report(key, { reason: "format", raw, error });
+  }
+}
+
+function report(key, details) {
+  const problem = { key, label: KEY_LABELS[key] || key, ...details };
+  problems.set(key, problem);
+  return { ok: false, problem };
+}
+
+const publicProblem = ({ key, label, reason }) => ({ key, label, reason });
+
+// Lectura para mostrar datos: ante un problema devuelve el valor por defecto sin escribir nada.
+function read(key, fallback) {
+  const result = inspect(key);
+  return result.ok && !result.absent ? result.value : fallback;
+}
+
+function ensureReadable(keys) {
+  const results = keys.map((key) => [key, inspect(key)]);
+  const failed = results.filter(([, result]) => !result.ok).map(([, result]) => publicProblem(result.problem));
+  if (failed.length) throw new StorageReadError(failed);
+  return Object.fromEntries(results);
+}
+
+// Lectura para modificar: si la clave no se puede leer, la operación se detiene antes de escribir.
+function readForUpdate(key, fallback) {
+  const result = ensureReadable([key])[key];
+  return result.absent ? fallback : result.value;
+}
+
+// Escribe varias claves como una unidad. Antes comprueba que todas siguen siendo legibles, y si una
+// escritura falla restaura los valores originales de todas.
+function commit(changes) {
+  const current = ensureReadable(changes.map(([key]) => key));
+  try {
+    changes.forEach(([key, value]) => {
+      if (value === undefined) localStorage.removeItem(key);
+      else localStorage.setItem(key, JSON.stringify(value));
+    });
+  } catch (error) {
+    changes.forEach(([key]) => {
+      try {
+        const { raw } = current[key];
+        if (raw === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, raw);
+      } catch {
+        // Se intenta restaurar el resto de claves aunque una falle.
+      }
+    });
+    throw error;
+  }
+  changes.forEach(([key]) => problems.delete(key));
+}
+
 function write(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+  commit([[key, value]]);
   return value;
 }
 
@@ -115,18 +216,30 @@ function normalizeActiveSession(session, catalog = catalogWith()) {
   };
 }
 
-if (localStorage.getItem(KEYS.entries) === null) {
-  const legacy = read(LEGACY_ENTRIES_KEY, []);
-  if (Array.isArray(legacy) && legacy.length) write(KEYS.entries, legacy);
+// La migración V0 solo ocurre si la clave V1 está ausente; un error de lectura no cuenta como ausencia.
+try {
+  if (localStorage.getItem(KEYS.entries) === null) {
+    const legacy = JSON.parse(localStorage.getItem(LEGACY_ENTRIES_KEY));
+    if (Array.isArray(legacy) && legacy.length) localStorage.setItem(KEYS.entries, JSON.stringify(legacy));
+  }
+} catch {
+  // Sin migración: los datos V0 y V1 permanecen como estaban.
 }
 
 export const storage = {
+  // Revisa de nuevo todas las claves y devuelve las que no se pueden leer.
+  checkData() {
+    Object.values(KEYS).forEach((key) => inspect(key));
+    return this.getStorageProblems();
+  },
+  // Problemas detectados en las últimas lecturas, sin volver a leer el almacenamiento.
+  getStorageProblems() { return [...problems.values()].map(publicProblem); },
   getExerciseCatalog({ includeArchived = false } = {}) {
     const catalog = catalogWith();
     return includeArchived ? catalog : catalog.filter((exercise) => !exercise.archived);
   },
   saveCustomExercise(exercise) {
-    const custom = read(KEYS.customExercises, []);
+    const custom = readForUpdate(KEYS.customExercises, []);
     const normalized = { ...exercise, custom: true, archived: Boolean(exercise.archived) };
     const duplicate = catalogWith(custom).find((item) => item.id !== normalized.id && item.name.toLocaleLowerCase() === normalized.name.toLocaleLowerCase());
     if (duplicate) throw new Error("Ya existe un ejercicio con ese nombre.");
@@ -136,15 +249,12 @@ export const storage = {
     return write(KEYS.customExercises, custom);
   },
   archiveCustomExercise(id) {
-    const custom = read(KEYS.customExercises, []);
+    const custom = readForUpdate(KEYS.customExercises, []);
     const item = custom.find((exercise) => exercise.id === id);
     if (item) item.archived = true;
     return write(KEYS.customExercises, custom);
   },
-  getEntries() {
-    const entries = read(KEYS.entries, []);
-    return Array.isArray(entries) ? entries.map((entry) => normalizeEntry(entry)) : [];
-  },
+  getEntries() { return read(KEYS.entries, []); },
   getExerciseHistory(exerciseId, exerciseName) {
     return this.getEntries().filter((entry) => entry.exerciseId === exerciseId || entry.exercise === exerciseName).sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
   },
@@ -152,7 +262,7 @@ export const storage = {
     return this.getExerciseHistory(exerciseId, exerciseName).find((entry) => !excludeSessionId || entry.sessionId !== excludeSessionId) || null;
   },
   saveWorkoutEntry(entry) {
-    const entries = this.getEntries();
+    const entries = readForUpdate(KEYS.entries, []);
     const normalized = normalizeEntry(entry);
     const index = entries.findIndex((item) => item.id === normalized.id);
     if (index >= 0) entries[index] = normalized;
@@ -160,17 +270,14 @@ export const storage = {
     return write(KEYS.entries, entries);
   },
   deleteWorkoutEntry(id) {
-    return write(KEYS.entries, this.getEntries().filter((entry) => entry.id !== id));
+    return write(KEYS.entries, readForUpdate(KEYS.entries, []).filter((entry) => entry.id !== id));
   },
-  getActiveSession() { return normalizeActiveSession(read(KEYS.activeSession, null)); },
+  getActiveSession() { return read(KEYS.activeSession, null); },
   saveActiveSession(session) { return write(KEYS.activeSession, normalizeActiveSession(session)); },
-  clearActiveSession() { localStorage.removeItem(KEYS.activeSession); },
-  getCompletedSessions() {
-    const sessions = read(KEYS.sessions, []);
-    return Array.isArray(sessions) ? sessions : [];
-  },
+  clearActiveSession() { commit([[KEYS.activeSession, undefined]]); },
+  getCompletedSessions() { return read(KEYS.sessions, []); },
   saveCompletedSession(session) {
-    const sessions = this.getCompletedSessions();
+    const sessions = readForUpdate(KEYS.sessions, []);
     const index = sessions.findIndex((item) => item.id === session.id);
     if (index >= 0) sessions[index] = session;
     else sessions.push(session);
@@ -179,15 +286,17 @@ export const storage = {
   changeSessionDate(sessionId, localDate, entryIds = []) {
     if (!parseLocalDate(localDate)) throw new Error("La fecha del entrenamiento no es válida.");
     const ids = new Set(entryIds);
+    // Se leen las tres claves antes de escribir para no dejar la sesión y sus entradas con fechas distintas.
+    const current = ensureReadable([KEYS.entries, KEYS.sessions, KEYS.activeSession]);
+    const valueOf = (key, fallback) => (current[key].absent ? fallback : current[key].value);
 
-    const entries = this.getEntries().map((entry) => {
+    const entries = valueOf(KEYS.entries, []).map((entry) => {
       if (entry.sessionId !== sessionId && !ids.has(entry.id)) return entry;
       const recordedAt = moveToLocalDate(entry.recordedAt, localDate);
       return recordedAt ? { ...entry, recordedAt, ...localizedEntryDate(recordedAt) } : entry;
     });
-    write(KEYS.entries, entries);
 
-    const sessions = this.getCompletedSessions().map((session) => {
+    const sessions = valueOf(KEYS.sessions, []).map((session) => {
       if (session.id !== sessionId) return session;
       const startedAt = moveToLocalDate(session.startedAt, localDate);
       if (!startedAt) return session;
@@ -197,13 +306,14 @@ export const storage = {
         : moveToLocalDate(session.endedAt, localDate) || startedAt;
       return { ...session, startedAt, endedAt };
     });
-    write(KEYS.sessions, sessions);
 
-    const active = this.getActiveSession();
+    const changes = [[KEYS.entries, entries], [KEYS.sessions, sessions]];
+    const active = valueOf(KEYS.activeSession, null);
     if (active?.id === sessionId) {
       const startedAt = moveToLocalDate(active.startedAt, localDate);
-      if (startedAt) write(KEYS.activeSession, normalizeActiveSession({ ...active, clockStartedAt: active.clockStartedAt || active.startedAt, startedAt }));
+      if (startedAt) changes.push([KEYS.activeSession, normalizeActiveSession({ ...active, clockStartedAt: active.clockStartedAt || active.startedAt, startedAt })]);
     }
+    commit(changes);
 
     return {
       activeSession: this.getActiveSession(),
@@ -212,27 +322,37 @@ export const storage = {
   },
   deleteSession(sessionId, entryIds = []) {
     const ids = new Set(entryIds);
-    write(KEYS.entries, this.getEntries().filter((entry) => entry.sessionId !== sessionId && !ids.has(entry.id)));
-    write(KEYS.sessions, this.getCompletedSessions().filter((session) => session.id !== sessionId));
+    const entries = readForUpdate(KEYS.entries, []);
+    const sessions = readForUpdate(KEYS.sessions, []);
+    commit([
+      [KEYS.entries, entries.filter((entry) => entry.sessionId !== sessionId && !ids.has(entry.id))],
+      [KEYS.sessions, sessions.filter((session) => session.id !== sessionId)],
+    ]);
   },
   getSettings() { return { trackingMode: "exercise", ...read(KEYS.settings, {}) }; },
-  saveSettings(settings) { return write(KEYS.settings, { ...this.getSettings(), ...settings }); },
+  saveSettings(settings) { return write(KEYS.settings, { trackingMode: "exercise", ...readForUpdate(KEYS.settings, {}), ...settings }); },
   exportData() {
-    return { app: "Sterk", version: 4, exportedAt: new Date().toISOString(), entries: this.getEntries(), completedSessions: this.getCompletedSessions(), activeSession: this.getActiveSession(), settings: this.getSettings(), customExercises: read(KEYS.customExercises, []) };
+    const backup = { app: "Sterk", version: 4, exportedAt: new Date().toISOString(), entries: this.getEntries(), completedSessions: this.getCompletedSessions(), activeSession: this.getActiveSession(), settings: this.getSettings(), customExercises: read(KEYS.customExercises, []) };
+    // Si alguna clave no se puede leer, la copia incluye su texto original para poder recuperarla a mano.
+    const unreadable = [...problems.values()].filter((problem) => typeof problem.raw === "string");
+    if (unreadable.length) backup.unreadableData = Object.fromEntries(unreadable.map((problem) => [problem.key, problem.raw]));
+    return backup;
   },
   importData(data) {
     if (!data || data.app !== "Sterk" || ![1, 2, 3, 4].includes(data.version) || !Array.isArray(data.entries)) throw new Error("El archivo no es un respaldo válido de Sterk.");
     const customExercises = data.version >= 3 && Array.isArray(data.customExercises) ? data.customExercises : [];
     const catalog = catalogWith(customExercises);
-    write(KEYS.customExercises, customExercises);
-    write(KEYS.entries, data.entries.map((entry) => normalizeEntry(entry, catalog)));
-    write(KEYS.sessions, Array.isArray(data.completedSessions) ? data.completedSessions : []);
-    write(KEYS.settings, data.settings || { trackingMode: "exercise" });
-    if (data.activeSession) write(KEYS.activeSession, normalizeActiveSession(data.activeSession, catalog));
-    else this.clearActiveSession();
+    // Se preparan todos los valores antes de escribir; restaurar no reemplaza datos ilegibles.
+    commit([
+      [KEYS.customExercises, customExercises],
+      [KEYS.entries, data.entries.map((entry) => normalizeEntry(entry, catalog))],
+      [KEYS.sessions, Array.isArray(data.completedSessions) ? data.completedSessions : []],
+      [KEYS.settings, data.settings || { trackingMode: "exercise" }],
+      [KEYS.activeSession, data.activeSession ? normalizeActiveSession(data.activeSession, catalog) : undefined],
+    ]);
   },
   clearAll() {
-    Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
+    commit(Object.values(KEYS).map((key) => [key, undefined]));
     localStorage.removeItem(LEGACY_ENTRIES_KEY);
   },
 };

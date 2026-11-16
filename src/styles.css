@@ -67,6 +67,10 @@ button:active:not(:disabled) { transform: scale(.97); }
 .resume-card div small { color: var(--muted); }
 .resume-card > button { align-self: center; min-height: 2.75rem; padding: 0 .85rem; border: 0; border-radius: .75rem; background: var(--accent); color: var(--accent-dark); font-size: .75rem; font-weight: 900; }
 .resume-card .text-button { grid-column: 1 / -1; min-height: auto; padding: .3rem; background: transparent; color: var(--danger); text-align: left; }
+.storage-warning { margin-bottom: 1rem; padding: .9rem 1rem; border: 1px solid rgba(255,128,119,.45); border-radius: .75rem; background: rgba(255,128,119,.08); }
+.storage-warning h2 { margin: 0 0 .35rem; color: var(--danger); font-size: .95rem; }
+.storage-warning p { margin: 0 0 .75rem; color: var(--text); font-size: .85rem; line-height: 1.4; }
+.storage-warning button { min-height: 2.75rem; padding: .5rem 1rem; border: 1px solid var(--danger); border-radius: .65rem; background: transparent; color: var(--danger); font-weight: 800; }
 .update-banner { width: 100%; margin-top: 1rem; padding: .75rem; border: 1px solid var(--accent); border-radius: .75rem; background: transparent; color: var(--accent); font-weight: 800; }
 
 .exercise-screen { padding-bottom: calc(6.5rem + env(safe-area-inset-bottom)); }

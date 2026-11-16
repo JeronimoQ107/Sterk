@@ -20,7 +20,7 @@ function setup() {
   const context = vm.createContext({ ...data, ...sets, icon, homeDashboard, progressDashboard, settingsDashboard, exerciseOptions, bindWeightControl() {}, bindRepsControl() {}, storage, structuredClone, console, crypto: globalThis.crypto,
     document: { querySelector: (selector) => selector === '#app' ? app : dummy, querySelectorAll: () => [], body: { append() {} },
       createElement: () => { const dialog = { handlers: {}, innerHTML: '', setAttribute() {}, addEventListener(type, fn) { this.handlers[type] = fn; }, showModal() {}, close() {}, remove() {} }; dialogs.push(dialog); return dialog; } },
-    navigator: {}, window: { setInterval() {}, setTimeout() {}, scrollTo() {} }, confirm: () => true, alert: (text) => notices.push(text), openWeightPicker() {}, openRepsPicker() {},
+    navigator: {}, window: { setInterval() {}, setTimeout() {}, scrollTo() {}, addEventListener() {} }, confirm: () => true, alert: (text) => notices.push(text), openWeightPicker() {}, openRepsPicker() {},
   });
   vm.runInContext(source, context);
   const run = (code) => vm.runInContext(code, context);
@@ -182,4 +182,24 @@ test('progress explanations open only from the information dialog', () => {
   assert.equal(dialogs.length, 1);
   assert.match(dialogs[0].innerHTML, /peso × \(1 \+ repeticiones ÷ 30\)/);
   assert.match(dialogs[0].innerHTML, /no una prueba real/);
+});
+test('DATA-02: unreadable history shows a warning and registering keeps the stored text', () => {
+  const { run, click, app } = setup();
+  run('state.builderSelection = ["pec-deck"]; startSession();');
+  click({ toggleSet: '0' });
+  const broken = '[{"id":"older","sets":';
+  memory.set('sterk:v1:workout-entries', broken);
+  try {
+    run('render();');
+    assert.match(app.innerHTML, /No se pudieron leer algunos datos/);
+    assert.match(app.innerHTML, /historial de ejercicios/);
+    assert.throws(() => run('saveExercise();'), { name: 'StorageReadError' });
+    assert.equal(memory.get('sterk:v1:workout-entries'), broken);
+    assert.equal(storage.getActiveSession().exercises[0].status, 'pending');
+  } finally {
+    memory.delete('sterk:v1:workout-entries');
+    storage.checkData();
+  }
+  run('render();');
+  assert.doesNotMatch(app.innerHTML, /No se pudieron leer algunos datos/);
 });
