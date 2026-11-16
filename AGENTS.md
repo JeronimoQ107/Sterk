@@ -17,7 +17,7 @@ Las instrucciones del usuario prevalecen. Actualiza los documentos afectados cua
 1. Comprueba la carpeta de trabajo, `git status`, la rama o HEAD separado y la base de la tarea. Identifica cambios previos del usuario y consérvalos.
 2. Confirma el resultado solicitado y trabaja dentro de ese alcance. Resuelve decisiones rutinarias sin pedir confirmaciones innecesarias.
 3. Usa un worktree por objetivo cuando sea útil aislar cambios. Un objetivo puede modificar varios módulos; no crees worktrees por carpeta.
-4. Si hace falta una rama nueva, usa el prefijo `codex/`. Un worktree puede comenzar con HEAD separado; compruébalo antes de suponer que existe una rama.
+4. Si hace falta una rama nueva, usa el prefijo de la herramienta: `codex/` en Codex y `claude/` en Claude Code. Un worktree puede comenzar con HEAD separado; compruébalo antes de suponer que existe una rama.
 
 ## Implementación y datos
 
@@ -26,8 +26,20 @@ Las instrucciones del usuario prevalecen. Actualiza los documentos afectados cua
 - El registro actual es por serie. `trackingMode` permanece en datos antiguos por compatibilidad; no lo confundas con un selector disponible en la interfaz.
 - Marcar el último ejercicio no finaliza el entrenamiento. El cierre es explícito y la sesión activa debe poder recuperarse.
 - Los lados izquierdo/derecho se registran independientemente; una pareja con algún lado completado cuenta como una serie. Hay una discrepancia pendiente para series completadas con cero repeticiones: consulta el roadmap antes de cambiar cálculos.
-- Si cambian rutas o recursos de la aplicación, revisa imports y precaché del service worker. Cambios solo documentales no requieren incrementar la versión ni la caché.
+- Si cambian rutas o recursos de la aplicación, revisa imports y precaché del service worker. La versión aparece en `package.json`, `CACHE_NAME` de `service-worker.js` y el texto de Ajustes en `src/dashboard.js`; mantenlas iguales. Cambios solo documentales no requieren incrementar la versión ni la caché.
 - Evita introducir dependencias, frameworks o abstracciones grandes para cambios pequeños.
+
+## Datos de quienes prueban la app
+
+Desde noviembre de 2026, varias personas usan Sterk instalada en su iPhone. Sus datos existen solo en su dispositivo, sin copia remota, y cada versión publicada se ejecuta sobre ellos. Un dato perdido no se puede recuperar.
+
+- Un error de lectura o un JSON inválido no equivale a datos ausentes: conserva el valor original y avisa en vez de escribir encima (DATA-02).
+- Las migraciones son aditivas y solo hacia adelante. No renombres ni elimines claves `sterk:v1:*` ni campos existentes; cada versión debe leer los datos de las anteriores y los respaldos V1–V4.
+- Un cambio en persistencia, normalización, series, migraciones o respaldos necesita pruebas que carguen datos de la versión anterior y comprueben que se conservan entradas, sesiones, series, lados, ejercicios personalizados y sesión activa (QA-03). Anonimiza los respaldos reales antes de usarlos como fixtures.
+- No cambies la URL publicada: nombre del repositorio, dominio, `start_url` ni `scope`. En iPhone, una app reinstalada empieza sin datos.
+- No publiques versiones de prueba en el mismo origen que la versión real (por ejemplo, otro repositorio bajo `jeronimoq107.github.io` si Sterk se publica en GitHub Pages): compartirían `localStorage` en Safari. Usa el servidor local o un dominio distinto.
+- Las pruebas usan siempre el almacenamiento simulado de `tests/`, nunca datos reales.
+- Si un cambio afecta datos o el service worker, indícalo en el resumen final para que el usuario pida a quienes prueban la app exportar una copia antes de publicarlo.
 
 ## Comprobación y cierre
 

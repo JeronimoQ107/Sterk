@@ -2,6 +2,8 @@
 
 ## La referencia común
 
+Este documento describe la interfaz de Codex. En Claude Code se sigue el mismo flujo con sesiones en lugar de chats; [CLAUDE.md](../CLAUDE.md) importa `AGENTS.md` y añade las diferencias.
+
 La memoria compartida del proyecto vive en Git: [AGENTS.md](../AGENTS.md), [contexto](project-context.md), [arquitectura](architecture.md) y [roadmap](roadmap.md). Un chat nuevo puede leerlos sin depender de una conversación anterior. Los documentos se actualizan cuando cambian decisiones o comportamiento.
 
 `main` es la rama de referencia para los cambios integrados. El checkout principal contiene esa rama. Un worktree es otra carpeta con una copia del proyecto para trabajar de forma aislada. Su nombre no tiene que ser `main` y no determina qué rama tiene seleccionada.

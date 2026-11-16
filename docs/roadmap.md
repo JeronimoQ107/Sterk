@@ -1,6 +1,6 @@
 # Sterk — pendientes y propuestas
 
-Revisión inicial: **2026-10-08**, sobre la versión **1.7.3**. Este documento distingue problemas observados de ideas de producto. La organización documental está autorizada; las mejoras de funcionalidad siguientes siguen pendientes de una tarea que determine su alcance.
+Revisión inicial: **2026-10-08**, sobre la versión **1.7.3**. Ampliado el **2026-11-16** con una revisión de interfaz y código sobre la misma versión, y con la protección de datos de quienes prueban la app. Este documento distingue problemas observados de ideas de producto. La organización documental está autorizada; las mejoras de funcionalidad siguientes siguen pendientes de una tarea que determine su alcance.
 
 ## Cómo usar este documento
 
@@ -18,13 +18,17 @@ Actualiza el estado y anota evidencia relevante al avanzar. No marques una funci
 | --- | --- | --- | --- |
 | DATA-01 | Alta | Propuesta | Validar íntegramente los respaldos antes de escribir y hacer segura su restauración. Un respaldo inválido o un fallo de escritura debe conservar todos los datos anteriores. |
 | DATA-02 | Alta | Propuesta | Evitar estados parciales en operaciones que actualizan varias claves, incluida la edición de fecha. Distinguir errores de lectura de datos ausentes y evitar sobrescribir datos recuperables. |
+| DATA-03 | Alta | Propuesta | Red de seguridad para quienes prueban la app: guardar una instantánea de todas las claves `sterk:v1:*` antes de la primera ejecución de una versión nueva o de una migración, conservar las tres últimas y permitir restaurarlas desde Ajustes. Solicitar `navigator.storage.persist()`. |
+| DATA-04 | Media | Propuesta | Recordar el respaldo ("última copia hace N días") y exportar con `navigator.share` y archivo cuando esté disponible, manteniendo la descarga como alternativa. |
 | MET-01 | Alta | Propuesta | Unificar el tratamiento de series completadas con cero repeticiones entre resumen, historial y Progreso. Definir la regla antes de ajustar los cálculos. |
 | MET-02 | Media | Propuesta | Hacer que el texto de comparación corresponda a la métrica seleccionada y que la tabla de Progreso incluya los valores necesarios para interpretar las tres gráficas. |
 
 ### Evidencia y comprobaciones de aceptación
 
 - **DATA-01:** la importación escribe varias claves antes de terminar de normalizar la sesión activa. Un respaldo V4 con `activeSession.exercises: [null]` puede fallar después de modificar otros datos. Comprobar restauración válida V1–V4, datos malformados y errores de escritura, siempre conservando el estado anterior cuando la operación no se completa.
-- **DATA-02:** almacenamiento mantiene varias entidades en claves independientes. Una lectura que falla puede convertirse en un valor vacío; una escritura posterior puede reemplazar datos. La edición de fecha también necesita coherencia entre sesión y entradas si una escritura falla. Añadir comprobaciones con fallos simulados en cada punto relevante.
+- **DATA-02:** almacenamiento mantiene varias entidades en claves independientes. Una lectura que falla puede convertirse en un valor vacío; una escritura posterior puede reemplazar datos. La edición de fecha también necesita coherencia entre sesión y entradas si una escritura falla. Añadir comprobaciones con fallos simulados en cada punto relevante. Verificado el 2026-11-15: si `sterk:v1:workout-entries` contiene JSON ilegible, el siguiente `saveWorkoutEntry` deja únicamente la entrada nueva.
+- **DATA-03:** comprobar que la instantánea se crea una sola vez por versión, no supera un tamaño razonable, restaura exactamente el estado anterior y no se crea si la lectura de los datos falla.
+- **DATA-04:** comprobar la exportación en Safari instalado en pantalla de inicio, incluido guardar en Archivos.
 - **MET-01:** el control permite marcar una serie con cero repeticiones; el resumen de almacenamiento puede contarla mientras Progreso la excluye. Comprobar registros bilaterales, izquierda/derecha y sesiones antiguas con una regla consistente.
 - **MET-02:** el porcentaje sigue la métrica de Progreso seleccionada mientras la etiqueta muestra rendimiento estimado. La tabla ofrece rendimiento y volumen, pero omite repeticiones totales. Comprobar las tres selecciones y su lectura accesible.
 
@@ -33,11 +37,15 @@ Actualiza el estado y anota evidencia relevante al avanzar. No marques una funci
 | ID | Prioridad sugerida | Estado | Pendiente y resultado esperado |
 | --- | --- | --- | --- |
 | PWA-01 | Alta | Propuesta | Limitar la limpieza de cachés a Sterk, separar fallbacks de navegación y recursos, y comprobar el ciclo de actualización. |
+| PWA-02 | Alta | Propuesta | Evitar versiones mezcladas al actualizar: precachear con `cache: "reload"` para no tomar archivos de la caché HTTP, usar red primero para la navegación (HTML) y derivar la versión de una sola fuente. |
+| QA-03 | Alta | Propuesta | Fixtures con respaldos de versiones anteriores (anonimizados) y pruebas que confirmen que una versión nueva conserva todos los datos. Requisito de cualquier cambio en persistencia. |
 | QA-01 | Alta | Propuesta | Ejecutar una revisión en iPhone físico: instalación, offline, recuperación de sesión, controles táctiles, decimales, respaldos y actualización con sesión activa. |
 | A11Y-01 | Media | Propuesta | Revisar nombres accesibles de botones, foco tras renderizados y anuncios del temporizador con VoiceOver. Corregir problemas confirmados. |
 | QA-02 | Media | Propuesta | Automatizar comprobaciones relevantes en CI y añadir cobertura de navegador para los flujos con mayor riesgo. |
 
 El service worker precachea recursos, pero actualmente elimina todas las otras cachés del origen y puede devolver el HTML de inicio para un recurso no disponible. Hay que comprobar fallos de carga y actualizaciones; las pruebas de lógica existentes no certifican estos flujos en Safari.
+
+Para PWA-02: `cache.addAll` puede recibir archivos que el navegador ya tenía en su caché HTTP y combinarlos con archivos nuevos; una mezcla de módulos puede dejar la pantalla en blanco, y en iPhone reinstalar la app para "arreglarla" borra sus datos. La versión aparece hoy en `package.json`, `CACHE_NAME` y el texto de Ajustes.
 
 Para QA-01, registrar dispositivo, versión de iOS, condiciones de red, pasos y resultado. La revisión de accesibilidad debe incluir el botón de volver del detalle de historial y el efecto de la actualización periódica del temporizador. No hay resultados de pruebas físicas incorporados en este análisis.
 
@@ -45,13 +53,24 @@ Para QA-01, registrar dispositivo, versión de iOS, condiciones de red, pasos y 
 
 | ID | Prioridad sugerida | Estado | Propuesta y condición de éxito |
 | --- | --- | --- | --- |
+| UI-01 | Media | Propuesta | Arreglos rápidos verificados: volver arriba al cambiar de vista o iniciar la sesión, ajustar el eje vertical de Rendimiento al rango de datos, redondear el rendimiento estimado, unificar el formato numérico y mantener los avisos visibles más de 1 s. |
 | UX-01 | Media | Propuesta | Repetir un entrenamiento o usar plantillas, reduciendo la selección manual sin arrastrar series como completadas. |
+| UX-02 | Media | Propuesta | Simplificar la pantalla de ejercicio: mostrar el resultado anterior dentro de cada serie, mover Añadir/Editar/Finalizar a un menú del encabezado, eliminar navegación duplicada, dar estilo a la casilla "Por lado" y reducir el ruido de los valores vecinos en los controles. Debe haber menos controles visibles sin perder funciones. |
+| UX-03 | Baja | Propuesta | Inicio y constructor: mostrar primero ejercicios recientes o frecuentes, compactar el encabezado de Inicio y dejar un solo acceso a "Crear ejercicio". |
+| UX-04 | Media | Propuesta | Sustituir los 12 `confirm()` y 5 `alert()` nativos por diálogos propios o avisos con Deshacer. |
 | HIST-01 | Media | Propuesta | Editar peso y repeticiones de entrenamientos guardados, conservando coherencia de totales y progreso. Actualmente solo se puede ajustar la fecha o eliminar datos desde ese detalle. |
 | LOAD-01 | Media | Propuesta | Definir unidades y tipos de carga, incluidos ejercicios con peso corporal, para evitar interpretar todos los ejercicios como carga externa en lb. |
 | MET-03 | Media | Propuesta | Comparar sesiones con criterios claros; un volumen mayor por añadir ejercicios no implica automáticamente mejor rendimiento. |
 | VIS-01 | Baja | Propuesta | Ampliar ilustraciones coherentes para el catálogo. Actualmente hay 60 ejercicios y solo Pec Deck dispone de imagen. |
 | TECH-01 | Baja | Propuesta | Medir el coste de leer y normalizar historiales grandes antes de optimizar almacenamiento. Reducir lecturas repetidas si se confirma impacto. |
 | TECH-02 | Baja | Propuesta | Separar gradualmente responsabilidades de interfaz y ordenar CSS al trabajar en esas zonas, sin reescribir la aplicación completa. |
+| TECH-03 | Baja | Propuesta | Retirar código sin uso y duplicado: manejadores `data-filter`/`builderFilter`, `data-set-weight` y `data-set-reps` sin marcado que los genere; constante `setMode = true`; controles y selectores de peso/repeticiones casi idénticos; `escapeHtml`/`escape` y formateadores repetidos. |
+
+### Evidencia de la revisión del 2026-11-15
+
+- **UI-01:** al iniciar la sesión desde el constructor desplazado (900 px), la pantalla de ejercicio no vuelve arriba; solo `goToExercise` llama a `scrollTo`. La gráfica usa 0 como base (`y = y1 - valor / max × alto`): con rendimientos entre 258 y 263 lb la línea se ve plana. El rendimiento se muestra con dos decimales ("263,08 lb"). Historial formatea sin separador de miles ("16542,5 lb", `formatNumber` con `useGrouping: false`) e Inicio con separador ("16.542,5 lb"). `showToast` oculta el aviso a los 1000 ms.
+- **UX-02:** la pantalla de ejercicio muestra unos 15 controles además de las series. Anterior/Siguiente repiten las pestañas numeradas, "Registrar ejercicio" coincide con el registro automático al marcar la última serie y la referencia anterior ocupa una línea truncada. En modo por lado hay tres botones de marcado por serie.
+- **TECH-01:** en Chrome de escritorio, abrir Historial tardó 12 ms con 50 sesiones, 47 ms con 200 y 115 ms con 450; la búsqueda vuelve a dibujar la lista con cada letra. En iPhone será más lento; no es urgente.
 
 ## Opciones futuras que requieren definir alcance
 
@@ -59,8 +78,10 @@ IndexedDB, sincronización, cuentas, exportación a Excel, RIR y temporizadores 
 
 ## Orden de trabajo recomendado
 
-1. Proteger respaldos y coherencia de datos: DATA-01 y DATA-02.
-2. Alinear métricas y validar los flujos reales del iPhone: MET-01, MET-02, PWA-01 y QA-01.
-3. Elegir la siguiente mejora de uso a partir de la experiencia real, con criterios de aceptación concretos.
+1. Proteger los datos de quienes prueban la app: DATA-02, DATA-03, PWA-02, PWA-01 y DATA-01, con QA-03 como requisito de cada uno.
+2. Arreglos rápidos y métricas: UI-01, MET-01 y MET-02.
+3. Validar los flujos reales en un iPhone físico: QA-01.
+4. Reducir fricción: UX-01 y UX-02; después UX-04, DATA-04 y UX-03.
+5. Mantenimiento al trabajar en esas zonas: TECH-03, TECH-02 y TECH-01.
 
 Esta secuencia admite cambios por decisión del usuario. Cada tarea debe referenciar su ID y mantener actualizado el contexto o la arquitectura si modifica decisiones. El proceso para aislar e integrar trabajo está en [development-workflow.md](development-workflow.md).

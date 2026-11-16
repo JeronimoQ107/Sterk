@@ -53,7 +53,8 @@ src/icons.js               Iconos SVG de la interfaz
 src/styles.css             Diseño para móvil
 tests/                     Pruebas automatizadas
 scripts/serve.cjs          Servidor local
-AGENTS.md                  Instrucciones para Codex
+AGENTS.md                  Instrucciones comunes para agentes (Codex y Claude Code)
+CLAUDE.md                  Importa AGENTS.md y añade notas de Claude Code
 docs/                      Contexto, arquitectura y trabajo pendiente
 ```
 
@@ -62,6 +63,7 @@ docs/                      Contexto, arquitectura y trabajo pendiente
 | Documento | Para qué sirve |
 | --- | --- |
 | [AGENTS.md](AGENTS.md) | Instrucciones comunes para los chats y agentes que trabajen en el proyecto. |
+| [CLAUDE.md](CLAUDE.md) | Punto de entrada de Claude Code: importa `AGENTS.md` y añade lo específico de esa herramienta. |
 | [Contexto](docs/project-context.md) | Visión, alcance y decisiones confirmadas. |
 | [Arquitectura](docs/architecture.md) | Módulos, datos, comportamiento y límites técnicos. |
 | [Roadmap](docs/roadmap.md) | Problemas detectados y propuestas, con estado y criterios de aceptación. |

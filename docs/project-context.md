@@ -6,6 +6,8 @@
 
 Sterk es una aplicación personal para registrar el progreso en el gimnasio desde un iPhone con la menor fricción posible. Es una PWA instalable mediante **Añadir a pantalla de inicio**.
 
+Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iPhone. Sus datos solo existen en sus dispositivos, así que ninguna actualización puede ponerlos en riesgo; las reglas están en [AGENTS.md](../AGENTS.md#datos-de-quienes-prueban-la-app).
+
 1. Minimizar toques y escritura y facilitar el uso con una mano.
 2. Mostrar el entrenamiento anterior y registrar peso y repeticiones por serie.
 3. Recuperar una sesión interrumpida y conservar el historial y sus respaldos.
@@ -61,3 +63,5 @@ Una mejora puede afectar varias carpetas y seguir siendo un solo objetivo. Se ut
 | 2026-09-03 | Construir sesiones libremente desde un catálogo clasificado. | Implementada |
 | 2026-09-03 | Mantener Excel fuera del camino crítico y como posible exportación. | Vigente |
 | 2026-10-08 | Organizar el desarrollo con `AGENTS.md`, documentos versionados y worktrees por objetivo cuando aporten aislamiento, conservando por ahora la estructura del código. | Aprobada |
+| 2026-11-16 | Con personas probando la app, preservar sus datos locales en cada actualización tiene prioridad sobre las mejoras de funcionalidad. | Vigente |
+| 2026-11-16 | Trabajar también con Claude Code: `CLAUDE.md` importa `AGENTS.md` para compartir las mismas instrucciones. | Vigente |
