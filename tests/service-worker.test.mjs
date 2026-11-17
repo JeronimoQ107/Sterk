@@ -1,0 +1,151 @@
+// PWA-01 y PWA-02: el service worker instala versiones completas, no mezcla archivos de dos versiones
+// y no borra cachés ajenas. Usa cachés y red simuladas; no sustituye probar Safari en un iPhone.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+
+const root = new URL('../', import.meta.url);
+const source = fs.readFileSync(new URL('service-worker.js', root), 'utf8');
+const ORIGIN = 'https://sterk.example';
+const BASE = `${ORIGIN}/app/`;
+
+function loadWorker({ network = (request) => ({ ok: true, body: `red:${request.url}` }), caches: initial = {} } = {}) {
+  const stores = new Map(Object.entries(initial).map(([name, entries]) => [name, new Map(Object.entries(entries))]));
+  const listeners = {};
+  const requests = [];
+  const lifecycle = { skipWaiting: 0, claim: 0 };
+  const urlOf = (request) => (typeof request === 'string' ? new URL(request, BASE).href : request.url);
+  class Request {
+    constructor(url, init = {}) {
+      this.url = new URL(url, BASE).href;
+      this.method = init.method || 'GET';
+      this.mode = init.mode || 'cors';
+      this.cache = init.cache || 'default';
+    }
+  }
+  const fetch = async (request) => {
+    requests.push(request);
+    const response = network(request);
+    if (!response) throw new TypeError('Sin conexión');
+    return response;
+  };
+  const cacheFor = (store) => ({
+    // Como en el navegador, addAll no guarda nada si una respuesta falla.
+    async addAll(list) {
+      const responses = [];
+      for (const request of list) {
+        const response = await fetch(request);
+        if (!response.ok) throw new TypeError('Respuesta no válida');
+        responses.push([urlOf(request), response]);
+      }
+      responses.forEach(([url, response]) => store.set(url, response));
+    },
+    async match(request, { ignoreSearch = false } = {}) {
+      const url = new URL(urlOf(request));
+      if (ignoreSearch) url.search = '';
+      return store.get(url.href);
+    },
+    async put(request, response) { store.set(urlOf(request), response); },
+  });
+  const caches = {
+    async open(name) {
+      if (!stores.has(name)) stores.set(name, new Map());
+      return cacheFor(stores.get(name));
+    },
+    async keys() { return [...stores.keys()]; },
+    async delete(name) { return stores.delete(name); },
+    async match(request) {
+      for (const store of stores.values()) if (store.has(urlOf(request))) return store.get(urlOf(request));
+      return undefined;
+    },
+  };
+  const self = {
+    location: new URL(`${BASE}service-worker.js`),
+    addEventListener(type, listener) { listeners[type] = listener; },
+    async skipWaiting() { lifecycle.skipWaiting += 1; },
+    clients: { async claim() { lifecycle.claim += 1; } },
+  };
+  vm.runInNewContext(source, { self, caches, fetch, Request, Response: { error: () => ({ type: 'error' }) }, URL, Promise });
+  const cacheName = /const CACHE_NAME = "([^"]+)"/.exec(source)[1];
+  const dispatch = async (type, extra = {}) => {
+    let pending;
+    const event = { ...extra, waitUntil(promise) { pending = promise; }, respondWith(promise) { pending = promise; } };
+    listeners[type](event);
+    return pending;
+  };
+  return { stores, requests, lifecycle, cacheName, dispatch, Request };
+}
+
+const shell = () => JSON.parse(/const APP_SHELL = (\[[\s\S]*?\]);/.exec(source)[1].replace(/,\s*\]/, ']'));
+
+test('PWA-02: installing downloads every app file from the network, bypassing the HTTP cache', async () => {
+  const worker = loadWorker();
+  await worker.dispatch('install');
+  assert.equal(worker.requests.length, shell().length);
+  assert(worker.requests.every((request) => request.cache === 'reload'));
+  assert.equal(worker.stores.get(worker.cacheName).size, shell().length);
+  assert.equal(worker.lifecycle.skipWaiting, 1);
+});
+
+test('PWA-02: if one file fails, nothing of the new version is used', async () => {
+  const worker = loadWorker({ network: (request) => ({ ok: !request.url.endsWith('/src/storage.js'), body: request.url }) });
+  await assert.rejects(worker.dispatch('install'));
+  assert.equal(worker.stores.get(worker.cacheName)?.size ?? 0, 0);
+  assert.equal(worker.lifecycle.skipWaiting, 0);
+});
+
+test('PWA-02: requests are answered only from this version cache, never from an older one', async () => {
+  const worker = loadWorker({ caches: { 'sterk-v1-7-3': { [`${BASE}src/storage.js`]: 'storage antiguo' } } });
+  await worker.dispatch('install');
+  const response = await worker.dispatch('fetch', { request: new worker.Request(`${BASE}src/storage.js`) });
+  assert.equal(response.body, `red:${BASE}src/storage.js`);
+});
+
+test('PWA-01: activating removes older Sterk caches and keeps the rest of the origin', async () => {
+  const worker = loadWorker({ caches: { 'sterk-v1-7-3': {}, 'otra-app': {} } });
+  await worker.dispatch('install');
+  await worker.dispatch('activate');
+  assert.deepEqual([...worker.stores.keys()].sort(), ['otra-app', worker.cacheName].sort());
+  assert.equal(worker.lifecycle.claim, 1);
+});
+
+test('PWA-01: offline, navigation opens the saved app but a missing resource is not replaced by HTML', async () => {
+  let online = true;
+  const worker = loadWorker({ network: (request) => (online ? { ok: true, body: `red:${request.url}` } : null) });
+  await worker.dispatch('install');
+  online = false;
+
+  const page = await worker.dispatch('fetch', { request: new worker.Request(`${BASE}?source=pwa`, { mode: 'navigate' }) });
+  assert.equal(page.body, `red:${BASE}`);
+  const other = await worker.dispatch('fetch', { request: new worker.Request(`${BASE}historial`, { mode: 'navigate' }) });
+  assert.equal(other.body, `red:${BASE}index.html`);
+  const script = await worker.dispatch('fetch', { request: new worker.Request(`${BASE}src/nuevo.js`) });
+  assert.equal(script.type, 'error');
+});
+
+test('PWA-01: other origins and non-GET requests are left to the browser', async () => {
+  const worker = loadWorker();
+  assert.equal(await worker.dispatch('fetch', { request: new worker.Request('https://fonts.example/font.woff2') }), undefined);
+  assert.equal(await worker.dispatch('fetch', { request: new worker.Request(`${BASE}src/app.js`, { method: 'POST' }) }), undefined);
+});
+
+test('PWA-02: package.json, the cache name and Settings show the same version', () => {
+  const { version } = JSON.parse(fs.readFileSync(new URL('package.json', root), 'utf8'));
+  const cacheName = /const CACHE_NAME = "([^"]+)"/.exec(source)[1];
+  const settings = /Versión (\d+\.\d+\.\d+)/.exec(fs.readFileSync(new URL('src/dashboard.js', root), 'utf8'))[1];
+  assert.equal(cacheName, `sterk-v${version.replaceAll('.', '-')}`);
+  assert.equal(settings, version);
+});
+
+test('PWA-02: the precache lists every app file, and every listed file exists', () => {
+  const listed = shell();
+  const expected = [
+    './', './index.html', './manifest.json',
+    ...fs.readdirSync(new URL('src/', root)).filter((file) => /\.(js|css)$/.test(file)).map((file) => `./src/${file}`),
+    ...fs.readdirSync(new URL('icons/', root)).map((file) => `./icons/${file}`),
+    ...fs.readdirSync(new URL('assets/exercises/', root)).map((file) => `./assets/exercises/${file}`),
+  ];
+  assert.deepEqual([...listed].sort(), [...expected].sort());
+  for (const file of listed.filter((file) => file !== './')) assert(fs.existsSync(new URL(file, root)), file);
+});
