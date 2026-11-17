@@ -37,16 +37,18 @@ Actualiza el estado y anota evidencia relevante al avanzar. No marques una funci
 
 | ID | Prioridad sugerida | Estado | Pendiente y resultado esperado |
 | --- | --- | --- | --- |
-| PWA-01 | Alta | Propuesta | Limitar la limpieza de cachés a Sterk, separar fallbacks de navegación y recursos, y comprobar el ciclo de actualización. |
-| PWA-02 | Alta | Propuesta | Evitar versiones mezcladas al actualizar: precachear con `cache: "reload"` para no tomar archivos de la caché HTTP, usar red primero para la navegación (HTML) y derivar la versión de una sola fuente. |
+| PWA-01 | Alta | Lista para integrar | Limitar la limpieza de cachés a Sterk, separar fallbacks de navegación y recursos, y comprobar el ciclo de actualización. |
+| PWA-02 | Alta | Lista para integrar | Evitar versiones mezcladas al actualizar: precachear con `cache: "reload"` para no tomar archivos de la caché HTTP, servir cada versión completa desde su propia caché y mantener una sola versión comprobada. |
 | QA-03 | Alta | En curso | Fixtures con respaldos de versiones anteriores (anonimizados) y pruebas que confirmen que una versión nueva conserva todos los datos. Requisito de cualquier cambio en persistencia. |
 | QA-01 | Alta | Propuesta | Ejecutar una revisión en iPhone físico: instalación, offline, recuperación de sesión, controles táctiles, decimales, respaldos y actualización con sesión activa. |
 | A11Y-01 | Media | Propuesta | Revisar nombres accesibles de botones, foco tras renderizados y anuncios del temporizador con VoiceOver. Corregir problemas confirmados. |
 | QA-02 | Media | Propuesta | Automatizar comprobaciones relevantes en CI y añadir cobertura de navegador para los flujos con mayor riesgo. |
 
-El service worker precachea recursos, pero actualmente elimina todas las otras cachés del origen y puede devolver el HTML de inicio para un recurso no disponible. Hay que comprobar fallos de carga y actualizaciones; las pruebas de lógica existentes no certifican estos flujos en Safari.
+Hasta 1.7.3, el service worker eliminaba todas las otras cachés del origen y podía devolver el HTML de inicio para un recurso no disponible. **Implementado en `claude/pwa-02` (1.7.4, 2026-11-16):** solo borra cachés `sterk-*` anteriores; sin conexión, una navegación abre `index.html` guardado y un recurso ausente devuelve un error en vez de HTML.
 
 Para PWA-02: `cache.addAll` puede recibir archivos que el navegador ya tenía en su caché HTTP y combinarlos con archivos nuevos; una mezcla de módulos puede dejar la pantalla en blanco, y en iPhone reinstalar la app para "arreglarla" borra sus datos. La versión aparece hoy en `package.json`, `CACHE_NAME` y el texto de Ajustes.
+
+**PWA-02 implementado en `claude/pwa-02` (1.7.4, 2026-11-16):** el precaché pide cada archivo con `cache: "reload"`, la instalación falla entera si falta uno (y entonces sigue la versión anterior) y cada respuesta sale solo de la caché de la versión activa, nunca de otra. Decisión: **no** se usa red primero para el HTML. `index.html` no cambia entre versiones y cargarlo de la red mientras los módulos salen de la caché anterior sería otra forma de mezclar versiones; el riesgo de olvidar subir la versión se cubre con una prueba. Sin paso de compilación, la versión sigue escrita en tres sitios: `tests/service-worker.test.mjs` falla si difieren o si el precaché no lista exactamente los archivos de la app. Evidencia: pruebas con cachés y red simuladas, y una actualización real 1.7.3 → 1.7.4 en Edge headless con perfil temporal (aviso de nueva versión, datos idénticos, caché ajena conservada, apertura sin conexión). Pendiente: comprobar el ciclo en Safari de un iPhone (QA-01).
 
 Para QA-01, registrar dispositivo, versión de iOS, condiciones de red, pasos y resultado. La revisión de accesibilidad debe incluir el botón de volver del detalle de historial y el efecto de la actualización periódica del temporizador. No hay resultados de pruebas físicas incorporados en este análisis.
 
