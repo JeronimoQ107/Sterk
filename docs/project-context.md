@@ -37,6 +37,7 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 - Registrar u omitir el último ejercicio no cierra el entrenamiento. Para finalizar hay que registrar, omitir o quitar los ejercicios pendientes.
 - La fecha histórica y el comienzo real del cronómetro son conceptos distintos: cambiar la fecha no debe inflar la duración.
 - El rendimiento es una estimación comparativa basada en peso y repeticiones, no una medición real de 1RM.
+- Un dato guardado que no se puede leer nunca se sobrescribe, ni siquiera al restaurar una copia o borrar todos los datos (decisión del 2026-11-16, DATA-02). La app avisa y ofrece exportar; recuperar ese dato requiere revisarlo fuera de la app.
 - Las discrepancias entre métricas y los riesgos de persistencia están documentados en [architecture.md](architecture.md) y [roadmap.md](roadmap.md). No se consideran resueltos por esta actualización documental.
 
 ## Fuera de alcance actual
