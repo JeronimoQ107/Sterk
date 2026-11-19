@@ -131,7 +131,7 @@ test('unilateral series mode persists asymmetric values and only counts complete
 test('finalization blocks unsaved edits, then writes completed summary on explicit action', () => {
   const { run, click, notices } = setup();
   run('state.builderSelection = ["bayesian-curl"]; startSession();');
-  click({ toggleSet: '0' }); click({ toggleSet: '1' }); click({ toggleSet: '2' });
+  for (let index = 0; index < run('draft().sets.length'); index += 1) click({ toggleSet: String(index) });
   click({ setReps: '0', delta: '2' });
   click({ action: 'finish-session' });
   assert.equal(notices.length, 1);
@@ -225,6 +225,40 @@ test('HIST-02 y QA-03: los registros V0 sin sesión siguen en el historial al ce
     assert.ok(run('exerciseOptions(getHistorySessions())').some((option) => /bench/i.test(JSON.stringify(option))));
     assert.equal(memory.get('gym-tracker:v0:workout-entries'), fixture['gym-tracker:v0:workout-entries']);
     assert.equal(memory.get('sterk:v1:workout-entries'), fixture['sterk:v1:workout-entries']);
+  } finally {
+    memory.clear();
+  }
+});
+
+test('HIST-03 y QA-03: las sesiones antiguas sin totales muestran valores calculados de sus entradas', () => {
+  const { run, click, app } = setup();
+  const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/storage-v1.7.3.json', import.meta.url), 'utf8'));
+  memory.clear();
+  Object.entries(fixture).forEach(([key, value]) => memory.set(key, value));
+  try {
+    const old = run('getHistorySessions()').find((session) => session.id === 'session-b');
+    assert.deepEqual([old.exerciseCount, old.setCount, old.volume, old.skippedCount], [1, 1, 337.5, 0]);
+    const current = run('getHistorySessions()').find((session) => session.id === 'session-a');
+    assert.deepEqual([current.exerciseCount, current.setCount, current.volume], [2, 5, 3620]);
+
+    run('state.view = "history"; render();');
+    assert.doesNotMatch(app.innerHTML, /undefined|NaN/);
+    run('state.historySessionId = "session-b"; state.view = "history-detail"; render();');
+    assert.doesNotMatch(app.innerHTML, /undefined|NaN/);
+    assert.match(app.innerHTML, /337,5 lb/);
+
+    // Al finalizar una sesión de piernas, la comparación usa el volumen calculado de session-b.
+    storage.clearActiveSession();
+    run('state.builderSelection = ["custom-cable-kickback"]; startSession();');
+    run('draft().sets.forEach((set) => { set.weight = 25; set.reps = 10; }); persistSession();');
+    const setCount = run('draft().sets.length');
+    for (let index = 0; index < setCount; index += 1) click({ toggleSet: String(index) });
+    run('completeSession();');
+    assert.equal(run('state.completion.previous.id'), 'session-b');
+    assert.equal(run('state.completion.previous.volume'), 337.5);
+    assert.doesNotMatch(app.innerHTML, /undefined|NaN/);
+
+    assert.equal(memory.get('sterk:v1:completed-sessions').includes('"id":"session-b","routineId":"legs"'), true, 'la sesión antigua no se reescribe');
   } finally {
     memory.clear();
   }

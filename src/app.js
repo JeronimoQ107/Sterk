@@ -298,7 +298,8 @@ function completeSession() {
   const label = categoryLabel(categoryTags);
   const summary = { id: state.session.id, categoryTags, categoryLabel: label, startedAt: state.session.startedAt, endedAt: endedAt.toISOString(), durationSeconds, durationMinutes: Math.max(1, Math.round(durationSeconds / 60)), exerciseCount: entries.length, skippedCount: state.session.exercises.filter((item) => item.status === "skipped").length, setCount: entries.reduce((sum, entry) => sum + entry.setCount, 0), repCount: entries.reduce((sum, entry) => sum + entry.sets.reduce((total, set) => total + setReps(set), 0), 0), volume: entries.reduce((sum, entry) => sum + entry.volume, 0) };
   const key = categoryKey(categoryTags);
-  const previous = storage.getCompletedSessions().filter((item) => categoryKey(item.categoryTags || [item.routineId].filter(Boolean)) === key && new Date(item.startedAt) < new Date(summary.startedAt)).sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt)).at(-1) || null;
+  const previousSession = storage.getCompletedSessions().filter((item) => categoryKey(item.categoryTags || [item.routineId].filter(Boolean)) === key && new Date(item.startedAt) < new Date(summary.startedAt)).sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt)).at(-1) || null;
+  const previous = previousSession && { ...previousSession, ...sessionTotals(previousSession, storage.getEntries().filter((entry) => entry.sessionId === previousSession.id)) };
   storage.saveCompletedSession(summary);
   storage.clearActiveSession();
   state.completion = { summary, previous };
@@ -317,12 +318,28 @@ function sessionMetadata(session, entries) {
   return { categoryTags, label: session.categoryLabel || categoryLabel(categoryTags) || session.routine || "Entrenamiento" };
 }
 
+// HIST-03: totales de un grupo de entradas. Las sesiones finalizadas con el formato antiguo
+// (routineId y durationMinutes) no guardan estos campos; se calculan al mostrarlas, sin escribirlos.
+function entryTotals(entries) {
+  return {
+    exerciseCount: entries.length,
+    setCount: entries.reduce((sum, entry) => sum + entry.setCount, 0),
+    repCount: entries.reduce((sum, entry) => sum + entry.sets.reduce((total, set) => total + setReps(set), 0), 0),
+    volume: entries.reduce((sum, entry) => sum + entry.volume, 0),
+  };
+}
+
+function sessionTotals(session, entries) {
+  const totals = entryTotals(entries);
+  return { ...Object.fromEntries(Object.entries(totals).map(([key, value]) => [key, Number.isFinite(session[key]) ? session[key] : value])), skippedCount: Number.isFinite(session.skippedCount) ? session.skippedCount : 0 };
+}
+
 function getHistorySessions() {
   const entries = storage.getEntries();
   const completed = storage.getCompletedSessions();
   const activeSessionId = storage.getActiveSession()?.id;
   const completedIds = new Set(completed.map((session) => session.id));
-  const result = completed.map((session) => { const sessionEntries = entries.filter((entry) => entry.sessionId === session.id); return { ...session, ...sessionMetadata(session, sessionEntries), durationSeconds: session.durationSeconds ?? Math.max(0, Number(session.durationMinutes || 0) * 60), entries: sessionEntries, synthetic: false }; });
+  const result = completed.map((session) => { const sessionEntries = entries.filter((entry) => entry.sessionId === session.id); return { ...session, ...sessionMetadata(session, sessionEntries), ...sessionTotals(session, sessionEntries), durationSeconds: session.durationSeconds ?? Math.max(0, Number(session.durationMinutes || 0) * 60), entries: sessionEntries, synthetic: false }; });
   const orphanGroups = new Map();
   // HIST-02: las entradas sin sesión (historial V0) siempre se muestran; sin sesión activa, activeSessionId también es undefined.
   entries.filter((entry) => !entry.sessionId || (entry.sessionId !== activeSessionId && !completedIds.has(entry.sessionId))).forEach((entry) => {
@@ -334,7 +351,7 @@ function getHistorySessions() {
     const sorted = group.sort((a, b) => new Date(a.recordedAt) - new Date(b.recordedAt));
     const first = sorted[0];
     const categoryTags = uniqueCategories(group);
-    result.push({ id, categoryTags, label: categoryLabel(categoryTags), startedAt: first.recordedAt, endedAt: sorted.at(-1).recordedAt, durationSeconds: 0, exerciseCount: group.length, skippedCount: 0, setCount: group.reduce((sum, entry) => sum + entry.setCount, 0), repCount: group.reduce((sum, entry) => sum + entry.sets.reduce((total, set) => total + setReps(set), 0), 0), volume: group.reduce((sum, entry) => sum + entry.volume, 0), entries: group, synthetic: true });
+    result.push({ id, categoryTags, label: categoryLabel(categoryTags), startedAt: first.recordedAt, endedAt: sorted.at(-1).recordedAt, durationSeconds: 0, ...entryTotals(group), skippedCount: 0, entries: group, synthetic: true });
   });
   return result.filter((session) => session.entries.length).sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt));
 }
