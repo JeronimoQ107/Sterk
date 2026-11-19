@@ -71,9 +71,9 @@ test('the settings selector is gone and legacy preferences cannot disable set ch
   storage.saveSettings({ trackingMode: 'exercise' });
   run('state.builderSelection = ["pec-deck"]; startSession();');
   assert.equal(storage.getActiveSession().trackingMode, 'set');
-  const row = run('renderSet(draft().sets[0], 0)');
-  assert(row.indexOf('class="set-number"') < row.indexOf('class="set-body"'));
-  assert(row.indexOf('class="set-body"') < row.indexOf('class="set-check"'));
+  const row = run('renderSetRows(draft().sets[0], 0, null)');
+  const order = ['class="ex-n"', 'class="ex-prev"', 'class="weight-value"', 'class="reps-value"', 'class="ex-check"'].map((marker) => row.indexOf(marker));
+  assert(order.every((position, index) => position >= 0 && (index === 0 || position > order[index - 1])), 'serie, anterior, peso, repeticiones y marcador en ese orden');
   click({ toggleSet: '0' });
   assert.equal(storage.getActiveSession().exercises[0].sets[0].completed, true);
   run('state.view = "settings"; render();');
@@ -128,18 +128,41 @@ test('unilateral series mode persists asymmetric values and only counts complete
   assert.equal(storage.getEntries()[0].volume, 550);
   assert.equal(storage.getEntries()[0].setCount, 1);
 });
-test('finalization blocks unsaved edits, then writes completed summary on explicit action', () => {
+test('UX-02: finishing registers the current edits, but untouched pending exercises still block', () => {
   const { run, click, notices } = setup();
-  run('state.builderSelection = ["bayesian-curl"]; startSession();');
+  run('state.builderSelection = ["bayesian-curl", "hammer-curl"]; startSession();');
   for (let index = 0; index < run('draft().sets.length'); index += 1) click({ toggleSet: String(index) });
+  assert.equal(run('state.exerciseIndex'), 1, 'la última serie registra y pasa al siguiente pendiente');
+  click({ jump: '0' });
   click({ setReps: '0', delta: '2' });
+  assert.equal(storage.getActiveSession().exercises[0].status, 'pending');
   click({ action: 'finish-session' });
-  assert.equal(notices.length, 1);
+  assert.equal(notices.length, 1, 'hammer-curl sigue pendiente sin series marcadas');
   assert.equal(storage.getCompletedSessions().length, 0);
-  run('saveExercise();');
+  assert.equal(storage.getActiveSession().exercises[0].status, 'registered', 'la edición de bayesian-curl se registró al finalizar');
+  run('goToExercise(1);');
+  click({ action: 'skip' });
   click({ action: 'finish-session' });
   assert.equal(storage.getActiveSession(), null);
   assert.equal(storage.getCompletedSessions()[0].volume, 800);
+});
+test('UX-02: leaving an exercise registers its checked sets; with nothing checked it stays pending', () => {
+  const { run, click } = setup();
+  run('state.builderSelection = ["bayesian-curl", "hammer-curl"]; startSession();');
+  click({ toggleSet: '0' });
+  assert.equal(storage.getEntries().length, 0, 'una serie marcada no registra por sí sola');
+  click({ action: 'next' });
+  assert.equal(run('state.exerciseIndex'), 1);
+  assert.equal(storage.getEntries().length, 1);
+  assert.equal(storage.getEntries()[0].setCount, 1);
+  assert.equal(storage.getActiveSession().exercises[0].status, 'registered');
+  click({ jump: '0' });
+  assert.equal(storage.getActiveSession().exercises[1].status, 'pending', 'sin series marcadas no se registra');
+  assert.equal(storage.getEntries().length, 1);
+  click({ toggleSet: '1' });
+  click({ action: 'leave-session' });
+  assert.equal(storage.getEntries()[0].setCount, 2, 'volver al inicio también registra la edición');
+  assert.equal(storage.getCompletedSessions().length, 0, 'salir no finaliza el entrenamiento');
 });
 test('reorder preserves current draft; removing exercises can leave a recoverable empty session', () => {
   const { run, click, dialogs } = setup();

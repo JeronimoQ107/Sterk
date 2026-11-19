@@ -1,7 +1,7 @@
 // La versión debe coincidir con package.json y con APP_VERSION (src/version.js); tests/service-worker.test.mjs lo comprueba.
 // Cambiar este archivo es lo que hace que el iPhone descargue una versión nueva.
 const CACHE_PREFIX = "sterk-";
-const CACHE_NAME = "sterk-v1-7-6";
+const CACHE_NAME = "sterk-v1-8-0";
 const APP_SHELL = [
   "./",
   "./index.html",

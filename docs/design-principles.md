@@ -1,6 +1,6 @@
 # Principios de diseño de Sterk
 
-> Decidido el **2026-11-19**: dirección **A · iOS nativo** con la paleta **índigo azulado sobre carbón**, que sustituye al verde lima. Aún no está implementado; la primera pantalla será la de ejercicio (UX-02). Producto: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md).
+> Decidido el **2026-11-19**: dirección **A · iOS nativo** con la paleta **índigo azulado sobre carbón**, que sustituye al verde lima. Desde 1.8.0 la paleta se aplica a toda la app y la pantalla de ejercicio (UX-02) sigue estas reglas; el resto de pantallas e icono quedan para UI-02. Producto: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md).
 
 Estas reglas existen para que Sterk no parezca una interfaz generada por IA y para que se use rápido en el gimnasio. Si una regla impide algo necesario, cámbiala aquí con su motivo antes de saltártela.
 
@@ -65,7 +65,7 @@ Es la referencia del resto de la app. Maqueta aprobada en la revisión del 2026-
 - Por lado: cada serie se divide en dos filas, I y D, con un marcador cada una. Sin casilla de "ambos".
 - Barra inferior: ejercicio anterior a la izquierda (texto en `--accent`) y siguiente a la derecha (botón relleno).
 - Se conservan los controles actuales de deslizar y escribir peso y repeticiones, sin mostrar los valores vecinos.
-- **Pendiente de decidir al implementar:** hoy un ejercicio se registra solo al marcar su última serie si todas tienen repeticiones, y con "Registrar ejercicio" en los demás casos. Sin ese botón, hay que definir cuándo se registra un ejercicio con series sin marcar (por ejemplo, al pasar al siguiente) sin cambiar la regla de que finalizar el entrenamiento es explícito.
+- Sin botón "Registrar ejercicio" (decidido el 2026-11-19): al marcar la última serie con repeticiones se registra y pasa al siguiente pendiente; al salir del ejercicio por cualquier vía con alguna serie o lado marcado, se registra lo marcado; sin nada marcado queda pendiente. Finalizar sigue siendo una acción explícita y se bloquea mientras haya ejercicios pendientes sin nada marcado.
 
 ## Textos
 

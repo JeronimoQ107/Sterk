@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-> Implementación revisada: **1.7.6, 2026-11-19**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+> Implementación revisada: **1.8.0, 2026-11-19**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
 
 ## Implementación actual
 
@@ -69,9 +69,10 @@ El peso se presenta en libras, con ajuste directo de 2,5 lb y entrada decimal ma
 ## Ciclo de la sesión
 
 - La sesión activa contiene identificador, fechas, categorías, índice de navegación y borradores con estados `pending`, `registered` o `skipped`.
-- Los cambios de valores, series, marcado y navegación se guardan inmediatamente. Si se edita un ejercicio registrado, vuelve a pendiente para exigir actualizar su entrada.
+- Los cambios de valores, series, marcado y navegación se guardan inmediatamente. Si se edita un ejercicio registrado, vuelve a pendiente hasta que se vuelva a registrar.
 - Se puede añadir, crear, quitar o reordenar ejercicios conservando el identificador y el cronómetro. Una sesión vacía sigue siendo recuperable.
-- Registrar un ejercicio exige al menos una serie o lado marcado. Al marcar la última parte, se registra automáticamente si todas las partes tienen repeticiones positivas; el entrenamiento permanece abierto.
+- Registrar un ejercicio exige al menos una serie o lado marcado. Al marcar la última parte, se registra automáticamente si todas las partes tienen repeticiones positivas y se pasa al siguiente pendiente. Desde 1.8.0 no hay botón "Registrar ejercicio": salir de un ejercicio pendiente con algo marcado (cambiar de ejercicio, volver a Inicio, añadir ejercicios o finalizar) lo registra (`commitCurrentExercise`); sin nada marcado sigue pendiente. El entrenamiento permanece abierto.
+- La pantalla de ejercicio (UX-02) es una lista con columnas Serie · Anterior · lb · Reps · ✓; "Anterior" muestra la misma serie y lado del último registro. Las acciones de sesión y de ejercicio (añadir, editar, por lado, copiar, eliminar serie, omitir, finalizar) están en el menú `⋯`. Los controles de deslizar y escribir no cambian; los valores vecinos solo se ven al deslizar.
 - La finalización es explícita y exige resolver los ejercicios pendientes. Guarda resumen y duración y compara volumen con la sesión anterior de la misma categoría, sin comprobar que coincidan ejercicios o series.
 - `clockStartedAt` conserva el inicio real del cronómetro; `startedAt` representa la fecha histórica. Cambiar la fecha modifica también las entradas asociadas y conserva la duración.
 

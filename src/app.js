@@ -59,11 +59,26 @@ function markEdited() {
   current.status = "pending";
   current.sets.forEach((set) => { if (set.sides) set.completed = SIDES.every((side) => set.sides[side].completed); });
 }
-function renderSet(set, index) {
-  const controls = (part, side = "") => `<div class="side-row">${side ? `<div class="side-heading"><strong>${sideLabel(side)}</strong><div class="side-utilities"><button class="copy-side" data-copy-side="${index}" data-side="${side}" aria-label="Copiar valores de ${sideLabel(side)} al otro lado" title="Copiar al otro lado">${icon("copy")}</button><button class="side-check" data-toggle-set="${index}" data-side="${side}" aria-label="${part.completed ? "Desmarcar" : "Completar"} ${sideLabel(side)} serie ${index + 1}" aria-pressed="${part.completed}">${part.completed ? icon("check") : ""}</button></div></div>` : ""}<div class="set-controls"><div><small>PESO · LB</small><button class="weight-value" role="spinbutton" aria-valuemin="0" aria-valuenow="${part.weight}" aria-valuetext="${part.weight} libras" aria-describedby="weight-help" data-edit-weight="${index}" data-side="${side}" aria-label="Editar peso ${side ? sideLabel(side) : ""} serie ${index + 1}"><span class="weight-neighbor" data-weight-offset="-2" aria-hidden="true">${part.weight >= 5 ? formatNumber(part.weight - 5) : ""}</span><span class="weight-neighbor" data-weight-offset="-1" data-weight-previous aria-hidden="true">${part.weight >= 2.5 ? formatNumber(part.weight - 2.5) : ""}</span><span data-weight-offset="0" data-weight-number>${formatNumber(part.weight)}</span><span class="weight-neighbor" data-weight-offset="1" data-weight-next aria-hidden="true">${formatNumber(part.weight + 2.5)}</span><span class="weight-neighbor" data-weight-offset="2" aria-hidden="true">${formatNumber(part.weight + 5)}</span></button></div><div><small>REPETICIONES</small><button class="reps-value" role="spinbutton" aria-valuemin="0" aria-valuemax="999" aria-valuenow="${part.reps}" aria-valuetext="${part.reps} repeticiones" aria-describedby="weight-help" data-edit-reps="${index}" data-side="${side}" aria-label="Editar repeticiones ${side ? sideLabel(side) : ""} serie ${index + 1}"><span data-reps-offset="-2" aria-hidden="true">${part.reps >= 2 ? part.reps - 2 : ""}</span><span data-reps-offset="-1" aria-hidden="true">${part.reps >= 1 ? part.reps - 1 : ""}</span><span data-reps-offset="0">${part.reps}</span><span data-reps-offset="1" aria-hidden="true">${part.reps < 999 ? part.reps + 1 : ""}</span><span data-reps-offset="2" aria-hidden="true">${part.reps < 998 ? part.reps + 2 : ""}</span></button></div></div></div>`;
-  const completed = parts(set).every((part) => part.completed);
-  const partial = !completed && parts(set).some((part) => part.completed);
-  return `<article class="set-card ${completed ? "done" : partial ? "partial" : ""} ${set.sides ? "unilateral" : ""}"><span class="set-number" aria-label="Serie ${index + 1}">${index + 1}</span><div class="set-body">${set.sides ? SIDES.map((side) => controls(set.sides[side], side)).join("") : controls(set)}</div><button class="set-check" data-toggle-set="${index}" aria-label="${completed ? "Desmarcar" : "Completar"} serie ${index + 1}${set.sides ? " en ambos lados" : ""}" aria-pressed="${completed}">${icon("check")}</button></article>`;
+// UX-02: cada serie es una fila de la lista (por lado, dos filas: I y D) con un solo marcador por fila.
+function weightButton(part, index, side) {
+  return `<button class="weight-value" role="spinbutton" aria-valuemin="0" aria-valuenow="${part.weight}" aria-valuetext="${part.weight} libras" aria-describedby="weight-help" data-edit-weight="${index}" data-side="${side}" aria-label="Peso${side ? ` ${sideLabel(side)}` : ""}, serie ${index + 1}"><span class="weight-neighbor" data-weight-offset="-2" aria-hidden="true">${part.weight >= 5 ? formatNumber(part.weight - 5) : ""}</span><span class="weight-neighbor" data-weight-offset="-1" data-weight-previous aria-hidden="true">${part.weight >= 2.5 ? formatNumber(part.weight - 2.5) : ""}</span><span data-weight-offset="0" data-weight-number>${formatNumber(part.weight)}</span><span class="weight-neighbor" data-weight-offset="1" data-weight-next aria-hidden="true">${formatNumber(part.weight + 2.5)}</span><span class="weight-neighbor" data-weight-offset="2" aria-hidden="true">${formatNumber(part.weight + 5)}</span></button>`;
+}
+function repsButton(part, index, side) {
+  return `<button class="reps-value" role="spinbutton" aria-valuemin="0" aria-valuemax="999" aria-valuenow="${part.reps}" aria-valuetext="${part.reps} repeticiones" aria-describedby="weight-help" data-edit-reps="${index}" data-side="${side}" aria-label="Repeticiones${side ? ` ${sideLabel(side)}` : ""}, serie ${index + 1}"><span data-reps-offset="-2" aria-hidden="true">${part.reps >= 2 ? part.reps - 2 : ""}</span><span data-reps-offset="-1" aria-hidden="true">${part.reps >= 1 ? part.reps - 1 : ""}</span><span data-reps-offset="0">${part.reps}</span><span data-reps-offset="1" aria-hidden="true">${part.reps < 999 ? part.reps + 1 : ""}</span><span data-reps-offset="2" aria-hidden="true">${part.reps < 998 ? part.reps + 2 : ""}</span></button>`;
+}
+// Resultado de la misma serie (y lado) la última vez; solo cuenta lo que se marcó como hecho.
+function previousPart(previousSets, index, side) {
+  const set = previousSets?.[index];
+  const part = !set ? null : side ? (set.sides ? set.sides[side] : set) : (set.sides ? null : set);
+  return part?.completed ? part : null;
+}
+function renderSetRows(set, index, previousSets) {
+  const row = (part, side = "") => {
+    const previous = previousPart(previousSets, index, side);
+    const label = `${side === "right" ? "" : index + 1}${side ? `<small>${side === "left" ? "I" : "D"}</small>` : ""}`;
+    return `<div class="ex-row ${part.completed ? "done" : ""}" role="listitem"><span class="ex-n">${label}</span><span class="ex-prev">${previous ? `${formatNumber(previous.weight)} × ${previous.reps}` : "—"}</span>${weightButton(part, index, side)}${repsButton(part, index, side)}<button class="ex-check" data-toggle-set="${index}" ${side ? `data-side="${side}"` : ""} aria-pressed="${part.completed}" aria-label="${part.completed ? "Desmarcar" : "Completar"} serie ${index + 1}${side ? `, ${sideLabel(side)}` : ""}">${icon("check")}</button></div>`;
+  };
+  return set.sides ? SIDES.map((side) => row(set.sides[side], side)).join("") : row(set);
 }
 function sessionControls() {
   return `<div class="session-tools"><button data-action="add-exercises">${icon("plus")} Añadir ejercicio</button><button data-action="manage-session">${icon("edit")} Editar</button><button data-action="finish-session">Finalizar</button></div>`;
@@ -117,11 +132,18 @@ function handleSessionClick(event) {
     details.querySelector("input").focus(); details.scrollIntoView({ block: "center", behavior: "smooth" }); return true;
   }
   if (action === "add-exercises") {
+    commitCurrentExercise();
     state.adding = true; state.builderSelection = []; state.builderFilter = "all"; state.builderQuery = ""; state.view = "builder"; persistSession(); render(); return true;
   }
   if (action === "manage-session") { openSessionEditor(); return true; }
+  if (action === "exercise-menu") { openExerciseMenu(); return true; }
+  if (action === "copy-sides") {
+    draft().sets.forEach((set) => { if (set.sides) { set.sides.right.weight = set.sides.left.weight; set.sides.right.reps = set.sides.left.reps; } });
+    markEdited(); persistSession(); render(); return true;
+  }
   if (action === "finish-session") {
-    if (state.session.exercises.some((exercise) => exercise.status === "pending")) { alert("Registra u omite los ejercicios pendientes antes de finalizar. También puedes quitarlos desde Editar entrenamiento."); return true; }
+    commitCurrentExercise();
+    if (state.session.exercises.some((exercise) => exercise.status === "pending")) { alert("Marca al menos una serie u omite los ejercicios pendientes antes de finalizar. También puedes quitarlos desde Editar entrenamiento."); return true; }
     if (!storage.getEntries().some((entry) => entry.sessionId === state.session.id)) {
       if (confirm("No hay ejercicios registrados. ¿Cerrar esta sesión sin guardarla en el historial?")) { storage.clearActiveSession(); goHome(); }
       return true;
@@ -252,29 +274,62 @@ function renderBuilder() {
   <details class="custom-exercise"><summary>${icon('plus')} Crear ejercicio personalizado</summary><form id="custom-exercise-form"><label>Nombre<input name="name" required maxlength="50" autocomplete="off" value="${escapeHtml(state.builderQuery)}"></label><label>Grupo muscular<select name="muscleGroup">${Object.entries(MUSCLE_GROUPS).map(([id, label]) => `<option value="${id}">${label}</option>`).join('')}</select></label><label>Categoría<select name="category">${CATEGORY_ORDER.map((id) => `<option value="${id}">${CATEGORY_LABELS[id]}</option>`).join('')}</select></label><button type="submit">Guardar ejercicio</button></form></details>
   <footer class="builder-action"><button class="primary-button" data-action="start-session" ${selected.length ? '' : 'disabled'}>${state.adding ? 'Añadir a la sesión' : 'Comenzar entrenamiento'}${selected.length ? ` (${selected.length})` : ''}${icon('right')}</button></footer></section>`);
 }
-function renderPrevious(previous) {
-  if (!previous) return `<div class="previous-compact empty"><span>Primera vez con este ejercicio</span></div>`;
-  const summary = entrySets(previous).map((set) => setDescription(set)).join(" · ");
-  return `<details class="previous-compact"><summary><span>Anterior · ${formatDate(previous.recordedAt)}</span><strong>${summary}</strong></summary><div>${entrySets(previous).map((set, index) => `<p><span>Serie ${index + 1}</span><strong>${setDescription(set)}</strong></p>`).join("")}</div></details>`;
-}
-
+// UX-02: pantalla de ejercicio con aspecto de lista de iOS (docs/design-principles.md).
 function renderExercise() {
   const current = draft();
   if (!current) return renderEmptySession();
   const previous = storage.getLastExerciseEntry(current.exerciseId, current.exercise, state.session.id);
-  const setMode = true;
-  const completed = current.sets.filter((set) => set.completed).length;
-  const setRows = current.sets.map((set, index) => renderSet(set, index)).join("");
-  renderShell(`<section class="screen exercise-screen"><header class="exercise-header"><button class="icon-button" data-action="leave-session" aria-label="Volver al inicio">${icon("left")}</button><div class="progress-copy"><span>${categoryLabel(uniqueCategories(state.session.exercises))}</span><strong>${state.exerciseIndex + 1} de ${state.session.exercises.length}</strong></div><div class="workout-clock"><small>${inputDate(state.session.startedAt) === todayInputDate() ? "SESIÓN" : formatDate(state.session.startedAt)}</small>${timer(state.session.clockStartedAt || state.session.startedAt)}</div><div class="progress-track"><i style="width:${((state.exerciseIndex + 1) / state.session.exercises.length) * 100}%"></i></div></header><div class="exercise-jump" aria-label="Ejercicios">${state.session.exercises.map((exercise, index) => `<button data-jump="${index}" class="${index === state.exerciseIndex ? "active" : ""} ${exercise.status}"><span>${index + 1}</span><small>${escapeHtml(exercise.exercise)}</small></button>`).join("")}</div><div class="exercise-title"><p class="eyebrow">${current.status === "skipped" ? "EJERCICIO OMITIDO" : `${escapeHtml(MUSCLE_GROUPS[current.muscleGroup] || current.muscleGroup)} · ${escapeHtml(CATEGORY_LABELS[current.category])}`}</p><h1>${escapeHtml(current.exercise)}</h1></div>${sessionControls()}${renderPrevious(previous)}<section class="control-section sets-section"><div class="section-heading"><h2>Series</h2><label class="side-option"><input type="checkbox" aria-label="Registrar por lado" data-action="toggle-unilateral" ${current.unilateral ? "checked" : ""}> Por lado</label><span>${setMode ? `${completed}/${current.sets.length} HECHAS` : `${current.sets.length} TOTAL`}</span></div><p class="weight-help" id="weight-help">Desliza el peso para ajustar · Toca para escribir</p><div class="sets-list">${setRows}</div><div class="set-actions"><button data-action="remove-set" ${current.sets.length <= 1 ? "disabled" : ""}>${icon("minus")} Eliminar última</button><button data-action="add-set">${icon("plus")} Añadir serie</button></div><button class="copy-weight" data-action="copy-first-weight" ${current.sets.length <= 1 ? "disabled" : ""}>Copiar peso de la primera serie</button></section><div class="exercise-secondary-actions"><button data-action="previous" ${state.exerciseIndex === 0 ? "disabled" : ""}>${icon("left")} Anterior</button><button data-action="skip">${current.status === "skipped" ? "Recuperar" : "Omitir"}</button><button data-action="next" ${state.exerciseIndex === state.session.exercises.length - 1 ? "disabled" : ""}>Siguiente ${icon("right")}</button></div><footer class="sticky-action"><button class="primary-button" data-action="save">${current.entryId ? "Actualizar ejercicio" : "Registrar ejercicio"}<span>${icon("right")}</span></button></footer></section>`);
-  const help = app.querySelector("#weight-help");
-  if (help) help.textContent = "Desliza peso o repeticiones · Toca para escribir";
+  const previousSets = previous ? entrySets(previous) : null;
+  const exercises = state.session.exercises;
+  const index = state.exerciseIndex;
+  const done = current.sets.filter((set) => parts(set).every((part) => part.completed)).length;
+  const total = current.sets.length;
+  const statusLabel = { registered: "registrado", skipped: "omitido", pending: "pendiente" };
+  const steps = exercises.map((exercise, position) => `<button data-jump="${position}" class="${position === index ? "now" : exercise.status}" ${position === index ? 'aria-current="step"' : ""} aria-label="${position + 1}. ${escapeHtml(exercise.exercise)}, ${statusLabel[exercise.status] || exercise.status}"></button>`).join("");
+  const details = [escapeHtml(MUSCLE_GROUPS[current.muscleGroup] || current.muscleGroup), `${done} de ${total} ${total === 1 ? "serie" : "series"}`];
+  if (current.status === "skipped") details.push("omitido");
+  else if (!previous) details.push("primera vez");
+  const before = exercises[index - 1], after = exercises[index + 1];
+  const dateLabel = inputDate(state.session.startedAt) === todayInputDate() ? "" : `${formatDate(state.session.startedAt)} · `;
+  renderShell(`<section class="screen exercise-screen ex"><header class="ex-nav"><button class="ex-back" data-action="leave-session" aria-label="Volver al inicio">${icon("left")}<span>${escapeHtml(categoryLabel(uniqueCategories(exercises)))}</span></button><span class="ex-clock">${dateLabel}${index + 1} de ${exercises.length} · ${timer(state.session.clockStartedAt || state.session.startedAt)}</span><button class="ex-more" data-action="exercise-menu" aria-label="Opciones del entrenamiento" aria-haspopup="dialog">${icon("more")}</button></header><nav class="ex-steps" aria-label="Ejercicios del entrenamiento">${steps}</nav><div class="ex-heading"><h1>${escapeHtml(current.exercise)}</h1><p>${details.join(" · ")}</p></div><div class="ex-cols" aria-hidden="true"><span>Serie</span><span>Anterior</span><span>lb</span><span>Reps</span><span></span></div><div class="ex-group ${current.status === "skipped" ? "skipped" : ""}" role="list" aria-label="Series">${current.sets.map((set, position) => renderSetRows(set, position, previousSets)).join("")}<button class="ex-add" data-action="add-set">${icon("plus")}<span>Añadir serie</span></button></div><p class="ex-note" id="weight-help">Desliza un número para ajustarlo o tócalo para escribir.</p><footer class="ex-bar">${before ? `<button class="ex-bar-prev" data-action="previous">${icon("left")}<span>${escapeHtml(before.exercise)}</span></button>` : "<span></span>"}${after ? `<button class="ex-bar-next" data-action="next"><span>${escapeHtml(after.exercise)}</span>${icon("right")}</button>` : `<button class="ex-bar-next" data-action="finish-session"><span>Finalizar</span></button>`}</footer></section>`);
 }
 
-function saveExercise() {
+// Menú ⋯: acciones de la sesión y del ejercicio. Vive dentro de #app para que sus botones usen los mismos manejadores.
+function openExerciseMenu() {
   const current = draft();
+  if (!current) return;
+  const item = (action, label, className = "") => `<button class="${className}" data-action="${action}">${label}</button>`;
+  const exerciseItems = [
+    item("toggle-unilateral", current.unilateral ? "Registrar sin lados" : "Registrar por lado"),
+    current.unilateral ? item("copy-sides", "Copiar el lado izquierdo al derecho") : "",
+    current.sets.length > 1 ? item("copy-first-weight", "Copiar el peso de la primera serie") : "",
+    current.sets.length > 1 ? item("remove-set", "Eliminar la última serie") : "",
+    item("skip", current.status === "skipped" ? "Recuperar este ejercicio" : "Omitir este ejercicio"),
+  ].join("");
+  const dialog = document.createElement("dialog");
+  dialog.className = "action-sheet";
+  dialog.setAttribute("aria-label", "Opciones del entrenamiento");
+  dialog.innerHTML = `<div class="sheet-group">${item("add-exercises", "Añadir ejercicio")}${item("manage-session", "Editar entrenamiento")}${item("finish-session", "Finalizar entrenamiento")}</div><div class="sheet-group">${exerciseItems}</div><div class="sheet-group"><button data-close>Cancelar</button></div>`;
+  dialog.addEventListener("click", (event) => { if (event.target === dialog || event.target.closest("[data-close], [data-action]")) dialog.close(); });
+  dialog.addEventListener("close", () => dialog.remove());
+  app.append(dialog);
+  dialog.showModal();
+}
+
+// UX-02: al dejar un ejercicio con alguna serie o lado marcado, se registra; sin nada marcado sigue pendiente.
+function commitCurrentExercise() {
+  if (state.view !== "exercise" || !state.session) return false;
+  const current = draft();
+  if (!current || current.status !== "pending" || !current.sets.some((set) => parts(set).some((part) => part.completed))) return false;
+  registerExercise(current);
+  showToast("Ejercicio registrado");
+  return true;
+}
+
+// Guarda las series marcadas del ejercicio como una entrada del historial; no cambia de pantalla.
+function registerExercise(current = draft()) {
   const now = new Date();
   const sets = current.sets.map((set) => structuredClone(set));
-  if (!sets.some((set) => parts(set).some((part) => part.completed))) { showToast("Marca al menos una serie o lado"); return; }
   const previousEntry = current.entryId ? storage.getEntries().find((entry) => entry.id === current.entryId) : null;
   const recordedAt = previousEntry?.recordedAt || dateTimeOnWorkoutDate(now, state.session.startedAt);
   const recordedDate = new Date(recordedAt);
@@ -284,6 +339,13 @@ function saveExercise() {
   current.entryId = entry.id;
   current.status = "registered";
   persistSession();
+}
+
+// Registro al completar la última serie: guarda y pasa al siguiente ejercicio pendiente.
+function saveExercise() {
+  const current = draft();
+  if (!current.sets.some((set) => parts(set).some((part) => part.completed))) { showToast("Marca al menos una serie o lado"); return; }
+  registerExercise(current);
   showToast("Ejercicio registrado");
   const pending = state.session.exercises.map((item, index) => ({ item, index })).filter(({ item }) => item.status === "pending");
   const next = pending.find(({ index }) => index > state.exerciseIndex) || pending[0];
@@ -467,7 +529,7 @@ function render() {
 
 function updateTimers() { document.querySelectorAll("[data-session-start]").forEach((element) => { element.textContent = formatDuration(elapsedSeconds(element.dataset.sessionStart)); }); }
 function showToast(message) { toast.textContent = message; toast.classList.add("visible"); window.setTimeout(() => toast.classList.remove("visible"), 1000); }
-function goToExercise(index) { state.exerciseIndex = Math.max(0, Math.min(index, state.session.exercises.length - 1)); persistSession(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+function goToExercise(index) { const target = Math.max(0, Math.min(index, state.session.exercises.length - 1)); if (target !== state.exerciseIndex) commitCurrentExercise(); state.exerciseIndex = target; persistSession(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
 function parseDecimal(value) { return Number(String(value).trim().replace(",", ".")); }
 function exportData() {
   const blob = new Blob([JSON.stringify(storage.exportData(), null, 2)], { type: "application/json" });
@@ -567,7 +629,7 @@ app.addEventListener("click", (event) => {
   if (action === "cancel-builder") { if (state.adding) { state.adding = false; state.view = "exercise"; render(); } else goHome(); }
   if (action === "start-session") { if (state.adding) { const selected = selectedExercises(); if (!selected.length) return; const first = state.session.exercises.length; state.session.exercises.push(...selected.map(newExerciseDraft)); state.adding = false; state.view = "exercise"; goToExercise(first); } else startSession(); }
   if (action === "resume") resumeSession();
-  if (action === "home" || action === "leave-session") goHome();
+  if (action === "home" || action === "leave-session") { commitCurrentExercise(); goHome(); }
   if (action === "discard-session" && confirm("¿Descartar la sesión en curso y sus registros?")) { const active = storage.getActiveSession(); if (active) storage.deleteSession(active.id); storage.clearActiveSession(); goHome(); }
   if (action === "add-set") { const previous = draft().sets.at(-1) || { weight: DEFAULT_ENTRY.weight, reps: 10 }; draft().sets.push(resetSet(previous)); markEdited(); persistSession(); render(); }
   if (action === "remove-set" && draft().sets.length > 1) { if (parts(draft().sets.at(-1)).some((part) => part.completed) && !confirm("¿Eliminar esta serie y sus datos?")) return; draft().sets.pop(); markEdited(); persistSession(); render(); }
@@ -575,7 +637,6 @@ app.addEventListener("click", (event) => {
   if (action === "previous") goToExercise(state.exerciseIndex - 1);
   if (action === "next") goToExercise(state.exerciseIndex + 1);
   if (action === "skip") { const current = draft(); if (current.status === "skipped") current.status = "pending"; else { if (current.entryId && !confirm("¿Omitir este ejercicio y eliminar su registro de esta sesión?")) return; if (current.entryId) storage.deleteWorkoutEntry(current.entryId); current.entryId = null; current.status = "skipped"; } persistSession(); const pending = state.session.exercises.map((item, index) => ({ item, index })).filter(({ item }) => item.status === "pending"); if (!pending.length) render(); else { const next = pending.find(({ index }) => index > state.exerciseIndex) || pending[0]; goToExercise(next.index); } }
-  if (action === "save") saveExercise();
   if (action === "delete-session" && confirm("¿Eliminar este entrenamiento completo? Esta acción no se puede deshacer.")) { const session = getHistorySessions().find((item) => item.id === state.historySessionId); if (session) storage.deleteSession(session.id, session.entries.map((entry) => entry.id)); state.view = "history"; render(); showToast("Entrenamiento eliminado"); }
   if (action === "export") exportData();
   if (action === "import") importInput.click();
