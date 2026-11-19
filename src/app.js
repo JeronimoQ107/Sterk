@@ -322,7 +322,8 @@ function getHistorySessions() {
   const completedIds = new Set(completed.map((session) => session.id));
   const result = completed.map((session) => { const sessionEntries = entries.filter((entry) => entry.sessionId === session.id); return { ...session, ...sessionMetadata(session, sessionEntries), durationSeconds: session.durationSeconds ?? Math.max(0, Number(session.durationMinutes || 0) * 60), entries: sessionEntries, synthetic: false }; });
   const orphanGroups = new Map();
-  entries.filter((entry) => entry.sessionId !== activeSessionId && (!entry.sessionId || !completedIds.has(entry.sessionId))).forEach((entry) => {
+  // HIST-02: las entradas sin sesión (historial V0) siempre se muestran; sin sesión activa, activeSessionId también es undefined.
+  entries.filter((entry) => !entry.sessionId || (entry.sessionId !== activeSessionId && !completedIds.has(entry.sessionId))).forEach((entry) => {
     const key = entry.sessionId || `legacy:${entry.category}:${entry.date || entry.recordedAt?.slice(0, 10)}`;
     if (!orphanGroups.has(key)) orphanGroups.set(key, []);
     orphanGroups.get(key).push(entry);

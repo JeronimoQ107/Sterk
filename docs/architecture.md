@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-> Implementación revisada: **1.7.4, 2026-11-16**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+> Implementación revisada: **1.7.5, 2026-11-19**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
 
 ## Implementación actual
 
@@ -64,7 +64,7 @@ El peso se presenta en libras, con ajuste directo de 2,5 lb y entrada decimal ma
 - La finalización es explícita y exige resolver los ejercicios pendientes. Guarda resumen y duración y compara volumen con la sesión anterior de la misma categoría, sin comprobar que coincidan ejercicios o series.
 - `clockStartedAt` conserva el inicio real del cronómetro; `startedAt` representa la fecha histórica. Cambiar la fecha modifica también las entradas asociadas y conserva la duración.
 
-El historial combina las sesiones finalizadas y registros antiguos sin sesión finalizada, excluyendo la sesión activa. La interfaz permite cambiar la fecha o eliminar un entrenamiento, pero no editar sus pesos, repeticiones ni series después de finalizarlo.
+El historial combina las sesiones finalizadas y registros antiguos sin sesión finalizada, excluyendo la sesión activa. Los registros sin `sessionId` (historial V0) se agrupan por categoría y fecha y se muestran siempre, haya o no sesión activa (HIST-02, desde 1.7.5); Inicio, Ajustes y Progreso usan esa misma lista. La interfaz permite cambiar la fecha o eliminar un entrenamiento, pero no editar sus pesos, repeticiones ni series después de finalizarlo.
 
 ## Progreso
 
@@ -78,7 +78,7 @@ La gráfica alterna rendimiento, volumen o repeticiones; compara las dos última
 
 La exportación JSON V4 incluye entradas, sesiones finalizadas, sesión activa, ajustes y ejercicios personalizados. Se aceptan versiones V1–V4 y se normalizan sus datos. Importar prepara todos los valores, se bloquea si alguna clave local es ilegible y restaura los datos anteriores si una escritura falla; la validación aún no verifica todo el contenido del respaldo (DATA-01).
 
-El manifiesto incluye iconos PNG de 192/512 px e iOS usa uno de 180 px. El service worker precarga el shell, incluidos los controles de repeticiones y la imagen Pec Deck, pidiendo cada archivo a la red con `cache: "reload"`; si uno falla, la instalación falla y sigue la versión anterior. Responde solo desde la caché de su versión (HTML incluido), así que todos los archivos de una carga pertenecen a la misma versión. Al activarse borra solo cachés `sterk-*` anteriores. Sin conexión, una navegación abre `index.html` guardado; un recurso ausente devuelve error. Su versión actual es `sterk-v1-7-4`; `npm test` comprueba que coincide con `package.json` y Ajustes y que el precaché lista exactamente los archivos de `src/`, `icons/` y `assets/exercises/`.
+El manifiesto incluye iconos PNG de 192/512 px e iOS usa uno de 180 px. El service worker precarga el shell, incluidos los controles de repeticiones y la imagen Pec Deck, pidiendo cada archivo a la red con `cache: "reload"`; si uno falla, la instalación falla y sigue la versión anterior. Responde solo desde la caché de su versión (HTML incluido), así que todos los archivos de una carga pertenecen a la misma versión. Al activarse borra solo cachés `sterk-*` anteriores. Sin conexión, una navegación abre `index.html` guardado; un recurso ausente devuelve error. Su versión actual es `sterk-v1-7-5`; `npm test` comprueba que coincide con `package.json` y Ajustes y que el precaché lista exactamente los archivos de `src/`, `icons/` y `assets/exercises/`.
 
 ## Limitaciones verificadas y pendientes
 
@@ -87,6 +87,7 @@ Estos comportamientos **siguen presentes** y se rastrean en [roadmap.md](roadmap
 - Una serie marcada con cero repeticiones puede contar en el historial/resumen de `storage` y quedar excluida de Progreso.
 - En Progreso, el porcentaje comparativo sigue la métrica seleccionada, mientras la tarjeta mantiene el título y valor de “Rendimiento estimado”.
 - Un respaldo con contenido mal formado puede importarse sin validación completa (DATA-01). Las escrituras de varias claves ya se revierten si una falla.
+- Una sesión finalizada con el formato antiguo (`routineId` y `durationMinutes`, sin `exerciseCount`, `setCount` ni `volume`) aparece en Historial como "undefined ejercicios · undefined series · NaN lb", aunque sus entradas se conservan (HIST-03).
 - Si se publica un cambio de código sin subir la versión, el teléfono sigue con la versión anterior completa: no se mezclan archivos, pero tampoco llega la actualización.
 - Las pruebas automatizadas simulan almacenamiento y DOM; no sustituyen validar Safari, instalación, modo avión, reanudación, actualización y accesibilidad en un iPhone físico.
 
