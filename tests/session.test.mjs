@@ -7,6 +7,8 @@ import * as sets from '../src/sets.js';
 import { icon } from '../src/icons.js';
 import { homeDashboard, progressDashboard, settingsDashboard } from '../src/dashboard.js';
 import { exerciseOptions } from '../src/progress.js';
+import { createSnapshots } from '../src/snapshots.js';
+import { APP_VERSION } from '../src/version.js';
 
 const memory = new Map();
 globalThis.localStorage = { getItem: (key) => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, value), removeItem: (key) => memory.delete(key) };
@@ -17,7 +19,7 @@ function setup() {
   const handlers = {}, notices = [], dialogs = [];
   const app = { innerHTML: '', addEventListener: (type, fn) => { handlers[type] = fn; }, querySelector: () => null };
   const dummy = { addEventListener() {}, classList: { add() {}, remove() {} } };
-  const context = vm.createContext({ ...data, ...sets, icon, homeDashboard, progressDashboard, settingsDashboard, exerciseOptions, bindWeightControl() {}, bindRepsControl() {}, storage, structuredClone, console, crypto: globalThis.crypto,
+  const context = vm.createContext({ ...data, ...sets, icon, homeDashboard, progressDashboard, settingsDashboard, exerciseOptions, createSnapshots, APP_VERSION, bindWeightControl() {}, bindRepsControl() {}, storage, structuredClone, console, crypto: globalThis.crypto,
     document: { querySelector: (selector) => selector === '#app' ? app : dummy, querySelectorAll: () => [], body: { append() {} },
       createElement: () => { const dialog = { handlers: {}, innerHTML: '', setAttribute() {}, addEventListener(type, fn) { this.handlers[type] = fn; }, showModal() {}, close() {}, remove() {} }; dialogs.push(dialog); return dialog; } },
     navigator: {}, window: { setInterval() {}, setTimeout() {}, scrollTo() {}, addEventListener() {} }, confirm: () => true, alert: (text) => notices.push(text), openWeightPicker() {}, openRepsPicker() {},

@@ -1,6 +1,6 @@
 # Sterk
 
-PWA personal para registrar entrenamientos desde un iPhone con pocos toques. Versión actual: **1.7.4**. HTML, CSS y JavaScript vanilla, con datos locales en el navegador.
+PWA personal para registrar entrenamientos desde un iPhone con pocos toques. Versión actual: **1.7.5**. HTML, CSS y JavaScript vanilla, con datos locales en el navegador.
 
 ## Ejecutar y comprobar
 
@@ -41,6 +41,8 @@ assets/exercises/          Ilustraciones del catálogo
 icons/                     Iconos de la aplicación
 src/data.js                Catálogo, grupos y categorías
 src/storage.js             Persistencia, migraciones y respaldos
+src/snapshots.js           Copias automáticas antes de cada versión (IndexedDB)
+src/version.js             Versión de la app
 src/sets.js                Series, lados y totales
 src/progress.js            Cálculos de progreso
 src/dashboard.js           Inicio, Ajustes y Progreso

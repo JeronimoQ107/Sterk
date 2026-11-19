@@ -1,7 +1,7 @@
-// La versión debe coincidir con package.json y con Ajustes (src/dashboard.js); tests/service-worker.test.mjs lo comprueba.
+// La versión debe coincidir con package.json y con APP_VERSION (src/version.js); tests/service-worker.test.mjs lo comprueba.
 // Cambiar este archivo es lo que hace que el iPhone descargue una versión nueva.
 const CACHE_PREFIX = "sterk-";
-const CACHE_NAME = "sterk-v1-7-4";
+const CACHE_NAME = "sterk-v1-7-5";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -18,6 +18,8 @@ const APP_SHELL = [
   "./src/dashboard.js",
   "./src/progress.js",
   "./src/storage.js",
+  "./src/snapshots.js",
+  "./src/version.js",
   "./icons/icon.svg",
   "./icons/apple-touch-icon.svg",
   "./icons/apple-touch-icon.png",

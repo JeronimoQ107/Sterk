@@ -100,11 +100,16 @@ function readForUpdate(key, fallback) {
 // Escribe varias claves como una unidad. Antes comprueba que todas siguen siendo legibles, y si una
 // escritura falla restaura los valores originales de todas.
 function commit(changes) {
+  commitRaw(changes.map(([key, value]) => [key, value === undefined ? undefined : JSON.stringify(value)]));
+}
+
+// Igual que commit, con el texto exacto que se guarda en cada clave (undefined la elimina).
+function commitRaw(changes) {
   const current = ensureReadable(changes.map(([key]) => key));
   try {
-    changes.forEach(([key, value]) => {
-      if (value === undefined) localStorage.removeItem(key);
-      else localStorage.setItem(key, JSON.stringify(value));
+    changes.forEach(([key, raw]) => {
+      if (raw === undefined) localStorage.removeItem(key);
+      else localStorage.setItem(key, raw);
     });
   } catch (error) {
     changes.forEach(([key]) => {
@@ -216,6 +221,42 @@ function normalizeActiveSession(session, catalog = catalogWith()) {
   };
 }
 
+// DATA-03: claves que forman una copia completa de los datos, incluido el historial V0.
+const SNAPSHOT_KEYS = Object.freeze([...Object.values(KEYS), LEGACY_ENTRIES_KEY]);
+
+// Texto exacto de cada clave presente. Un error de acceso se propaga: sin lectura no hay copia.
+function captureRaw() {
+  const data = {};
+  SNAPSHOT_KEYS.forEach((key) => {
+    const raw = localStorage.getItem(key);
+    if (raw !== null) data[key] = raw;
+  });
+  return data;
+}
+
+function validateSnapshotData(data) {
+  const valid = isRecord(data) && Object.entries(data).every(([key, raw]) => {
+    if (!SNAPSHOT_KEYS.includes(key) || typeof raw !== "string") return false;
+    try {
+      const parsed = JSON.parse(raw);
+      if (SHAPES[key]) SHAPES[key](parsed);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  if (!valid) throw new Error("La copia está dañada y no se puede restaurar.");
+}
+
+// Estado de los datos al cargar esta versión, antes de que la migración V0 o la app escriban nada.
+const startupData = (() => {
+  try {
+    return captureRaw();
+  } catch {
+    return null;
+  }
+})();
+
 // La migración V0 solo ocurre si la clave V1 está ausente; un error de lectura no cuenta como ausencia.
 try {
   if (localStorage.getItem(KEYS.entries) === null) {
@@ -234,6 +275,21 @@ export const storage = {
   },
   // Problemas detectados en las últimas lecturas, sin volver a leer el almacenamiento.
   getStorageProblems() { return [...problems.values()].map(publicProblem); },
+  // DATA-03: texto de las claves tal como estaban al arrancar (null si no se pudieron leer).
+  getStartupData() { return startupData && { ...startupData }; },
+  // Texto actual de todas las claves; falla si alguna no se puede leer.
+  readRawData() {
+    const current = ensureReadable(SNAPSHOT_KEYS);
+    return Object.fromEntries(SNAPSHOT_KEYS.filter((key) => current[key].raw !== null).map((key) => [key, current[key].raw]));
+  },
+  // Falla si una copia está incompleta o dañada, sin tocar los datos.
+  validateRawData(data) { validateSnapshotData(data); },
+  // Sustituye todas las claves por el texto exacto de una copia; las ausentes en la copia se eliminan.
+  restoreRawData(data) {
+    validateSnapshotData(data);
+    commitRaw(SNAPSHOT_KEYS.map((key) => [key, data[key]]));
+    this.checkData();
+  },
   getExerciseCatalog({ includeArchived = false } = {}) {
     const catalog = catalogWith();
     return includeArchived ? catalog : catalog.filter((exercise) => !exercise.archived);

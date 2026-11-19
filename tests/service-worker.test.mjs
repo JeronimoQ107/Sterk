@@ -130,10 +130,12 @@ test('PWA-01: other origins and non-GET requests are left to the browser', async
   assert.equal(await worker.dispatch('fetch', { request: new worker.Request(`${BASE}src/app.js`, { method: 'POST' }) }), undefined);
 });
 
-test('PWA-02: package.json, the cache name and Settings show the same version', () => {
+test('PWA-02: package.json, the cache name and Settings show the same version', async () => {
   const { version } = JSON.parse(fs.readFileSync(new URL('package.json', root), 'utf8'));
   const cacheName = /const CACHE_NAME = "([^"]+)"/.exec(source)[1];
-  const settings = /Versión (\d+\.\d+\.\d+)/.exec(fs.readFileSync(new URL('src/dashboard.js', root), 'utf8'))[1];
+  const { APP_VERSION: settings } = await import('../src/version.js');
+  const { settingsDashboard } = await import('../src/dashboard.js');
+  assert.match(settingsDashboard([], 0), new RegExp(`Versión ${settings.replaceAll('.', '\\.')}<`));
   assert.equal(cacheName, `sterk-v${version.replaceAll('.', '-')}`);
   assert.equal(settings, version);
 });

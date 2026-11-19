@@ -1,5 +1,7 @@
 import { CATEGORY_LABELS, CATEGORY_ORDER, DEFAULT_ENTRY, EXERCISE_IMAGES, MUSCLE_GROUPS, categoryLabel, matchesExercise, searchText } from "./data.js";
 import { storage } from "./storage.js";
+import { createSnapshots } from "./snapshots.js";
+import { APP_VERSION } from "./version.js";
 
 import { SIDES, parts, setReps, resetSet } from "./sets.js";
 import { openWeightPicker } from "./weight-picker.js";
@@ -357,7 +359,31 @@ function renderHistoryDetail() {
 }
 
 function renderSettings() {
-  renderShell(`<section class="screen page-screen settings-screen">${brand()}${settingsDashboard(getHistorySessions(), storage.getExerciseCatalog().filter((exercise) => exercise.custom).length)}</section>`, "settings");
+  renderShell(`<section class="screen page-screen settings-screen">${brand()}${settingsDashboard(getHistorySessions(), storage.getExerciseCatalog().filter((exercise) => exercise.custom).length, state.snapshots)}</section>`, "settings");
+}
+
+// DATA-03: copias automáticas. state.snapshots es null hasta cargarlas y "unavailable" si fallan.
+const snapshots = createSnapshots({ storage, version: APP_VERSION, describe: () => ({ sessions: getHistorySessions().length }) });
+state.snapshots = null;
+
+async function refreshSnapshots() {
+  try { state.snapshots = await snapshots.list(); } catch { state.snapshots = "unavailable"; }
+  if (state.view === "settings") render();
+}
+
+async function restoreSnapshot(id) {
+  const snapshot = Array.isArray(state.snapshots) ? state.snapshots.find((item) => item.id === id) : null;
+  if (!snapshot || !confirm(`¿Restaurar la copia del ${formatDate(snapshot.createdAt)}? Reemplazará tus datos actuales. Antes se guardará una copia de los datos actuales para poder deshacerlo.`)) return;
+  try {
+    await snapshots.restore(id);
+    await refreshSnapshots();
+    goHome();
+    showToast("Copia restaurada");
+  } catch (error) {
+    alert(error.message);
+    await refreshSnapshots();
+    render();
+  }
 }
 
 function renderProgress() {
@@ -482,6 +508,8 @@ app.addEventListener("click", (event) => {
   if (viewButton) { state.view = viewButton.dataset.view; return render(); }
   const filterButton = event.target.closest("[data-filter]");
   if (filterButton) { state.builderFilter = filterButton.dataset.filter; return render(); }
+  const restoreButton = event.target.closest("[data-restore-snapshot]");
+  if (restoreButton) { restoreSnapshot(restoreButton.dataset.restoreSnapshot); return; }
   const archiveButton = event.target.closest("[data-archive-exercise]");
   if (archiveButton) { const id = archiveButton.dataset.archiveExercise; if (confirm("¿Archivar este ejercicio personalizado? El historial no se eliminará.")) { storage.archiveCustomExercise(id); state.builderSelection = state.builderSelection.filter((item) => item !== id); render(); } return; }
   const selectButton = event.target.closest("[data-select-exercise]");
@@ -576,3 +604,6 @@ window.addEventListener("error", (event) => {
 window.setInterval(updateTimers, 1000);
 storage.checkData();
 render();
+// DATA-03: pedir almacenamiento persistente y guardar la copia de esta versión sin retrasar el inicio.
+navigator.storage?.persisted?.().then((persisted) => persisted || navigator.storage.persist()).catch(() => {});
+snapshots.ensureVersionSnapshot().catch(() => {}).finally(refreshSnapshots);

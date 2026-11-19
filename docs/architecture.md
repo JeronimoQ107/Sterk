@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-> Implementación revisada: **1.7.4, 2026-11-16**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+> Implementación revisada: **1.7.5, 2026-11-19**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
 
 ## Implementación actual
 
@@ -17,6 +17,8 @@ La aplicación utiliza HTML/CSS y módulos ES de JavaScript, sin framework, back
 | `src/dashboard.js` | Vistas de Inicio, Ajustes y Progreso, gráfica SVG y tabla. |
 | `src/data.js` | 60 ejercicios, grupos, categorías, alias, imágenes y compatibilidad con rutinas antiguas. |
 | `src/storage.js` | Persistencia, normalización, migración, catálogo personalizado y respaldos. |
+| `src/snapshots.js` | Copias automáticas de los datos en IndexedDB y su restauración (DATA-03). |
+| `src/version.js` | `APP_VERSION`, mostrada en Ajustes y guardada en cada copia. |
 | `src/sets.js` | Normalización y cálculos de series bilaterales o por lado. |
 | `src/progress.js` | Filtros y cálculos de actividad, rendimiento, volumen, repeticiones y récords. |
 | `src/weight-control.js`, `src/reps-control.js` | Ajuste por arrastre, rueda y teclado, conservando el control durante el gesto. |
@@ -40,6 +42,15 @@ Cada lectura distingue tres casos: clave ausente, clave legible y clave ilegible
 - Las operaciones que modifican varias claves (cambio de fecha, eliminación de un entrenamiento, importación) leen todo antes de escribir y escriben juntas. Si una escritura falla, se restaura el texto original de todas las claves de la operación.
 - `storage.checkData()` revisa todas las claves; `storage.getStorageProblems()` devuelve los problemas detectados en las últimas lecturas. La interfaz muestra un aviso permanente con las claves afectadas y un botón para exportar, y un `alert` cuando una acción queda bloqueada.
 - Si hay claves ilegibles, la exportación añade `unreadableData` con su texto original para recuperarlo a mano. La importación ignora ese campo.
+
+### Copias automáticas (DATA-03, desde 1.7.5)
+
+- Al cargar `storage.js` se guarda en memoria el texto exacto de todas las claves `sterk:v1:*` y del historial V0, antes de la migración V0 y de cualquier escritura de la app.
+- Tras el primer render, `snapshots.js` guarda ese texto en IndexedDB (`sterk-snapshots`) si aún no existe una copia de la versión actual. No se crea si alguna clave no se pudo leer (DATA-02) ni si no hay datos; en ese caso se reintenta en el siguiente arranque.
+- Se usa IndexedDB y no `localStorage` para no consumir el límite de unos 5 MB de Safari: si `localStorage` se llenara, fallaría guardar entrenamientos. Cada copia ocupa lo mismo que los datos y se conservan como máximo cuatro (tres de versión y una previa a restaurar).
+- Restaurar valida la copia, guarda antes una copia de los datos actuales para poder deshacerlo y reemplaza todas las claves con el texto exacto de la copia (las ausentes se eliminan) mediante `commitRaw`, con la misma protección de DATA-02: no reemplaza datos ilegibles y revierte si una escritura falla.
+- Las copias viven en el mismo dispositivo: se pierden al borrar la app y no sustituyen exportar. "Borrar todos los datos" no las elimina.
+- Al iniciar se llama a `navigator.storage.persist()` si existe, para pedir que el navegador no desaloje los datos.
 
 Una entrada identifica sesión, ejercicio, grupo muscular y categoría, e incluye series y totales derivados. Se conservan campos antiguos como `weight`, `reps`, `completedSets` y `trackingMode` para compatibilidad. Las entradas actuales se guardan con `trackingMode: "set"`; el ajuste legado puede seguir indicando `"exercise"`, pero la UI siempre ofrece marcado por serie y ya no muestra un selector de modo.
 
@@ -78,7 +89,7 @@ La gráfica alterna rendimiento, volumen o repeticiones; compara las dos última
 
 La exportación JSON V4 incluye entradas, sesiones finalizadas, sesión activa, ajustes y ejercicios personalizados. Se aceptan versiones V1–V4 y se normalizan sus datos. Importar prepara todos los valores, se bloquea si alguna clave local es ilegible y restaura los datos anteriores si una escritura falla; la validación aún no verifica todo el contenido del respaldo (DATA-01).
 
-El manifiesto incluye iconos PNG de 192/512 px e iOS usa uno de 180 px. El service worker precarga el shell, incluidos los controles de repeticiones y la imagen Pec Deck, pidiendo cada archivo a la red con `cache: "reload"`; si uno falla, la instalación falla y sigue la versión anterior. Responde solo desde la caché de su versión (HTML incluido), así que todos los archivos de una carga pertenecen a la misma versión. Al activarse borra solo cachés `sterk-*` anteriores. Sin conexión, una navegación abre `index.html` guardado; un recurso ausente devuelve error. Su versión actual es `sterk-v1-7-4`; `npm test` comprueba que coincide con `package.json` y Ajustes y que el precaché lista exactamente los archivos de `src/`, `icons/` y `assets/exercises/`.
+El manifiesto incluye iconos PNG de 192/512 px e iOS usa uno de 180 px. El service worker precarga el shell, incluidos los controles de repeticiones y la imagen Pec Deck, pidiendo cada archivo a la red con `cache: "reload"`; si uno falla, la instalación falla y sigue la versión anterior. Responde solo desde la caché de su versión (HTML incluido), así que todos los archivos de una carga pertenecen a la misma versión. Al activarse borra solo cachés `sterk-*` anteriores. Sin conexión, una navegación abre `index.html` guardado; un recurso ausente devuelve error. Su versión actual es `sterk-v1-7-5`; `npm test` comprueba que coincide con `package.json` y `APP_VERSION` y que el precaché lista exactamente los archivos de `src/`, `icons/` y `assets/exercises/`.
 
 ## Limitaciones verificadas y pendientes
 
@@ -87,6 +98,7 @@ Estos comportamientos **siguen presentes** y se rastrean en [roadmap.md](roadmap
 - Una serie marcada con cero repeticiones puede contar en el historial/resumen de `storage` y quedar excluida de Progreso.
 - En Progreso, el porcentaje comparativo sigue la métrica seleccionada, mientras la tarjeta mantiene el título y valor de “Rendimiento estimado”.
 - Un respaldo con contenido mal formado puede importarse sin validación completa (DATA-01). Las escrituras de varias claves ya se revierten si una falla.
+- Cuando no hay sesión activa, los registros antiguos sin `sessionId` (historial V0) no aparecen en Historial ni en la biblioteca, aunque siguen guardados (HIST-02).
 - Si se publica un cambio de código sin subir la versión, el teléfono sigue con la versión anterior completa: no se mezclan archivos, pero tampoco llega la actualización.
 - Las pruebas automatizadas simulan almacenamiento y DOM; no sustituyen validar Safari, instalación, modo avión, reanudación, actualización y accesibilidad en un iPhone físico.
 

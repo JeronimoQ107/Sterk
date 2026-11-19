@@ -26,7 +26,7 @@ Las instrucciones del usuario prevalecen. Actualiza los documentos afectados cua
 - El registro actual es por serie. `trackingMode` permanece en datos antiguos por compatibilidad; no lo confundas con un selector disponible en la interfaz.
 - Marcar el último ejercicio no finaliza el entrenamiento. El cierre es explícito y la sesión activa debe poder recuperarse.
 - Los lados izquierdo/derecho se registran independientemente; una pareja con algún lado completado cuenta como una serie. Hay una discrepancia pendiente para series completadas con cero repeticiones: consulta el roadmap antes de cambiar cálculos.
-- Si cambian rutas o recursos de la aplicación, revisa imports y precaché del service worker. La versión aparece en `package.json`, `CACHE_NAME` de `service-worker.js` y el texto de Ajustes en `src/dashboard.js`; mantenlas iguales (`npm test` lo comprueba, igual que la lista de precaché). Cualquier cambio de código publicado necesita subir la versión: sin ello el iPhone no descarga la actualización. Cambios solo documentales no requieren incrementar la versión ni la caché.
+- Si cambian rutas o recursos de la aplicación, revisa imports y precaché del service worker. La versión aparece en `package.json`, `CACHE_NAME` de `service-worker.js` y `APP_VERSION` en `src/version.js` (texto de Ajustes); mantenlas iguales (`npm test` lo comprueba, igual que la lista de precaché). Cualquier cambio de código publicado necesita subir la versión: sin ello el iPhone no descarga la actualización. Cambios solo documentales no requieren incrementar la versión ni la caché.
 - Evita introducir dependencias, frameworks o abstracciones grandes para cambios pequeños.
 
 ## Datos de quienes prueban la app

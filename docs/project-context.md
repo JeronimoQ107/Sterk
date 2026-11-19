@@ -15,7 +15,7 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 5. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
 6. Considerar Excel como exportación opcional para análisis, sin convertirlo en base de datos.
 
-## Estado implementado — 1.7.4
+## Estado implementado — 1.7.5
 
 - HTML, CSS y JavaScript vanilla, sin frameworks ni backend. Persistencia mediante una capa `storage` sobre `localStorage`.
 - Catálogo de **60 ejercicios predeterminados**, búsqueda por nombres y alias en español e inglés sin distinguir acentos, grupos musculares y categorías Push/Pull/Legs. Se pueden crear y archivar ejercicios personalizados.
@@ -27,7 +27,7 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 - Referencia al entrenamiento anterior, persistencia de la sesión activa y duración automática. Completar todas las series válidas registra el ejercicio; el entrenamiento se termina mediante una acción explícita.
 - Historial por entrenamiento con detalles, cambio de fecha y eliminación. **Todavía no permite editar peso, repeticiones o series de una sesión finalizada**.
 - Inicio con acceso al último entrenamiento; Progreso con periodos de 30/90 días o todo el historial, actividad, rendimiento estimado, volumen, repeticiones, récords del periodo y series por grupo muscular.
-- Respaldo JSON **V4**, importación compatible con V1–V4 y migración del historial V0. Una clave ilegible se conserva sin sobrescribirla y la app avisa (DATA-02); la validación completa de respaldos sigue pendiente (DATA-01).
+- Respaldo JSON **V4**, importación compatible con V1–V4 y migración del historial V0. Una clave ilegible se conserva sin sobrescribirla y la app avisa (DATA-02); la validación completa de respaldos sigue pendiente (DATA-01). Al abrir cada versión nueva se guarda una copia automática en el dispositivo; Ajustes conserva las tres últimas y permite restaurarlas y deshacer la restauración (DATA-03).
 - PWA con manifiesto, iconos y service worker para recursos offline. La validación completa en un iPhone físico sigue pendiente.
 
 ## Reglas de producto
