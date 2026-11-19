@@ -1,6 +1,6 @@
 # Principios de diseño de Sterk
 
-> Decidido el **2026-11-19**: dirección **A · iOS nativo** con una paleta azul sobre carbón que sustituye al verde lima. El azul es **cobalto** desde 1.8.1 (en 1.8.0 era un índigo azulado; se cambió tras comparar cinco azules más eléctricos). Desde 1.8.0 la paleta se aplica a toda la app y la pantalla de ejercicio (UX-02) sigue estas reglas; el resto de pantallas e icono quedan para UI-02. Producto: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md).
+> Decidido el **2026-11-19**: dirección **A · iOS nativo** con una paleta azul sobre carbón que sustituye al verde lima. El azul es **cobalto** desde 1.8.1 (en 1.8.0 era un índigo azulado; se cambió tras comparar cinco azules más eléctricos). Desde 1.8.0 la paleta se aplica a toda la app y la pantalla de ejercicio (UX-02) sigue estas reglas; desde 1.9.0 también el resto de pantallas y el icono (UI-02). Producto: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md).
 
 Estas reglas existen para que Sterk no parezca una interfaz generada por IA y para que se use rápido en el gimnasio. Si una regla impide algo necesario, cámbiala aquí con su motivo antes de saltártela.
 
@@ -76,7 +76,11 @@ Es la referencia del resto de la app. Maqueta aprobada en la revisión del 2026-
 
 ## Icono de la app
 
-Hay que rehacer los iconos (`icons/`) con la nueva paleta: una "S" en `--on-accent` sobre `--accent-fill` o sobre carbón. En iPhone, quienes ya tienen Sterk instalada probablemente sigan viendo el icono anterior; nunca se les pide reinstalar para cambiarlo, porque eso borra sus datos. `theme_color` y `background_color` del manifiesto pasan a carbón (`#111214`).
+Desde 1.9.0 los iconos (`icons/`) son la mancuerna de siempre en blanco sobre cobalto `#1A56DB` (6,2:1). Los PNG son cuadrados completos, sin esquinas redondeadas, porque iOS aplica su propia máscara; `icon.svg` (favicon) sí las lleva. En iPhone, quienes ya tienen Sterk instalada probablemente sigan viendo el icono anterior; nunca se les pide reinstalar para cambiarlo, porque eso borra sus datos. `theme_color` y `background_color` del manifiesto pasan a carbón (`#111214`).
+
+## Componentes compartidos (desde 1.9.0)
+
+Las pantallas se construyen con las clases `ui-*` de `src/styles.css`: `ui-title` (título grande y subtítulo), `ui-nav` y `ui-back` (volver), `ui-group-header`, `ui-group`, `ui-row` y `ui-group-footer` (listas agrupadas), `ui-button` (único botón relleno), `ui-pill`, `ui-search`, `ui-segmented`, `ui-metrics` y `ui-action-bar`. Una pantalla nueva debería poder hacerse solo con ellas.
 
 ## Cómo comprobar un cambio de interfaz
 

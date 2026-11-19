@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { inPeriod, overview, exerciseSeries, availableSides, estimatedOneRepMax, personalRecords, muscleGroupSets } from '../src/progress.js';
-import { progressDashboard } from '../src/dashboard.js';
+import { progressDashboard, homeDashboard, sessionSummary } from '../src/dashboard.js';
 const part = (weight, reps, completed = true) => ({ weight, reps, completed });
 const session = (id, date, sets) => ({ id, startedAt: date, entries: [{ exerciseId: 'curl', exercise: 'Curl', sets }] });
 test('best performance keeps weight and reps from the same completed set; observations are chronological', () => {
@@ -56,4 +56,12 @@ test('muscle group totals count completed sets and the main view keeps formulas 
   assert.match(html, /Cómo se calcula el progreso/);
   assert.match(html, /Rendimiento estimado/);
   assert.doesNotMatch(html, /repeticiones ÷ 30|Más peso no implica/);
+});
+test('UI-02: session totals use correct plurals and thousands separators everywhere', () => {
+  assert.equal(sessionSummary({ exerciseCount: 1, setCount: 1, volume: 337.5 }), '1 ejercicio · 1 serie · 337,5 lb');
+  assert.equal(sessionSummary({ exerciseCount: 4, setCount: 12, volume: 15930 }), '4 ejercicios · 12 series · 15.930 lb');
+  const html = homeDashboard([{ id: 's', label: 'Legs', startedAt: '2026-11-07T18:30:00Z', exerciseCount: 1, setCount: 3, volume: 16542.5, entries: [{ exerciseId: 'squat', exercise: 'Squat', sets: [] }] }]);
+  assert.match(html, /1 ejercicio · 3 series · 16\.542,5 lb/);
+  assert.doesNotMatch(html, /[A-ZÁÉÍÓÚ]{4,} /, 'sin etiquetas en mayúsculas');
+  assert.match(homeDashboard([]), /Todavía no hay entrenamientos/);
 });

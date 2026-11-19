@@ -690,3 +690,78 @@ dialog.action-sheet { position: fixed; inset: auto 0 0; width: min(100%, 32rem);
 .sheet-group button { min-height: 52px; padding: 0 1rem; border: 0; background: transparent; color: var(--accent); font-size: 1.0625rem; }
 .sheet-group button + button { border-top: 1px solid var(--line); }
 .sheet-group [data-close] { font-weight: 600; }
+
+/* ===== UI-02: componentes compartidos con aspecto de iOS (docs/design-principles.md) ===== */
+.ui-screen { padding: max(.75rem, env(safe-area-inset-top)) 1rem calc(6rem + env(safe-area-inset-bottom)); }
+.ui-title { margin: .75rem 0 1.25rem; }
+.ui-title h1 { margin: 0; font-size: 2rem; font-weight: 700; line-height: 1.1; letter-spacing: -.02em; text-wrap: balance; }
+.ui-title p { margin: .3rem 0 0; color: var(--muted); font-size: .9375rem; }
+.ui-title-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.ui-title-row .info-button { margin-top: 0; }
+.ui-title-center { text-align: center; }
+.ui-nav { display: flex; align-items: center; min-height: 44px; }
+.ui-back { display: flex; align-items: center; gap: .1rem; min-height: 44px; padding: 0 .5rem 0 0; border: 0; background: transparent; color: var(--accent); font-size: 1.0625rem; }
+.ui-back .ui-icon { width: 1.4rem; height: 1.4rem; margin-left: -.35rem; stroke-width: 2.2; }
+
+.ui-group-header { display: flex; justify-content: space-between; gap: 1rem; margin: 1.5rem 1rem .4rem; color: var(--muted); font-size: .8125rem; font-weight: 400; line-height: 1.3; }
+.ui-group { overflow: hidden; border-radius: 12px; background: var(--surface); }
+.ui-group-end { margin-top: 2rem; }
+.ui-group-footer { margin: .45rem 1rem 0; color: var(--muted); font-size: .8125rem; line-height: 1.4; }
+.ui-pad { padding: 1rem; }
+.ui-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; width: 100%; min-height: 48px; padding: .625rem 1rem; border: 0; background: transparent; color: var(--text); font-size: 1.0625rem; line-height: 1.3; text-align: left; }
+.ui-row + .ui-row { border-top: 1px solid var(--line); }
+.ui-row-main { display: grid; flex: 1; gap: .15rem; min-width: 0; }
+.ui-row-main strong { font-weight: 600; }
+.ui-row-main small { overflow: hidden; color: var(--muted); font-size: .875rem; text-overflow: ellipsis; white-space: nowrap; }
+.ui-row-top { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+.ui-row-top .ui-muted { flex: none; font-size: .875rem; }
+.ui-value { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.ui-value .session-timer { color: inherit; font: inherit; letter-spacing: 0; }
+.ui-accent { color: var(--accent); font-weight: 600; }
+.ui-muted { color: var(--muted); }
+.ui-chevron { display: grid; flex: none; color: var(--muted); }
+.ui-chevron .ui-icon { width: 1rem; height: 1rem; stroke-width: 2.2; }
+.ui-row-link { color: var(--accent); }
+.ui-row-danger { color: var(--danger); }
+
+.ui-button { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 50px; margin-top: 1rem; border: 0; border-radius: 12px; background: var(--accent-fill); color: var(--on-accent); font-size: 1.0625rem; font-weight: 600; }
+.ui-pill { flex: none; min-height: 44px; padding: 0 1rem; border: 0; border-radius: 22px; background: var(--surface-2); color: var(--accent); font-size: .9375rem; font-weight: 600; }
+.ui-link { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 600; }
+.ui-empty { margin: 1.25rem 0; color: var(--muted); font-size: .9375rem; line-height: 1.5; }
+.ui-banner { width: 100%; min-height: 48px; margin-bottom: .5rem; padding: .75rem 1rem; border: 0; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-size: .9375rem; font-weight: 600; text-align: left; }
+
+.ui-search { display: flex; align-items: center; gap: .5rem; min-height: 44px; padding: 0 .75rem; border-radius: 10px; background: var(--surface-2); color: var(--muted); }
+.ui-search .ui-icon { width: 1.1rem; height: 1.1rem; stroke-width: 2; }
+.ui-search input { flex: 1; min-width: 0; height: 44px; padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; font-size: 1.0625rem; outline: none; }
+.ui-search:focus-within { box-shadow: 0 0 0 2px var(--accent); }
+.ui-segmented { display: flex; gap: 2px; margin: .75rem 0; padding: 2px; border-radius: 9px; background: var(--surface-2); }
+.ui-segmented button { flex: 1; min-width: 0; min-height: 36px; padding: 0 .25rem; border: 0; border-radius: 7px; background: transparent; color: var(--text); font-size: .875rem; font-weight: 500; }
+.ui-segmented button[aria-pressed=true] { background: var(--surface); box-shadow: 0 0 0 1px var(--line); font-weight: 600; }
+
+.ui-metrics { display: grid; grid-template-columns: repeat(3, 1fr); margin: .75rem 0 0; }
+.ui-metrics div { display: grid; gap: .2rem; padding: .875rem 1rem; }
+.ui-metrics div + div { border-left: 1px solid var(--line); }
+.ui-metrics strong { font-size: 1.375rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ui-metrics span { color: var(--muted); font-size: .8125rem; }
+.ui-group.progress-detail, .ui-group.muscle-summary { margin: 0; border: 0; }
+.ui-segmented.metric-filter { margin: 1rem 0; }
+
+.ui-complete-mark { display: grid; place-items: center; width: 4.5rem; height: 4.5rem; margin: 2.5rem auto 0; border-radius: 50%; background: var(--accent-fill); color: var(--on-accent); }
+.ui-complete-mark .ui-icon { width: 2.25rem; height: 2.25rem; stroke-width: 2.4; }
+.ui-action-bar { position: fixed; z-index: 5; right: 0; bottom: 0; left: 0; width: min(100%, 32rem); margin: auto; padding: .625rem 1rem max(.625rem, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--nav-bg); }
+.ui-action-bar .ui-button { margin-top: 0; }
+.history-detail-screen input[type=date] { flex: 1; min-width: 0; min-height: 44px; border: 0; background: transparent; color: var(--text); font: inherit; }
+.ui-screen .version { margin: 2rem 0 0; color: var(--muted); font-size: .8125rem; text-align: center; }
+.bottom-nav button { font-size: .6875rem; font-weight: 500; }
+.bottom-nav button.active { font-weight: 600; }
+/* La versión anterior de Progreso reordenaba secciones con flex y order; la nueva sigue el orden del marcado. */
+.progress-screen.ui-screen { display: block; }
+/* Constructor: los grupos musculares forman una sola lista agrupada. */
+.builder-screen .grouped-catalog { display: block; margin-top: 1rem; overflow: hidden; border-radius: 12px; background: var(--surface); }
+.builder-screen .catalog-group { border: 0; border-radius: 0; background: transparent; }
+.builder-screen .catalog-group + .catalog-group { border-top: 1px solid var(--line); }
+.builder-screen .catalog-group summary strong { font-size: 1.0625rem; font-weight: 500; }
+.builder-screen .catalog-group summary span { font-size: .875rem; }
+.builder-screen .ui-empty { padding: 0 1rem; }
+.builder-screen .custom-exercise { margin-top: 1rem; border: 0; border-radius: 12px; background: var(--surface); }
+.builder-screen .selection-preview { margin-top: 1rem; border: 0; border-radius: 12px; background: var(--surface); }
