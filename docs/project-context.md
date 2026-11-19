@@ -15,7 +15,7 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 5. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
 6. Considerar Excel como exportación opcional para análisis, sin convertirlo en base de datos.
 
-## Estado implementado — 1.8.0
+## Estado implementado — 1.8.1
 
 - HTML, CSS y JavaScript vanilla, sin frameworks ni backend. Persistencia mediante una capa `storage` sobre `localStorage`.
 - Catálogo de **60 ejercicios predeterminados**, búsqueda por nombres y alias en español e inglés sin distinguir acentos, grupos musculares y categorías Push/Pull/Legs. Se pueden crear y archivar ejercicios personalizados.
@@ -25,7 +25,7 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 - Registro opcional por lado, con valores y marcado independientes para izquierda/derecha. Copiar valores no marca automáticamente el lado de destino. Los registros anteriores permanecen sin lado asignado.
 - Controles de peso y repeticiones por deslizamiento y entrada manual. El peso utiliza libras y pasos de 2,5 lb; las repeticiones admiten enteros de 0 a 999.
 - Referencia al entrenamiento anterior, persistencia de la sesión activa y duración automática. Completar todas las series válidas registra el ejercicio, y salir de un ejercicio con alguna serie marcada también lo registra; el entrenamiento se termina mediante una acción explícita.
-- Interfaz con paleta índigo azulado sobre carbón, en claro y oscuro según el sistema. La pantalla de ejercicio sigue la dirección "iOS nativo" de [design-principles.md](design-principles.md); el resto de pantallas conserva su estructura anterior hasta UI-02.
+- Interfaz con paleta azul cobalto sobre carbón, en claro y oscuro según el sistema. La pantalla de ejercicio sigue la dirección "iOS nativo" de [design-principles.md](design-principles.md); el resto de pantallas conserva su estructura anterior hasta UI-02.
 - Historial por entrenamiento con detalles, cambio de fecha y eliminación. **Todavía no permite editar peso, repeticiones o series de una sesión finalizada**.
 - Inicio con acceso al último entrenamiento; Progreso con periodos de 30/90 días o todo el historial, actividad, rendimiento estimado, volumen, repeticiones, récords del periodo y series por grupo muscular.
 - Respaldo JSON **V4**, importación compatible con V1–V4 y migración del historial V0. Una clave ilegible se conserva sin sobrescribirla y la app avisa (DATA-02); la validación completa de respaldos sigue pendiente (DATA-01). Al abrir cada versión nueva se guarda una copia automática en el dispositivo; Ajustes conserva las tres últimas y permite restaurarlas y deshacer la restauración (DATA-03).
@@ -67,4 +67,5 @@ Una mejora puede afectar varias carpetas y seguir siendo un solo objetivo. Se ut
 | 2026-10-08 | Organizar el desarrollo con `AGENTS.md`, documentos versionados y worktrees por objetivo cuando aporten aislamiento, conservando por ahora la estructura del código. | Aprobada |
 | 2026-11-16 | Con personas probando la app, preservar sus datos locales en cada actualización tiene prioridad sobre las mejoras de funcionalidad. | Vigente |
 | 2026-11-16 | Trabajar también con Claude Code: `CLAUDE.md` importa `AGENTS.md` para compartir las mismas instrucciones. | Vigente |
-| 2026-11-19 | Rediseñar la interfaz con aspecto de iOS nativo y una paleta índigo azulado sobre carbón en lugar del verde lima, empezando por la pantalla de ejercicio. Reglas en [design-principles.md](design-principles.md). | Aprobada |
+| 2026-11-19 | Rediseñar la interfaz con aspecto de iOS nativo y una paleta índigo azulado sobre carbón en lugar del verde lima, empezando por la pantalla de ejercicio. Reglas en [design-principles.md](design-principles.md). | Implementada en 1.8.0; el color cambió en 1.8.1 |
+| 2026-11-19 | Sustituir el índigo azulado por azul cobalto, tras comparar cinco azules más eléctricos. | Vigente |

@@ -1,6 +1,6 @@
 # Principios de diseño de Sterk
 
-> Decidido el **2026-11-19**: dirección **A · iOS nativo** con la paleta **índigo azulado sobre carbón**, que sustituye al verde lima. Desde 1.8.0 la paleta se aplica a toda la app y la pantalla de ejercicio (UX-02) sigue estas reglas; el resto de pantallas e icono quedan para UI-02. Producto: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md).
+> Decidido el **2026-11-19**: dirección **A · iOS nativo** con una paleta azul sobre carbón que sustituye al verde lima. El azul es **cobalto** desde 1.8.1 (en 1.8.0 era un índigo azulado; se cambió tras comparar cinco azules más eléctricos). Desde 1.8.0 la paleta se aplica a toda la app y la pantalla de ejercicio (UX-02) sigue estas reglas; el resto de pantallas e icono quedan para UI-02. Producto: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md).
 
 Estas reglas existen para que Sterk no parezca una interfaz generada por IA y para que se use rápido en el gimnasio. Si una regla impide algo necesario, cámbiala aquí con su motivo antes de saltártela.
 
@@ -16,7 +16,7 @@ Sterk se usa en un iPhone, a una mano, entre series, a veces con las manos sudad
 
 ## Paleta
 
-Grises carbón neutros y un índigo llevado hacia el azul (tono ≈231°). Cada color se define una vez como variable CSS en `:root` y se redefine para modo oscuro; los componentes usan solo variables.
+Grises carbón neutros y un azul cobalto puro y fuerte (tono ≈222°), sin matiz violeta. Cada color se define una vez como variable CSS en `:root` y se redefine para modo oscuro; los componentes usan solo variables.
 
 | Variable | Uso | Claro | Oscuro |
 |---|---|---|---|
@@ -26,12 +26,12 @@ Grises carbón neutros y un índigo llevado hacia el azul (tono ≈231°). Cada 
 | `--separator` | Líneas entre filas | `#DCDCE3` | `#303238` |
 | `--label` | Texto principal | `#111214` | `#F2F2F5` |
 | `--secondary` | Texto secundario, referencia anterior | `#6B6E78` | `#8E9099` |
-| `--accent` | Texto y iconos que se pueden tocar | `#3043C2` | `#9DB2FF` |
-| `--accent-fill` | Botón principal, serie hecha | `#3043C2` | `#4C63E3` |
+| `--accent` | Texto y iconos que se pueden tocar | `#1A56DB` | `#82AAFF` |
+| `--accent-fill` | Botón principal, serie hecha | `#1A56DB` | `#2F6BFF` |
 | `--on-accent` | Texto sobre `--accent-fill` | `#FFFFFF` | `#FFFFFF` |
 | `--danger` | Acciones que borran datos | `#C2352B` | `#FF7A70` |
 
-Contraste comprobado (WCAG AA): texto ≥ 4,5:1 y controles ≥ 3:1 sobre su fondo en los dos modos. Por ejemplo, `--accent-fill` oscuro: 5,0:1 con texto blanco y 3,4:1 sobre `--group`; `--secondary` claro: 4,55:1 sobre `--bg`. Si cambias un color, vuelve a medir.
+Contraste comprobado (WCAG AA): texto ≥ 4,5:1 y controles ≥ 3:1 sobre su fondo en los dos modos. Por ejemplo, `--accent` claro: 6,2:1 sobre blanco y 5,3:1 sobre `--field`; `--accent` oscuro: 7,3:1 sobre `--group`; `--accent-fill` oscuro: 3,7:1 sobre `--group` y 4,5:1 con texto blanco, justo en el límite, así que no se aclara más sin pasar el texto del botón a oscuro; `--secondary` claro: 4,55:1 sobre `--bg`. Si cambias un color, vuelve a medir.
 
 - El acento marca solo lo que se puede tocar y las series hechas. Todo lo demás es gris.
 - Un solo botón relleno (`--accent-fill`) por pantalla.

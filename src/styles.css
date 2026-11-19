@@ -1,4 +1,4 @@
-/* Paleta índigo azulado sobre carbón (docs/design-principles.md). Claro por defecto; oscuro según el sistema. */
+/* Paleta cobalto sobre carbón (docs/design-principles.md). Claro por defecto; oscuro según el sistema. */
 :root {
   color-scheme: light dark;
   --bg: #f2f2f5;
@@ -7,13 +7,13 @@
   --line: #dcdce3;
   --text: #111214;
   --muted: #6b6e78;
-  --accent: #3043c2;
-  --accent-fill: #3043c2;
+  --accent: #1a56db;
+  --accent-fill: #1a56db;
   --on-accent: #ffffff;
   --accent-dark: var(--on-accent);
   --danger: #c2352b;
-  --accent-soft: rgba(48, 67, 194, .08);
-  --accent-line: rgba(48, 67, 194, .35);
+  --accent-soft: rgba(26, 86, 219, .08);
+  --accent-line: rgba(26, 86, 219, .35);
   --danger-soft: rgba(194, 53, 43, .08);
   --danger-line: rgba(194, 53, 43, .35);
   --overlay: rgba(17, 18, 20, .45);
@@ -33,12 +33,12 @@
     --line: #303238;
     --text: #f2f2f5;
     --muted: #8e9099;
-    --accent: #9db2ff;
-    --accent-fill: #4c63e3;
+    --accent: #82aaff;
+    --accent-fill: #2f6bff;
     --on-accent: #ffffff;
     --danger: #ff7a70;
-    --accent-soft: rgba(76, 99, 227, .16);
-    --accent-line: rgba(157, 178, 255, .45);
+    --accent-soft: rgba(47, 107, 255, .16);
+    --accent-line: rgba(130, 170, 255, .45);
     --danger-soft: rgba(255, 122, 112, .1);
     --danger-line: rgba(255, 122, 112, .4);
     --overlay: rgba(0, 0, 0, .6);
