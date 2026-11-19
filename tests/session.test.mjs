@@ -205,3 +205,27 @@ test('DATA-02: unreadable history shows a warning and registering keeps the stor
   run('render();');
   assert.doesNotMatch(app.innerHTML, /No se pudieron leer algunos datos/);
 });
+
+test('HIST-02 y QA-03: los registros V0 sin sesión siguen en el historial al cerrar la sesión activa', () => {
+  const { run } = setup();
+  const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/storage-v1.7.3.json', import.meta.url), 'utf8'));
+  memory.clear();
+  Object.entries(fixture).forEach(([key, value]) => memory.set(key, value));
+  const legacyId = 'legacy:push:1/8/2026';
+  const ids = () => run('getHistorySessions().map((session) => session.id)');
+  try {
+    assert.ok(storage.getActiveSession());
+    assert.ok(ids().includes(legacyId));
+    assert.ok(!ids().includes(storage.getActiveSession().id));
+    storage.clearActiveSession();
+    assert.equal(storage.getActiveSession(), null);
+    const legacy = run('getHistorySessions()').find((session) => session.id === legacyId);
+    assert.ok(legacy, 'el entrenamiento legacy debe seguir en el historial');
+    assert.deepEqual(Array.from(legacy.entries, (entry) => entry.id), ['v0-entry']);
+    assert.ok(run('exerciseOptions(getHistorySessions())').some((option) => /bench/i.test(JSON.stringify(option))));
+    assert.equal(memory.get('gym-tracker:v0:workout-entries'), fixture['gym-tracker:v0:workout-entries']);
+    assert.equal(memory.get('sterk:v1:workout-entries'), fixture['sterk:v1:workout-entries']);
+  } finally {
+    memory.clear();
+  }
+});
