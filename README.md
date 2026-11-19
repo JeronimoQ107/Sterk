@@ -70,6 +70,7 @@ docs/                      Contexto, arquitectura y trabajo pendiente
 | [Arquitectura](docs/architecture.md) | Módulos, datos, comportamiento y límites técnicos. |
 | [Roadmap](docs/roadmap.md) | Problemas detectados y propuestas, con estado y criterios de aceptación. |
 | [Flujo de trabajo](docs/development-workflow.md) | Cómo usar chats, worktrees, ramas e integración sin perder el contexto. |
+| [Diseño](docs/design-principles.md) | Dirección visual, paleta, tipografía y reglas de interfaz. |
 
 El proyecto mantiene su estructura actual. Usa worktrees por objetivos cuando haga falta aislamiento y conserva decisiones en documentos versionados para que los siguientes chats puedan recuperarlas.
 

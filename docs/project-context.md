@@ -66,3 +66,4 @@ Una mejora puede afectar varias carpetas y seguir siendo un solo objetivo. Se ut
 | 2026-10-08 | Organizar el desarrollo con `AGENTS.md`, documentos versionados y worktrees por objetivo cuando aporten aislamiento, conservando por ahora la estructura del código. | Aprobada |
 | 2026-11-16 | Con personas probando la app, preservar sus datos locales en cada actualización tiene prioridad sobre las mejoras de funcionalidad. | Vigente |
 | 2026-11-16 | Trabajar también con Claude Code: `CLAUDE.md` importa `AGENTS.md` para compartir las mismas instrucciones. | Vigente |
+| 2026-11-19 | Rediseñar la interfaz con aspecto de iOS nativo y una paleta índigo azulado sobre carbón en lugar del verde lima, empezando por la pantalla de ejercicio. Reglas en [design-principles.md](design-principles.md). | Aprobada |

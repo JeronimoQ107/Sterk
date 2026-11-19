@@ -9,6 +9,7 @@ Sterk es una PWA personal para registrar entrenamientos desde un iPhone con poco
 - [docs/architecture.md](docs/architecture.md): módulos, datos y límites técnicos. Lee las partes relacionadas con el cambio.
 - [docs/roadmap.md](docs/roadmap.md): problemas detectados y propuestas pendientes. Una propuesta documentada no autoriza su implementación.
 - [docs/development-workflow.md](docs/development-workflow.md): chats, worktrees, ramas e integración.
+- [docs/design-principles.md](docs/design-principles.md): dirección visual, paleta, tipografía y reglas de interfaz. Léelo antes de cambiar cualquier pantalla.
 
 Las instrucciones del usuario prevalecen. Actualiza los documentos afectados cuando cambie una decisión o el comportamiento; evita duplicar todo el historial de conversación y no presentes planes como funciones implementadas.
 
