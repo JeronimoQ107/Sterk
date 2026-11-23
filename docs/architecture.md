@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-> Implementación revisada: **1.9.1, 2026-11-22**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+> Implementación revisada: **1.9.2, 2026-11-22**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
 
 ## Implementación actual
 
