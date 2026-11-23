@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { inPeriod, overview, exerciseSeries, availableSides, estimatedOneRepMax, personalRecords, muscleGroupSets } from '../src/progress.js';
-import { progressDashboard, homeDashboard, sessionSummary } from '../src/dashboard.js';
+import { progressDashboard, homeDashboard, sessionSummary, chartScale } from '../src/dashboard.js';
 const part = (weight, reps, completed = true) => ({ weight, reps, completed });
 const session = (id, date, sets) => ({ id, startedAt: date, entries: [{ exerciseId: 'curl', exercise: 'Curl', sets }] });
 test('best performance keeps weight and reps from the same completed set; observations are chronological', () => {
@@ -64,4 +64,23 @@ test('UI-02: session totals use correct plurals and thousands separators everywh
   assert.match(html, /1 ejercicio · 3 series · 16\.542,5 lb/);
   assert.doesNotMatch(html, /[A-ZÁÉÍÓÚ]{4,} /, 'sin etiquetas en mayúsculas');
   assert.match(homeDashboard([]), /Todavía no hay entrenamientos/);
+});
+test('UI-01: the chart axis follows the data range and the estimated performance is shown in whole pounds', () => {
+  assert.deepEqual(chartScale([258.33, 263.08]), { min: 255, max: 265 });
+  assert.deepEqual(chartScale([20, 24]), { min: 20, max: 24 });
+  assert.deepEqual(chartScale([260, 260]), { min: 250, max: 270 }, 'valores iguales quedan en el centro');
+  assert.deepEqual(chartScale([0, 0]), { min: 0, max: 2 });
+  assert.deepEqual(chartScale([5, 16542.5]), { min: 0, max: 20000 }, 'el eje nunca baja de 0');
+  for (const values of [[1, 3], [95, 1001], [258.33, 263.08], [0.4, 0.6], [1234, 1250]]) {
+    const { min, max } = chartScale(values);
+    assert(min <= Math.min(...values) && max >= Math.max(...values) && min >= 0, `${values} cabe en ${min}–${max}`);
+    assert(Number.isInteger(min) && Number.isInteger((max - min) / 2), `${values}: marcas enteras`);
+  }
+  // 200 × 9 → 260 lb exactos y 197,5 × 10 → 263,33 lb: el eje va de 260 a 264 y no empieza en 0.
+  const sessions = [session('a', '2026-09-01', [part(200, 9)]), session('b', '2026-09-08', [part(197.5, 10)])];
+  const html = progressDashboard(sessions, { progressPeriod: 'all' });
+  assert.match(html, /263 <span>lb<\/span>/);
+  assert.doesNotMatch(html, /263,33/);
+  assert.match(html, />260<\/text>.*>262<\/text>.*>264<\/text>/s);
+  assert.doesNotMatch(html, />0<\/text>/);
 });

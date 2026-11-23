@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-> Implementación revisada: **1.9.0, 2026-11-19**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+> Implementación revisada: **1.9.1, 2026-11-22**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
 
 ## Implementación actual
 
@@ -84,7 +84,7 @@ Los periodos de 30/90 días incluyen hoy y los 29/89 días de calendario anterio
 
 Se genera una observación por sesión, ejercicio y tipo de registro: sin lado asignado, izquierdo o derecho. Conserva mejor serie por rendimiento, carga máxima, repeticiones máximas, volumen, repeticiones totales y series. El rendimiento usa Epley (`peso × (1 + repeticiones / 30)`), con el peso real para una repetición: es una estimación comparativa.
 
-La gráfica alterna rendimiento, volumen o repeticiones; compara las dos últimas observaciones del periodo y los récords respetan ese filtro. Una sola observación no muestra tendencia. Las fórmulas y límites se explican en un diálogo de ayuda.
+La gráfica alterna rendimiento, volumen o repeticiones; compara las dos últimas observaciones del periodo y los récords respetan ese filtro. Una sola observación no muestra tendencia. El eje vertical cubre el rango de los datos con tres marcas enteras (`chartScale`), no empieza en 0, y el rendimiento estimado se muestra en libras enteras; los cálculos conservan el valor exacto. Las fórmulas y límites se explican en un diálogo de ayuda.
 
 ## Respaldos y PWA
 

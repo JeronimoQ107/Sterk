@@ -286,3 +286,24 @@ test('HIST-03 y QA-03: las sesiones antiguas sin totales muestran valores calcul
     memory.clear();
   }
 });
+
+test('UI-01: changing view or starting the workout scrolls to the top and notices stay visible for more than 1 s', () => {
+  const { run, click } = setup();
+  run('globalThis.scrolls = []; window.scrollTo = (...args) => scrolls.push(args); globalThis.timers = []; window.setTimeout = (fn, ms) => timers.push({ fn, ms });');
+  run('toast.classList = { visible: false, add() { this.visible = true; }, remove() { this.visible = false; } };');
+  click({ view: 'history' });
+  assert.equal(run('scrolls.length'), 1, 'cambiar de vista vuelve arriba');
+  run('render(); renderHistory();');
+  assert.equal(run('scrolls.length'), 1, 'volver a dibujar la misma vista no mueve la página');
+  click({ action: 'new-session' });
+  run('state.builderSelection = ["pec-deck"];');
+  click({ action: 'start-session' });
+  assert.equal(run('state.view'), 'exercise');
+  assert.equal(run('scrolls.length'), 3, 'empezar el entrenamiento abre el primer ejercicio arriba');
+  run('showToast("Uno"); showToast("Dos");');
+  assert(run('timers.every((timer) => timer.ms > 1000)'));
+  run('timers[0].fn();');
+  assert.equal(run('toast.classList.visible'), true, 'un aviso anterior no oculta el siguiente');
+  run('timers[1].fn();');
+  assert.equal(run('toast.classList.visible'), false);
+});

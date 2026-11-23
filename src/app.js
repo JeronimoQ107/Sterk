@@ -533,6 +533,8 @@ function openProgressInfo() {
   dialog.showModal();
 }
 
+// UI-01: al cambiar de vista (también al empezar la sesión) se vuelve arriba; los renderizados dentro de una misma vista conservan la posición.
+let renderedView = null;
 function render() {
   if (state.view === "progress") renderProgress();
   if (state.view === "home") renderHome();
@@ -542,10 +544,14 @@ function render() {
   if (state.view === "history") renderHistory();
   if (state.view === "history-detail") renderHistoryDetail();
   if (state.view === "settings") renderSettings();
+  if (state.view !== renderedView) { renderedView = state.view; window.scrollTo(0, 0); }
 }
 
 function updateTimers() { document.querySelectorAll("[data-session-start]").forEach((element) => { element.textContent = formatDuration(elapsedSeconds(element.dataset.sessionStart)); }); }
-function showToast(message) { toast.textContent = message; toast.classList.add("visible"); window.setTimeout(() => toast.classList.remove("visible"), 1000); }
+// UI-01: cada aviso se ve 2,5 s; si llega otro antes, el plazo empieza de nuevo.
+const TOAST_MS = 2500;
+let toastSequence = 0;
+function showToast(message) { const current = ++toastSequence; toast.textContent = message; toast.classList.add("visible"); window.setTimeout(() => { if (current === toastSequence) toast.classList.remove("visible"); }, TOAST_MS); }
 function goToExercise(index) { const target = Math.max(0, Math.min(index, state.session.exercises.length - 1)); if (target !== state.exerciseIndex) commitCurrentExercise(); state.exerciseIndex = target; persistSession(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
 function parseDecimal(value) { return Number(String(value).trim().replace(",", ".")); }
 function exportData() {
