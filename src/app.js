@@ -19,7 +19,8 @@ const state = { view: "home", session: null, exerciseIndex: 0, historySessionId:
 
 const uid = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 const escapeHtml = (value) => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
-const formatNumber = (value) => Number(value).toLocaleString("es-CO", { useGrouping: false, maximumFractionDigits: 10 });
+// UI-01: pesos con separador de miles como los totales; se conservan todos los decimales que se hayan escrito.
+const formatNumber = (value) => Number(value).toLocaleString("es-CO", { maximumFractionDigits: 10 });
 // Totales (volumen, conteos) con separador de miles, como en Inicio y Progreso.
 const formatTotal = (value) => Number(value).toLocaleString("es-CO", { maximumFractionDigits: 2 });
 const formatDayMonth = (value) => new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(new Date(value));

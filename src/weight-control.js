@@ -3,7 +3,7 @@ export function scrubWeight(start, distance) {
 }
 
 export function bindWeightControl(root, readWeight, writeWeight) {
-  const format = (value) => value.toLocaleString('es-CO', { useGrouping: false, maximumFractionDigits: 10 });
+  const format = (value) => value.toLocaleString('es-CO', { maximumFractionDigits: 10 });
   const animations = new Map();
   const draw = (button, anchor, position) => {
     if (anchor + position * 2.5 <= 0) { anchor = 0; position = 0; }
@@ -45,8 +45,7 @@ export function bindWeightControl(root, readWeight, writeWeight) {
   const update = (button, value) => {
     if (value === readWeight(button)) return;
     writeWeight(button, value);
-    button.querySelector('[data-weight-number]').textContent = value.toLocaleString('es-CO', { useGrouping: false, maximumFractionDigits: 10 });
-    const format = (weight) => weight.toLocaleString('es-CO', { useGrouping: false, maximumFractionDigits: 10 });
+    button.querySelector('[data-weight-number]').textContent = format(value);
     button.querySelector('[data-weight-previous]').textContent = value >= 2.5 ? format(value - 2.5) : '';
     button.querySelector('[data-weight-next]').textContent = format(value + 2.5);
     button.setAttribute('aria-valuenow', String(value));

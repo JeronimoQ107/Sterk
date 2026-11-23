@@ -86,7 +86,8 @@ test('UI-01: the chart axis follows the data range and the estimated performance
 });
 test('MET-02: the comparison names the selected metric and the table has the values of all three charts', () => {
   const sessions = [session('a', '2026-09-01', [part(100, 5), part(80, 10)]), session('b', '2026-09-08', [part(95, 8), part(70, 12)])];
-  const expected = { performance: ['Rendimiento', '+3,'], volume: ['Volumen', '+23,'], reps: ['Repeticiones', '+33,'] };
+  // UI-01: un decimal en el porcentaje.
+  const expected = { performance: ['Rendimiento', '+3,1%'], volume: ['Volumen', '+23,1%'], reps: ['Repeticiones', '+33,3%'] };
   for (const [metric, [label, change]] of Object.entries(expected)) {
     const html = progressDashboard(sessions, { progressPeriod: 'all', progressMetric: metric });
     assert(html.includes(`<small>${label} frente al anterior</small><strong>${change}`), `${metric}: ${label} ${change}`);
@@ -94,4 +95,9 @@ test('MET-02: the comparison names the selected metric and the table has the val
   const html = progressDashboard(sessions, { progressPeriod: 'all' });
   assert.match(html, /<th>Rendimiento<\/th><th>Volumen<\/th><th>Reps<\/th>/);
   assert.match(html, /<td>1\.600 lb<\/td><td>20<\/td><\/tr>/, 'repeticiones totales de la sesión más reciente');
+});
+test('UI-01: a change that rounds to zero shows 0% without a sign', () => {
+  const sessions = [session('a', '2026-09-01', [part(100, 10), part(50, 1)]), session('b', '2026-09-08', [part(100, 10), part(50, 1), part(0.5, 1)])];
+  const html = progressDashboard(sessions, { progressPeriod: 'all', progressMetric: 'volume' });
+  assert(html.includes('<small>Volumen frente al anterior</small><strong>0%</strong>'));
 });

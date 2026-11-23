@@ -307,3 +307,9 @@ test('UI-01: changing view or starting the workout scrolls to the top and notice
   run('timers[1].fn();');
   assert.equal(run('toast.classList.visible'), false);
 });
+
+test('UI-01: weights of 1,000 lb or more use the thousands separator in the exercise screen', () => {
+  const { run, app } = setup();
+  run('state.builderSelection = ["pec-deck"]; startSession(); draft().sets[0].weight = 1002.5; render();');
+  assert.match(app.innerHTML, /data-weight-number>1\.002,5</);
+});
