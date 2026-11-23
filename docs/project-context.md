@@ -28,7 +28,7 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 - Interfaz con paleta azul cobalto sobre carbón, en claro y oscuro según el sistema. Todas las pantallas siguen la dirección "iOS nativo" de [design-principles.md](design-principles.md): títulos grandes, listas agrupadas, sin etiquetas en mayúsculas ni textos de relleno. Icono: mancuerna blanca sobre cobalto.
 - Historial por entrenamiento con detalles, cambio de fecha y eliminación. **Todavía no permite editar peso, repeticiones o series de una sesión finalizada**.
 - Inicio con acceso al último entrenamiento; Progreso con periodos de 30/90 días o todo el historial, actividad, rendimiento estimado, volumen, repeticiones, récords del periodo y series por grupo muscular.
-- Respaldo JSON **V4**, importación compatible con V1–V4 y migración del historial V0. Una clave ilegible se conserva sin sobrescribirla y la app avisa (DATA-02); la validación completa de respaldos sigue pendiente (DATA-01). Al abrir cada versión nueva se guarda una copia automática en el dispositivo; Ajustes conserva las tres últimas y permite restaurarlas y deshacer la restauración (DATA-03).
+- Respaldo JSON **V4**, importación compatible con V1–V4 y migración del historial V0. Una clave ilegible se conserva sin sobrescribirla y la app avisa (DATA-02); un respaldo dañado se rechaza antes de escribir y los datos anteriores no cambian (DATA-01). Al abrir cada versión nueva se guarda una copia automática en el dispositivo; Ajustes conserva las tres últimas y permite restaurarlas y deshacer la restauración (DATA-03).
 - PWA con manifiesto, iconos y service worker para recursos offline. La validación completa en un iPhone físico sigue pendiente.
 
 ## Reglas de producto

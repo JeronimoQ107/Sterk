@@ -1,2 +1,2 @@
 // Debe coincidir con package.json y con CACHE_NAME de service-worker.js; npm test lo comprueba.
-export const APP_VERSION = "1.9.1";
+export const APP_VERSION = "1.9.2";

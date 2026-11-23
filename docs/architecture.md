@@ -89,7 +89,7 @@ La gráfica alterna rendimiento, volumen o repeticiones; compara las dos última
 
 ## Respaldos y PWA
 
-La exportación JSON V4 incluye entradas, sesiones finalizadas, sesión activa, ajustes y ejercicios personalizados. Se aceptan versiones V1–V4 y se normalizan sus datos. Importar prepara todos los valores, se bloquea si alguna clave local es ilegible y restaura los datos anteriores si una escritura falla; la validación aún no verifica todo el contenido del respaldo (DATA-01).
+La exportación JSON V4 incluye entradas, sesiones finalizadas, sesión activa, ajustes y ejercicios personalizados. Se aceptan versiones V1–V4 y se normalizan sus datos. Importar valida primero el contenido completo del respaldo (entradas, series y lados, sesiones, preferencias, sesión en curso y ejercicios propios) y lanza `InvalidBackupError` sin escribir nada si una sección está dañada; cada valor preparado debe superar además la comprobación de lectura, para no dejar claves ilegibles (DATA-01). Esa validación solo se aplica a los respaldos; los datos guardados se leen como antes. Después se bloquea si alguna clave local es ilegible y restaura los datos anteriores si una escritura falla, avisando si esa restauración tampoco fue posible. Ajustes valida el archivo antes de pedir confirmación.
 
 El manifiesto incluye iconos PNG de 192/512 px e iOS usa uno de 180 px. El service worker precarga el shell, incluidos los controles de repeticiones y la imagen Pec Deck, pidiendo cada archivo a la red con `cache: "reload"`; si uno falla, la instalación falla y sigue la versión anterior. Responde solo desde la caché de su versión (HTML incluido), así que todos los archivos de una carga pertenecen a la misma versión. Al activarse borra solo cachés `sterk-*` anteriores. Sin conexión, una navegación abre `index.html` guardado; un recurso ausente devuelve error. Su versión actual es `sterk-v1-7-5`; `npm test` comprueba que coincide con `package.json` y `APP_VERSION` y que el precaché lista exactamente los archivos de `src/`, `icons/` y `assets/exercises/`.
 
@@ -99,7 +99,6 @@ Estos comportamientos **siguen presentes** y se rastrean en [roadmap.md](roadmap
 
 - Una serie marcada con cero repeticiones puede contar en el historial/resumen de `storage` y quedar excluida de Progreso.
 - En Progreso, el porcentaje comparativo sigue la métrica seleccionada, mientras la tarjeta mantiene el título y valor de “Rendimiento estimado”.
-- Un respaldo con contenido mal formado puede importarse sin validación completa (DATA-01). Las escrituras de varias claves ya se revierten si una falla.
 - Si se publica un cambio de código sin subir la versión, el teléfono sigue con la versión anterior completa: no se mezclan archivos, pero tampoco llega la actualización.
 - Las pruebas automatizadas simulan almacenamiento y DOM; no sustituyen validar Safari, instalación, modo avión, reanudación, actualización y accesibilidad en un iPhone físico.
 

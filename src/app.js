@@ -659,8 +659,15 @@ app.addEventListener("click", (event) => {
 importInput.addEventListener("change", async () => {
   const file = importInput.files[0];
   if (!file) return;
-  try { const backup = JSON.parse(await file.text()); if (!confirm("¿Restaurar esta copia? Reemplazará el historial, la sesión activa y las preferencias actuales.")) return; storage.importData(backup); goHome(); showToast("Respaldo restaurado"); }
-  catch (error) { alert(error.message); }
+  // DATA-01: el respaldo se lee y valida entero antes de pedir confirmación; si falla, nada cambia.
+  try {
+    let backup;
+    try { backup = JSON.parse(await file.text()); } catch { throw new Error("No se pudo leer el archivo: no es un respaldo de Sterk o está incompleto. No se modificó ningún dato."); }
+    storage.validateBackup(backup);
+    if (!confirm("¿Restaurar esta copia? Reemplazará el historial, la sesión activa y las preferencias actuales.")) return;
+    storage.importData(backup); goHome(); showToast("Respaldo restaurado");
+  }
+  catch (error) { alert(error.message); render(); }
   finally { importInput.value = ""; }
 });
 

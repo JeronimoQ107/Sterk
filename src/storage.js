@@ -1,5 +1,5 @@
 import { DEFAULT_EXERCISES, LEGACY_ROUTINES } from "./data.js";
-import { normalizeSet, setReps, setVolume, parts } from "./sets.js";
+import { SIDES, normalizeSet, setReps, setVolume, parts } from "./sets.js";
 
 const KEYS = Object.freeze({
   entries: "sterk:v1:workout-entries",
@@ -121,6 +121,19 @@ function commitRaw(changes) {
         // Se intenta restaurar el resto de claves aunque una falle.
       }
     });
+    // Indica si todas las claves volvieron a su texto original, para avisar con precisión.
+    const restored = changes.every(([key]) => {
+      try {
+        return localStorage.getItem(key) === current[key].raw;
+      } catch {
+        return false;
+      }
+    });
+    try {
+      error.restored = restored;
+    } catch {
+      // Un error no extensible se propaga sin la marca.
+    }
     throw error;
   }
   changes.forEach(([key]) => problems.delete(key));
@@ -219,6 +232,125 @@ function normalizeActiveSession(session, catalog = catalogWith()) {
     categoryTags: session.categoryTags || [...new Set(exercises.map((exercise) => exercise.category))],
     exercises,
   };
+}
+
+// DATA-01: un respaldo se valida entero antes de preparar o escribir nada. Se rechaza lo que la app
+// no podría mostrar o que dejaría una clave ilegible, y se acepta todo lo que escribieron V1–V4.
+export class InvalidBackupError extends Error {
+  constructor(problem, message = `El respaldo está dañado (${problem}). No se modificó ningún dato.`) {
+    super(message);
+    this.name = "InvalidBackupError";
+    this.problem = problem;
+  }
+}
+
+const isText = (value) => value === undefined || value === null || typeof value === "string";
+const isId = (value) => value === undefined || value === null || typeof value === "string" || Number.isFinite(value);
+const isDate = (value) => value === undefined || value === null || (typeof value === "string" && !Number.isNaN(new Date(value).getTime()));
+const isAmount = (value) => value === undefined || value === null || (typeof value === "number" && Number.isFinite(value))
+  || (typeof value === "string" && Number.isFinite(Number(value)));
+const isFlag = (value) => value === undefined || value === null || typeof value === "boolean";
+
+function checkFields(record, rules, where) {
+  rules.forEach(([check, fields]) => fields.forEach((field) => {
+    if (!check(record[field])) throw new InvalidBackupError(`${where}, campo «${field}»`);
+  }));
+}
+
+function checkList(value, where, checkItem) {
+  if (!Array.isArray(value)) throw new InvalidBackupError(`${where} no es una lista`);
+  value.forEach((item, index) => {
+    const position = `${where}, elemento ${index + 1}`;
+    if (!isRecord(item)) throw new InvalidBackupError(position);
+    checkItem?.(item, position);
+  });
+}
+
+function checkPart(part, where) {
+  checkFields(part, [[isAmount, ["weight", "reps"]], [isFlag, ["completed"]]], where);
+}
+
+function checkSet(set, where) {
+  if (set.sides === undefined) return checkPart(set, where);
+  if (!isRecord(set.sides)) throw new InvalidBackupError(`${where}, lados`);
+  SIDES.forEach((side) => {
+    const part = set.sides[side];
+    const position = `${where}, lado ${side === "left" ? "izquierdo" : "derecho"}`;
+    if (part === undefined) return;
+    if (!isRecord(part)) throw new InvalidBackupError(position);
+    checkPart(part, position);
+  });
+}
+
+// Entradas del historial y ejercicios de la sesión activa comparten las series y su formato V1.
+function checkExerciseRecord(record, where) {
+  checkFields(record, [[isId, ["id", "sessionId", "exerciseId", "entryId"]], [isText, ["exercise", "name", "muscleGroup", "category", "routineId", "status"]], [isAmount, ["weight"]]], where);
+  if (record.sets !== undefined && record.sets !== null) checkList(record.sets, `${where}, series`, checkSet);
+  if (Array.isArray(record.reps) && !record.reps.every(isAmount)) throw new InvalidBackupError(`${where}, repeticiones`);
+}
+
+function checkEntry(entry, where) {
+  checkExerciseRecord(entry, where);
+  checkFields(entry, [[isDate, ["recordedAt"]], [isText, ["date", "time"]]], where);
+}
+
+function checkSession(session, where) {
+  checkFields(session, [
+    [isId, ["id"]],
+    [isText, ["label", "routineId", "routine"]],
+    [isDate, ["startedAt", "endedAt"]],
+    [isAmount, ["durationSeconds", "durationMinutes", "exerciseCount", "skippedCount", "setCount", "repCount", "volume"]],
+  ], where);
+  if (session.categoryTags != null && !(Array.isArray(session.categoryTags) && session.categoryTags.every((tag) => typeof tag === "string"))) {
+    throw new InvalidBackupError(`${where}, categorías`);
+  }
+}
+
+function checkActiveSession(session) {
+  const where = "sesión en curso";
+  if (!isRecord(session)) throw new InvalidBackupError(where);
+  checkSession(session, where);
+  checkFields(session, [[isDate, ["clockStartedAt"]], [isAmount, ["exerciseIndex"]]], where);
+  checkList(session.exercises, `${where}, ejercicios`, checkExerciseRecord);
+}
+
+function checkCustomExercise(exercise, where) {
+  if (typeof exercise.id !== "string" || !exercise.id) throw new InvalidBackupError(`${where}, campo «id»`);
+  if (typeof exercise.name !== "string" || !exercise.name.trim()) throw new InvalidBackupError(`${where}, campo «name»`);
+  checkFields(exercise, [[isText, ["category", "muscleGroup"]], [isFlag, ["archived", "custom"]]], where);
+}
+
+// Devuelve el valor de cada clave listo para guardarse, o lanza InvalidBackupError sin tocar nada.
+function prepareBackup(data) {
+  if (!isRecord(data) || data.app !== "Sterk" || ![1, 2, 3, 4].includes(data.version) || !Array.isArray(data.entries)) {
+    throw new InvalidBackupError("formato", "El archivo no es un respaldo válido de Sterk. No se modificó ningún dato.");
+  }
+  const customExercises = data.version >= 3 && data.customExercises != null ? data.customExercises : [];
+  checkList(customExercises, "ejercicios propios", checkCustomExercise);
+  checkList(data.entries, "historial de ejercicios", checkEntry);
+  const sessions = data.completedSessions ?? [];
+  checkList(sessions, "entrenamientos finalizados", checkSession);
+  if (data.settings != null && !isRecord(data.settings)) throw new InvalidBackupError("preferencias");
+  if (data.activeSession != null) checkActiveSession(data.activeSession);
+
+  const catalog = catalogWith(customExercises);
+  const prepared = [
+    [KEYS.customExercises, customExercises],
+    [KEYS.entries, data.entries.map((entry) => normalizeEntry(entry, catalog))],
+    [KEYS.sessions, sessions],
+    [KEYS.settings, data.settings || { trackingMode: "exercise" }],
+    [KEYS.activeSession, data.activeSession ? normalizeActiveSession(data.activeSession, catalog) : undefined],
+  ];
+  // Lo guardado debe leerse después sin problemas: la misma comprobación que se aplica al abrir la app.
+  prepared.forEach(([key, value]) => {
+    if (value === undefined) return;
+    try {
+      SHAPES[key](JSON.parse(JSON.stringify(value)));
+    } catch {
+      throw new InvalidBackupError(KEY_LABELS[key]);
+    }
+  });
+  return prepared;
 }
 
 // DATA-03: claves que forman una copia completa de los datos, incluido el historial V0.
@@ -394,18 +526,27 @@ export const storage = {
     if (unreadable.length) backup.unreadableData = Object.fromEntries(unreadable.map((problem) => [problem.key, problem.raw]));
     return backup;
   },
+  // Falla sin tocar los datos si el respaldo no se puede restaurar completo.
+  validateBackup(data) { prepareBackup(data); },
   importData(data) {
-    if (!data || data.app !== "Sterk" || ![1, 2, 3, 4].includes(data.version) || !Array.isArray(data.entries)) throw new Error("El archivo no es un respaldo válido de Sterk.");
-    const customExercises = data.version >= 3 && Array.isArray(data.customExercises) ? data.customExercises : [];
-    const catalog = catalogWith(customExercises);
-    // Se preparan todos los valores antes de escribir; restaurar no reemplaza datos ilegibles.
-    commit([
-      [KEYS.customExercises, customExercises],
-      [KEYS.entries, data.entries.map((entry) => normalizeEntry(entry, catalog))],
-      [KEYS.sessions, Array.isArray(data.completedSessions) ? data.completedSessions : []],
-      [KEYS.settings, data.settings || { trackingMode: "exercise" }],
-      [KEYS.activeSession, data.activeSession ? normalizeActiveSession(data.activeSession, catalog) : undefined],
-    ]);
+    // DATA-01: se valida y prepara todo antes de escribir; restaurar no reemplaza datos ilegibles (DATA-02).
+    let prepared;
+    try {
+      prepared = prepareBackup(data);
+    } catch (error) {
+      if (error instanceof InvalidBackupError) throw error;
+      // Un fallo inesperado al normalizar también cuenta como respaldo dañado.
+      throw new InvalidBackupError("contenido no reconocido");
+    }
+    try {
+      commit(prepared);
+    } catch (error) {
+      if (error instanceof StorageReadError) throw error;
+      const detail = error.restored === false
+        ? "Puede que algunos datos hayan cambiado: exporta una copia y revisa Historial."
+        : "Tus datos anteriores se conservan sin cambios.";
+      throw new Error(`No se pudo guardar el respaldo (${error.message}). ${detail}`, { cause: error });
+    }
   },
   clearAll() {
     commit(Object.values(KEYS).map((key) => [key, undefined]));
