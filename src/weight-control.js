@@ -1,9 +1,10 @@
+import { formatNumber as format } from './format.js';
+
 export function scrubWeight(start, distance) {
   return Math.max(0, Math.round((start + Math.round(distance / 20) * 2.5) * 1000000) / 1000000);
 }
 
 export function bindWeightControl(root, readWeight, writeWeight) {
-  const format = (value) => value.toLocaleString('es-CO', { maximumFractionDigits: 10 });
   const animations = new Map();
   const draw = (button, anchor, position) => {
     if (anchor + position * 2.5 <= 0) { anchor = 0; position = 0; }

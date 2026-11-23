@@ -2,13 +2,11 @@ import { icon } from './icons.js';
 import { MUSCLE_GROUPS } from './data.js';
 import { APP_VERSION } from './version.js';
 import { inPeriod, overview, exerciseOptions, availableSides, exerciseSeries, personalRecords, muscleGroupSets } from './progress.js';
-const escape = (value) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
-const number = (value) => Number(value).toLocaleString('es-CO', { maximumFractionDigits: 2 });
+import { escapeHtml as escape, formatTotal as number, formatDayMonth as date } from './format.js';
 // UI-01: el rendimiento estimado es una estimación; se muestra en libras enteras. Los cálculos conservan el valor exacto.
 const estimate = (value) => number(Math.round(value));
 // Porcentajes con un decimal; un cambio que redondea a 0 se muestra como "0%", sin signo.
 const percentChange = (value) => { const rounded = Math.round(value * 10) / 10 || 0; return `${rounded > 0 ? '+' : ''}${number(rounded)}%`; };
-const date = (value) => new Date(value).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
 const sideNames = { both: 'Sin lado asignado', left: 'Izquierdo', right: 'Derecho' };
 const metrics = (stats) => `<div class="ui-group ui-metrics"><div><strong>${number(stats.sessions)}</strong><span>Entrenamientos</span></div><div><strong>${number(stats.sets)}</strong><span>Series hechas</span></div><div><strong>${number(stats.days)}</strong><span>Días activos</span></div></div>`;
 // UI-02: textos con plural correcto y una fila de lista agrupada con flecha.

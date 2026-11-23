@@ -9,6 +9,7 @@ import { homeDashboard, progressDashboard, settingsDashboard, plural, sessionSum
 import { exerciseOptions } from '../src/progress.js';
 import { createSnapshots } from '../src/snapshots.js';
 import { APP_VERSION } from '../src/version.js';
+import * as format from '../src/format.js';
 
 const memory = new Map();
 globalThis.localStorage = { getItem: (key) => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, value), removeItem: (key) => memory.delete(key) };
@@ -19,7 +20,7 @@ function setup() {
   const handlers = {}, notices = [], dialogs = [];
   const app = { innerHTML: '', addEventListener: (type, fn) => { handlers[type] = fn; }, querySelector: () => null };
   const dummy = { addEventListener() {}, classList: { add() {}, remove() {} } };
-  const context = vm.createContext({ ...data, ...sets, icon, homeDashboard, progressDashboard, settingsDashboard, plural, sessionSummary, exerciseOptions, createSnapshots, APP_VERSION, bindWeightControl() {}, bindRepsControl() {}, storage, structuredClone, console, crypto: globalThis.crypto,
+  const context = vm.createContext({ ...data, ...sets, ...format, icon, homeDashboard, progressDashboard, settingsDashboard, plural, sessionSummary, exerciseOptions, createSnapshots, APP_VERSION, bindWeightControl() {}, bindRepsControl() {}, storage, structuredClone, console, crypto: globalThis.crypto,
     document: { querySelector: (selector) => selector === '#app' ? app : dummy, querySelectorAll: () => [], body: { append() {} },
       createElement: () => { const dialog = { handlers: {}, innerHTML: '', setAttribute() {}, addEventListener(type, fn) { this.handlers[type] = fn; }, showModal() {}, close() {}, remove() {} }; dialogs.push(dialog); return dialog; } },
     navigator: {}, window: { setInterval() {}, setTimeout() {}, scrollTo() {}, addEventListener() {} }, confirm: () => true, alert: (text) => notices.push(text), openWeightPicker() {}, openRepsPicker() {},
@@ -117,7 +118,7 @@ test('unilateral series mode persists asymmetric values and only counts complete
   const { run, click } = setup();
   run('state.builderSelection = ["bayesian-curl"]; startSession();');
   click({ action: 'toggle-unilateral' });
-  click({ setReps: '0', side: 'right', delta: '2' });
+  run('editablePart(0, "right").reps += 2; markEdited(); persistSession();'); // lo que hace el control de repeticiones
   click({ toggleSet: '0', side: 'left' });
   run('saveExercise(); goHome(); resumeSession();');
   assert.equal(run('draft().sets[0].sides.right.reps'), 12);
@@ -134,7 +135,7 @@ test('UX-02: finishing registers the current edits, but untouched pending exerci
   for (let index = 0; index < run('draft().sets.length'); index += 1) click({ toggleSet: String(index) });
   assert.equal(run('state.exerciseIndex'), 1, 'la última serie registra y pasa al siguiente pendiente');
   click({ jump: '0' });
-  click({ setReps: '0', delta: '2' });
+  run('editablePart(0).reps += 2; markEdited(); persistSession();'); // lo que hace el control de repeticiones
   assert.equal(storage.getActiveSession().exercises[0].status, 'pending');
   click({ action: 'finish-session' });
   assert.equal(notices.length, 1, 'hammer-curl sigue pendiente sin series marcadas');

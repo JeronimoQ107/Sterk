@@ -11,19 +11,14 @@ import { openRepsPicker } from "./reps-picker.js";
 import { homeDashboard, progressDashboard, settingsDashboard, plural, sessionSummary } from "./dashboard.js";
 import { exerciseOptions } from "./progress.js";
 import { icon } from "./icons.js";
+import { escapeHtml, formatNumber, formatTotal, formatDayMonth } from "./format.js";
 
 const app = document.querySelector("#app");
 const toast = document.querySelector("#toast");
 const importInput = document.querySelector("#import-data");
-const state = { view: "home", session: null, exerciseIndex: 0, historySessionId: null, historyFilter: "all", historyQuery: "", completion: null, updateWaiting: false, builderSelection: [], builderFilter: "all", builderQuery: "", adding: false };
+const state = { view: "home", session: null, exerciseIndex: 0, historySessionId: null, historyFilter: "all", historyQuery: "", completion: null, updateWaiting: false, builderSelection: [], builderQuery: "", adding: false };
 
 const uid = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
-const escapeHtml = (value) => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
-// UI-01: pesos con separador de miles como los totales; se conservan todos los decimales que se hayan escrito.
-const formatNumber = (value) => Number(value).toLocaleString("es-CO", { maximumFractionDigits: 10 });
-// Totales (volumen, conteos) con separador de miles, como en Inicio y Progreso.
-const formatTotal = (value) => Number(value).toLocaleString("es-CO", { maximumFractionDigits: 2 });
-const formatDayMonth = (value) => new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(new Date(value));
 const capitalize = (text) => text.charAt(0).toLocaleUpperCase("es-CO") + text.slice(1);
 const formatDate = (value) => new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
 const formatTime = (value) => new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
@@ -138,7 +133,7 @@ function handleSessionClick(event) {
   }
   if (action === "add-exercises") {
     commitCurrentExercise();
-    state.adding = true; state.builderSelection = []; state.builderFilter = "all"; state.builderQuery = ""; state.view = "builder"; persistSession(); render(); return true;
+    state.adding = true; state.builderSelection = []; state.builderQuery = ""; state.view = "builder"; persistSession(); render(); return true;
   }
   if (action === "manage-session") { openSessionEditor(); return true; }
   if (action === "exercise-menu") { openExerciseMenu(); return true; }
@@ -554,7 +549,6 @@ const TOAST_MS = 2500;
 let toastSequence = 0;
 function showToast(message) { const current = ++toastSequence; toast.textContent = message; toast.classList.add("visible"); window.setTimeout(() => { if (current === toastSequence) toast.classList.remove("visible"); }, TOAST_MS); }
 function goToExercise(index) { const target = Math.max(0, Math.min(index, state.session.exercises.length - 1)); if (target !== state.exerciseIndex) commitCurrentExercise(); state.exerciseIndex = target; persistSession(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
-function parseDecimal(value) { return Number(String(value).trim().replace(",", ".")); }
 function exportData() {
   const blob = new Blob([JSON.stringify(storage.exportData(), null, 2)], { type: "application/json" });
   const link = document.createElement("a");
@@ -595,7 +589,7 @@ app.addEventListener("submit", (event) => {
     storage.saveCustomExercise(exercise);
     state.builderSelection.push(exercise.id);
     state.builderQuery = "";
-    state.builderFilter = "all";
+   
     render();
     showToast("Ejercicio creado");
   } catch (error) { alert(error.message); }
@@ -610,8 +604,6 @@ app.addEventListener("click", (event) => {
   if (periodButton) { state.progressPeriod = periodButton.dataset.period; return renderProgress(); }
   const viewButton = event.target.closest("[data-view]");
   if (viewButton) { state.view = viewButton.dataset.view; return render(); }
-  const filterButton = event.target.closest("[data-filter]");
-  if (filterButton) { state.builderFilter = filterButton.dataset.filter; return render(); }
   const restoreButton = event.target.closest("[data-restore-snapshot]");
   if (restoreButton) { restoreSnapshot(restoreButton.dataset.restoreSnapshot); return; }
   const archiveButton = event.target.closest("[data-archive-exercise]");
@@ -625,10 +617,6 @@ app.addEventListener("click", (event) => {
   const historyButton = event.target.closest("[data-history-session]");
   if (historyButton) { state.historySessionId = historyButton.dataset.historySession; state.view = "history-detail"; return render(); }
   if (handleSessionClick(event)) return;
-  const weightButton = event.target.closest("[data-set-weight]");
-  if (weightButton) { const set = draft().sets[Number(weightButton.dataset.setWeight)]; set.weight = Math.max(0, set.weight + Number(weightButton.dataset.delta)); persistSession(); return render(); }
-  const repButton = event.target.closest("[data-set-reps]");
-  if (repButton) { const set = editablePart(Number(repButton.dataset.setReps), repButton.dataset.side); set.reps = Math.max(0, set.reps + Number(repButton.dataset.delta)); markEdited(); persistSession(); return render(); }
   const setButton = event.target.closest("[data-toggle-set]");
   if (setButton) {
     const set = draft().sets[Number(setButton.dataset.toggleSet)];
@@ -649,7 +637,7 @@ app.addEventListener("click", (event) => {
   const action = event.target.closest("[data-action]")?.dataset.action;
   if (action === "progress-info") openProgressInfo();
   if (action === "progress-picker") openProgressPicker();
-  if (action === "new-session") { const active = storage.getActiveSession(); if (active && !confirm("Esto reemplazará la sesión en curso. ¿Continuar?")) return; if (active) storage.deleteSession(active.id); storage.clearActiveSession(); state.adding = false; state.builderQuery = ""; state.builderSelection = []; state.builderFilter = "all"; state.view = "builder"; render(); }
+  if (action === "new-session") { const active = storage.getActiveSession(); if (active && !confirm("Esto reemplazará la sesión en curso. ¿Continuar?")) return; if (active) storage.deleteSession(active.id); storage.clearActiveSession(); state.adding = false; state.builderQuery = ""; state.builderSelection = []; state.view = "builder"; render(); }
   if (action === "cancel-builder") { if (state.adding) { state.adding = false; state.view = "exercise"; render(); } else goHome(); }
   if (action === "start-session") { if (state.adding) { const selected = selectedExercises(); if (!selected.length) return; const first = state.session.exercises.length; state.session.exercises.push(...selected.map(newExerciseDraft)); state.adding = false; state.view = "exercise"; goToExercise(first); } else startSession(); }
   if (action === "resume") resumeSession();

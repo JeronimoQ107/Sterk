@@ -23,6 +23,7 @@ La aplicación utiliza HTML/CSS y módulos ES de JavaScript, sin framework, back
 | `src/progress.js` | Filtros y cálculos de actividad, rendimiento, volumen, repeticiones y récords. |
 | `src/weight-control.js`, `src/reps-control.js` | Ajuste por arrastre, rueda y teclado, conservando el control durante el gesto. |
 | `src/weight-picker.js`, `src/reps-picker.js` | Diálogos de entrada manual con validación. |
+| `src/format.js` | Escape de HTML y formato de números y fechas (`es-CO`, separador de miles), compartido por todas las vistas (TECH-03). |
 | `src/icons.js`, `src/styles.css` | Iconos SVG y presentación mobile-first. |
 | `assets/exercises/` | Una imagen disponible: `pec-deck.png`. |
 | `service-worker.js` | Caché del shell y recursos offline. |

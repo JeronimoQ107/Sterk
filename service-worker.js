@@ -20,6 +20,7 @@ const APP_SHELL = [
   "./src/storage.js",
   "./src/snapshots.js",
   "./src/version.js",
+  "./src/format.js",
   "./icons/icon.svg",
   "./icons/apple-touch-icon.svg",
   "./icons/apple-touch-icon.png",
