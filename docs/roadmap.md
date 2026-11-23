@@ -23,7 +23,7 @@ Actualiza el estado y anota evidencia relevante al avanzar. No marques una funci
 | HIST-02 | Alta | Completada | Mostrar siempre en Historial, biblioteca y Progreso los registros antiguos sin `sessionId`. Hasta 1.7.4 desaparecían cuando no había sesión activa: `getHistorySessions` comparaba `entry.sessionId !== activeSessionId` y ambos valían `undefined`. Los datos seguían guardados, pero quien los buscara podía creer que se perdieron. |
 | HIST-03 | Media | Completada | Calcular en Historial los totales de sesiones finalizadas con el formato antiguo (sin `exerciseCount`, `setCount` ni `volume`) a partir de sus entradas, en lugar de mostrar "undefined" y "NaN". |
 | MET-01 | Alta | Propuesta | Unificar el tratamiento de series completadas con cero repeticiones entre resumen, historial y Progreso. Definir la regla antes de ajustar los cálculos. |
-| MET-02 | Media | Propuesta | Hacer que el texto de comparación corresponda a la métrica seleccionada y que la tabla de Progreso incluya los valores necesarios para interpretar las tres gráficas. |
+| MET-02 | Media | Lista para integrar | Hacer que el texto de comparación corresponda a la métrica seleccionada y que la tabla de Progreso incluya los valores necesarios para interpretar las tres gráficas. |
 
 ### Evidencia y comprobaciones de aceptación
 
@@ -35,7 +35,7 @@ Actualiza el estado y anota evidencia relevante al avanzar. No marques una funci
 - **QA-03:** desde 1.7.4 existe `tests/fixtures/storage-v1.7.3.json`, generado con el código de 1.7.3 y datos sintéticos (migración V0, lados asimétricos, serie con 0 repeticiones, ejercicio archivado, sesión activa). Las pruebas comprueban lectura, escritura y respaldo V4 sin pérdidas. Pendiente: añadir respaldos reales anonimizados y un fixture por cada versión publicada.
 - **DATA-04:** comprobar la exportación en Safari instalado en pantalla de inicio, incluido guardar en Archivos.
 - **MET-01:** el control permite marcar una serie con cero repeticiones; el resumen de almacenamiento puede contarla mientras Progreso la excluye. Comprobar registros bilaterales, izquierda/derecha y sesiones antiguas con una regla consistente.
-- **MET-02:** el porcentaje sigue la métrica de Progreso seleccionada mientras la etiqueta muestra rendimiento estimado. La tabla ofrece rendimiento y volumen, pero omite repeticiones totales. Comprobar las tres selecciones y su lectura accesible.
+- **MET-02:** el porcentaje sigue la métrica de Progreso seleccionada mientras la etiqueta muestra rendimiento estimado. La tabla ofrece rendimiento y volumen, pero omite repeticiones totales. Comprobar las tres selecciones y su lectura accesible. **Implementado (1.9.1, 2026-11-22, rama `claude/ui-01-arreglos`):** la comparación se rotula con la métrica elegida ("Rendimiento/Volumen/Repeticiones frente al anterior") y sigue calculándose sobre ella; la tabla de registros añade la columna Reps (repeticiones totales), así que tiene los valores de las tres gráficas. Prueba en `tests/progress.test.mjs` con las tres selecciones.
 
 ## PWA, accesibilidad y comprobaciones
 

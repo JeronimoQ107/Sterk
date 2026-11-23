@@ -84,3 +84,14 @@ test('UI-01: the chart axis follows the data range and the estimated performance
   assert.match(html, />260<\/text>.*>262<\/text>.*>264<\/text>/s);
   assert.doesNotMatch(html, />0<\/text>/);
 });
+test('MET-02: the comparison names the selected metric and the table has the values of all three charts', () => {
+  const sessions = [session('a', '2026-09-01', [part(100, 5), part(80, 10)]), session('b', '2026-09-08', [part(95, 8), part(70, 12)])];
+  const expected = { performance: ['Rendimiento', '+3,'], volume: ['Volumen', '+23,'], reps: ['Repeticiones', '+33,'] };
+  for (const [metric, [label, change]] of Object.entries(expected)) {
+    const html = progressDashboard(sessions, { progressPeriod: 'all', progressMetric: metric });
+    assert(html.includes(`<small>${label} frente al anterior</small><strong>${change}`), `${metric}: ${label} ${change}`);
+  }
+  const html = progressDashboard(sessions, { progressPeriod: 'all' });
+  assert.match(html, /<th>Rendimiento<\/th><th>Volumen<\/th><th>Reps<\/th>/);
+  assert.match(html, /<td>1\.600 lb<\/td><td>20<\/td><\/tr>/, 'repeticiones totales de la sesión más reciente');
+});
