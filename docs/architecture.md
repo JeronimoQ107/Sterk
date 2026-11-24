@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-> Implementación revisada: **1.11.3, 2026-11-24**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+> Implementación revisada: **1.12.0, 2026-11-24**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
 
 ## Implementación actual
 
@@ -29,7 +29,7 @@ La aplicación utiliza HTML/CSS y módulos ES de JavaScript, sin framework, back
 | `src/sheet.js` | Hojas inferiores, confirmaciones y avisos propios en lugar de `confirm()` y `alert()` (UX-04). |
 | `src/progress-chart.js` | Recorrido táctil de la gráfica de Progreso y transformación de la línea. |
 | `assets/fonts/` | Archivo (SIL OFL), variable en peso y ancho. Las licencias de la fuente y los iconos están en `docs/licencias/`. |
-| `assets/exercises/` | Imágenes del catálogo (`pec-deck.webp`, `barbell-squat.webp`, `bench-press.webp`) y animaciones de la técnica en MP4, una por modo de color (`<ejercicio>-claro.mp4`, `<ejercicio>-oscuro.mp4`). Las de la sentadilla y el press de banca se renderizan con un modelo de Blender que se guarda fuera del repositorio. |
+| `assets/exercises/` | Imágenes del catálogo (`pec-deck.webp`, `barbell-squat.webp`, `bench-press.webp`, `romanian-deadlift.webp`) y animaciones de la técnica en MP4, una por modo de color (`<ejercicio>-claro.mp4`, `<ejercicio>-oscuro.mp4`). Las de la sentadilla, el press de banca y el peso muerto rumano se renderizan con un modelo de Blender que se guarda fuera del repositorio. |
 | `service-worker.js` | Caché del shell y recursos offline. |
 | `tests/`, `scripts/` | Pruebas con almacenamiento/DOM simulados y servidor local. `tests/fixtures/storage-v1.7.3.json` contiene un estado sintético escrito por 1.7.3 para comprobar compatibilidad (QA-03). |
 
@@ -73,7 +73,7 @@ Una entrada identifica sesión, ejercicio, grupo muscular y categoría, e incluy
 
 En una serie por lado, el estado agregado `completed` indica que ambos lados están completos. Los totales de peso × repeticiones y repeticiones suman solo las partes marcadas. Cuenta como hecha la parte marcada con repeticiones positivas (`countsPart`), y una pareja es una serie si cuenta al menos un lado (`countsSet`); esta regla se usa en la pantalla de ejercicio, la columna Anterior, el resumen final, Inicio, Historial y Progreso (MET-01). Una serie de cero repeticiones se guarda y se ve en el detalle, pero no cuenta. El `setCount` guardado en cada entrada conserva su significado anterior (series con algo marcado) para no reescribir datos; la interfaz no lo usa. Los registros antiguos siguen sin lado asignado.
 
-El peso se presenta en libras, con ajuste directo de 2,5 lb y entrada decimal manual. Las repeticiones tienen control equivalente en pasos de una unidad y entrada manual de enteros de 0 a 999. `EXERCISE_IMAGES` relaciona identificadores con imágenes opcionales sin cambiar los entrenamientos guardados (Pec Deck, Barbell Squat y Bench Press). `EXERCISE_ANIMATIONS` relaciona identificadores con su animación clara y oscura: un vídeo no puede ser transparente en Safari, así que cada uno lleva el fondo de las listas (`--surface`) de su modo. La pantalla de ejercicio la muestra en una fila plegable «Ver técnica», cerrada por defecto; su estado vive solo en memoria y el vídeo se conserva entre renderizados para no reiniciarse con cada toque. Con movimiento reducido no arranca solo y muestra controles.
+El peso se presenta en libras, con ajuste directo de 2,5 lb y entrada decimal manual. Las repeticiones tienen control equivalente en pasos de una unidad y entrada manual de enteros de 0 a 999. `EXERCISE_IMAGES` relaciona identificadores con imágenes opcionales sin cambiar los entrenamientos guardados (Pec Deck, Barbell Squat, Bench Press y Romanian Deadlift). `EXERCISE_ANIMATIONS` relaciona identificadores con su animación clara y oscura: un vídeo no puede ser transparente en Safari, así que cada uno lleva el fondo de las listas (`--surface`) de su modo. La pantalla de ejercicio la muestra en una fila plegable «Ver técnica», cerrada por defecto; su estado vive solo en memoria y el vídeo se conserva entre renderizados para no reiniciarse con cada toque. Con movimiento reducido no arranca solo y muestra controles.
 
 ## Ciclo de la sesión
 

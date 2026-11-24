@@ -1,7 +1,7 @@
 // La versión debe coincidir con package.json y con APP_VERSION (src/version.js); tests/service-worker.test.mjs lo comprueba.
 // Cambiar este archivo es lo que hace que el iPhone descargue una versión nueva.
 const CACHE_PREFIX = "sterk-";
-const CACHE_NAME = "sterk-v1-11-3";
+const CACHE_NAME = "sterk-v1-12-0";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -37,6 +37,9 @@ const APP_SHELL = [
   "./assets/exercises/bench-press.webp",
   "./assets/exercises/bench-press-claro.mp4",
   "./assets/exercises/bench-press-oscuro.mp4",
+  "./assets/exercises/romanian-deadlift.webp",
+  "./assets/exercises/romanian-deadlift-claro.mp4",
+  "./assets/exercises/romanian-deadlift-oscuro.mp4",
 ];
 
 // PWA-02: cada versión se descarga completa desde la red. `cache: "reload"` evita guardar copias

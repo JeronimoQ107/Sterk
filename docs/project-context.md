@@ -15,12 +15,12 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 5. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
 6. Considerar Excel como exportación opcional para análisis, sin convertirlo en base de datos.
 
-## Estado implementado — 1.11.3
+## Estado implementado — 1.12.0
 
 - HTML, CSS y JavaScript vanilla, sin frameworks ni backend. Persistencia mediante una capa `storage` sobre `localStorage`.
 - Catálogo de **60 ejercicios predeterminados**, búsqueda por nombres y alias en español e inglés sin distinguir acentos, grupos musculares y categorías Push/Pull/Legs. Se pueden crear y archivar ejercicios personalizados.
-- Ilustraciones disponibles: **Pec Deck**, **Barbell Squat** y **Bench Press**. Los demás ejercicios muestran un icono; la biblioteca completa de imágenes está pendiente.
-- Barbell Squat y Bench Press tienen además una animación de la técnica en la pantalla del ejercicio («Ver técnica», plegada por defecto): los músculos que trabajan se colorean a medida que baja y quedan en azul completo en la posición más baja. Las ilustraciones nuevas salen de Blender, con un cuerpo anatómico propio que se guarda fuera del repositorio, y citan BodyParts3D y Z-Anatomy (CC BY-SA) en Ajustes.
+- Ilustraciones disponibles: **Pec Deck**, **Barbell Squat**, **Bench Press** y **Romanian Deadlift**. Los demás ejercicios muestran un icono; la biblioteca completa de imágenes está pendiente.
+- Barbell Squat, Bench Press y Romanian Deadlift tienen además una animación de la técnica en la pantalla del ejercicio («Ver técnica», plegada por defecto): los músculos que trabajan se colorean a medida que baja y quedan en azul completo en la posición más baja. Las ilustraciones nuevas salen de Blender, con un cuerpo anatómico propio que se guarda fuera del repositorio, y citan BodyParts3D y Z-Anatomy (CC BY-SA) en Ajustes.
 - Sesiones construidas mediante selección y orden libre. Durante la sesión se pueden añadir, crear, quitar y reordenar ejercicios, navegar entre ellos y omitir o recuperar pendientes.
 - **Registro por serie obligatorio**: marcado independiente y peso/repeticiones por serie. El selector de modo se eliminó; los campos históricos `trackingMode` se conservan por compatibilidad, pero no permiten desactivar los checks.
 - Registro opcional por lado, con valores y marcado independientes para izquierda/derecha. Copiar valores no marca automáticamente el lado de destino. Los registros anteriores permanecen sin lado asignado.
