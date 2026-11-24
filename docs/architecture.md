@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-> Implementación revisada: **1.10.0, 2026-11-24**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+> Implementación revisada: **1.10.1, 2026-11-24**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
 
 ## Implementación actual
 
@@ -91,7 +91,7 @@ La gráfica alterna rendimiento, volumen o repeticiones; compara las dos última
 
 La exportación JSON V4 incluye entradas, sesiones finalizadas, sesión activa, ajustes y ejercicios personalizados. Se aceptan versiones V1–V4 y se normalizan sus datos. Importar valida primero el contenido completo del respaldo (entradas, series y lados, sesiones, preferencias, sesión en curso y ejercicios propios) y lanza `InvalidBackupError` sin escribir nada si una sección está dañada; cada valor preparado debe superar además la comprobación de lectura, para no dejar claves ilegibles (DATA-01). Esa validación solo se aplica a los respaldos; los datos guardados se leen como antes. Después se bloquea si alguna clave local es ilegible y restaura los datos anteriores si una escritura falla, avisando si esa restauración tampoco fue posible. Ajustes valida el archivo antes de pedir confirmación.
 
-El manifiesto incluye iconos PNG de 192/512 px e iOS usa uno de 180 px. El service worker precarga el shell, incluidos los controles de repeticiones, las imágenes y las animaciones de `assets/exercises/`, pidiendo cada archivo a la red con `cache: "reload"`; si uno falla, la instalación falla y sigue la versión anterior. Responde solo desde la caché de su versión (HTML incluido), así que todos los archivos de una carga pertenecen a la misma versión. Al activarse borra solo cachés `sterk-*` anteriores. Sin conexión, una navegación abre `index.html` guardado; un recurso ausente devuelve error. Safari pide los vídeos por rangos y no reproduce uno que reciba entero, así que una petición con `Range` se responde desde la caché con el trozo pedido (206). Su versión actual es `sterk-v1-10-0`; `npm test` comprueba que coincide con `package.json` y `APP_VERSION` y que el precaché lista exactamente los archivos de `src/`, `icons/` y `assets/exercises/`.
+El manifiesto incluye iconos PNG de 192/512 px e iOS usa uno de 180 px. El service worker precarga el shell, incluidos los controles de repeticiones, las imágenes y las animaciones de `assets/exercises/`, pidiendo cada archivo a la red con `cache: "reload"`; si uno falla, la instalación falla y sigue la versión anterior. Responde solo desde la caché de su versión (HTML incluido), así que todos los archivos de una carga pertenecen a la misma versión. Al activarse borra solo cachés `sterk-*` anteriores. Sin conexión, una navegación abre `index.html` guardado; un recurso ausente devuelve error. Safari pide los vídeos por rangos y no reproduce uno que reciba entero, así que una petición con `Range` se responde desde la caché con el trozo pedido (206). Su versión actual es `sterk-v1-10-1`; `npm test` comprueba que coincide con `package.json` y `APP_VERSION` y que el precaché lista exactamente los archivos de `src/`, `icons/` y `assets/exercises/`.
 
 ## Limitaciones verificadas y pendientes
 
