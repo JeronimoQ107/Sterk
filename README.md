@@ -1,6 +1,6 @@
 # Sterk
 
-PWA personal para registrar entrenamientos desde un iPhone con pocos toques. Versión actual: **1.9.3**. HTML, CSS y JavaScript vanilla, con datos locales en el navegador.
+PWA personal para registrar entrenamientos desde un iPhone con pocos toques. Versión actual: **1.10.0**. HTML, CSS y JavaScript vanilla, con datos locales en el navegador.
 
 ## Ejecutar y comprobar
 
@@ -29,7 +29,7 @@ Abre `http://127.0.0.1:8083`. Las pruebas usan almacenamiento y entorno simulado
 - Respaldo JSON V4, importación compatible con V1–V4 y migración del historial de V0.
 - Manifest, iconos y service worker con precaché de recursos para la PWA.
 
-Pec Deck es el único ejercicio con ilustración; los demás muestran iniciales. El detalle del historial permite ajustar la fecha y eliminar datos, pero aún no editar peso y repeticiones guardados.
+Pec Deck, Barbell Squat y Bench Press tienen ilustración; los demás muestran iniciales. Barbell Squat y Bench Press también tienen animación de la técnica en la pantalla del ejercicio («Ver técnica», plegada por defecto). El detalle del historial permite ajustar la fecha y eliminar datos, pero aún no editar peso y repeticiones guardados.
 
 ## Estructura actual
 
@@ -37,7 +37,7 @@ Pec Deck es el único ejercicio con ilustración; los demás muestran iniciales.
 index.html                 Entrada y metadatos PWA
 manifest.json              Instalación de Sterk
 service-worker.js          Caché de recursos
-assets/exercises/          Ilustraciones del catálogo
+assets/exercises/          Ilustraciones del catálogo y animaciones de la técnica
 icons/                     Iconos de la aplicación
 src/data.js                Catálogo, grupos y categorías
 src/storage.js             Persistencia, migraciones y respaldos

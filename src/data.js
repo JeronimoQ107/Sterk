@@ -86,7 +86,17 @@ export const DEFAULT_EXERCISES = Object.freeze([
 ]);
 
 // Images are optional: a catalog entry can be illustrated without changing saved workouts.
-export const EXERCISE_IMAGES = Object.freeze({ "pec-deck": "./assets/exercises/pec-deck.png" });
+export const EXERCISE_IMAGES = Object.freeze({
+  "pec-deck": "./assets/exercises/pec-deck.png",
+  "barbell-squat": "./assets/exercises/barbell-squat.webp",
+  "bench-press": "./assets/exercises/bench-press.webp",
+});
+// Animación de la técnica (VIS-01), una por modo de color: un vídeo no puede ser transparente en Safari,
+// así que cada uno lleva el fondo de las listas de la app (--surface) en modo claro u oscuro.
+export const EXERCISE_ANIMATIONS = Object.freeze({
+  "barbell-squat": Object.freeze({ light: "./assets/exercises/barbell-squat-claro.mp4", dark: "./assets/exercises/barbell-squat-oscuro.mp4" }),
+  "bench-press": Object.freeze({ light: "./assets/exercises/bench-press-claro.mp4", dark: "./assets/exercises/bench-press-oscuro.mp4" }),
+});
 
 const LEGACY_ALIASES = {
   "bench-press": "press banca pecho plano barra", "incline-press": "press inclinado pecho",

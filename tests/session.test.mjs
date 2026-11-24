@@ -98,9 +98,32 @@ test('the catalog keeps image slots for illustrated and pending exercises', () =
   run('state.view = "builder"; render();');
   assert.match(app.innerHTML, /assets\/exercises\/pec-deck\.png/);
   assert.match(app.innerHTML, /catalog-item illustrated/);
-  assert.match(app.innerHTML, /catalog-thumbnail image-pending">BP<\/span>/);
+  assert.match(app.innerHTML, /catalog-thumbnail image-pending">IP<\/span>/);
   assert.match(app.innerHTML, /Antebrazos/);
   assert.match(app.innerHTML, /Reverse Wrist Curl/);
+});
+
+test('VIS-01: the exercise screen offers the technique animation closed, only where one exists', () => {
+  const { run, app } = setup();
+  run('state.builderSelection = ["barbell-squat", "pec-deck"]; startSession();');
+  assert.match(app.innerHTML, /<details class="ex-technique" ><summary>Ver técnica/);
+  assert.match(app.innerHTML, /data-technique="barbell-squat"/);
+  run('state.techniqueOpen = true; render();');
+  assert.match(app.innerHTML, /<details class="ex-technique" open>/);
+  run('state.exerciseIndex = 1; render();');
+  assert.doesNotMatch(app.innerHTML, /ex-technique/);
+  run('state.view = "builder"; render();');
+  assert.match(app.innerHTML, /assets\/exercises\/barbell-squat\.webp/);
+});
+
+test('VIS-01: the bench press shows its catalog image and its technique animation', () => {
+  const { run, app } = setup();
+  run('state.builderSelection = ["pec-deck", "bench-press"]; startSession();');
+  assert.doesNotMatch(app.innerHTML, /ex-technique/);
+  run('state.exerciseIndex = 1; render();');
+  assert.match(app.innerHTML, /data-technique="bench-press"/);
+  run('state.view = "builder"; render();');
+  assert.match(app.innerHTML, /assets\/exercises\/bench-press\.webp/);
 });
 
 test('history keeps mixed workouts in their own filter', () => {

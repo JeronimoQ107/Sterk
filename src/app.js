@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, CATEGORY_ORDER, DEFAULT_ENTRY, EXERCISE_IMAGES, MUSCLE_GROUPS, categoryLabel, matchesExercise, searchText } from "./data.js";
+import { CATEGORY_LABELS, CATEGORY_ORDER, DEFAULT_ENTRY, EXERCISE_ANIMATIONS, EXERCISE_IMAGES, MUSCLE_GROUPS, categoryLabel, matchesExercise, searchText } from "./data.js";
 import { storage } from "./storage.js";
 import { createSnapshots } from "./snapshots.js";
 import { APP_VERSION } from "./version.js";
@@ -170,6 +170,7 @@ function handleSessionClick(event) {
 }
 
 app.addEventListener("toggle", (event) => {
+  if (event.target.matches?.(".ex-technique")) { state.techniqueOpen = event.target.open; mountTechnique(); return; }
   if (!event.target.matches?.(".catalog-group") || state.builderQuery) return;
   state.builderOpen ||= {}; state.builderOpen[event.target.dataset.group] = event.target.open;
 }, true);
@@ -296,8 +297,39 @@ function renderExercise() {
   else if (!previous) details.push("primera vez");
   const before = exercises[index - 1], after = exercises[index + 1];
   const dateLabel = inputDate(state.session.startedAt) === todayInputDate() ? "" : `${formatDate(state.session.startedAt)} · `;
-  renderShell(`<section class="screen exercise-screen ex"><header class="ex-nav"><button class="ex-back" data-action="leave-session" aria-label="Volver al inicio">${icon("left")}<span>${escapeHtml(categoryLabel(uniqueCategories(exercises)))}</span></button><span class="ex-clock">${dateLabel}${index + 1} de ${exercises.length} · ${timer(state.session.clockStartedAt || state.session.startedAt)}</span><button class="ex-more" data-action="exercise-menu" aria-label="Opciones del entrenamiento" aria-haspopup="dialog">${icon("more")}</button></header><nav class="ex-steps" aria-label="Ejercicios del entrenamiento">${steps}</nav><div class="ex-heading"><h1>${escapeHtml(current.exercise)}</h1><p>${details.join(" · ")}</p></div><div class="ex-cols" aria-hidden="true"><span>Serie</span><span>Anterior</span><span>lb</span><span>Reps</span><span></span></div><div class="ex-group ${current.status === "skipped" ? "skipped" : ""}" role="list" aria-label="Series">${current.sets.map((set, position) => renderSetRows(set, position, previousSets)).join("")}<button class="ex-add" data-action="add-set">${icon("plus")}<span>Añadir serie</span></button></div><p class="ex-note" id="weight-help">Desliza un número para ajustarlo o tócalo para escribir.</p><footer class="ex-bar">${before ? `<button class="ex-bar-prev" data-action="previous">${icon("left")}<span>${escapeHtml(before.exercise)}</span></button>` : "<span></span>"}${after ? `<button class="ex-bar-next" data-action="next"><span>${escapeHtml(after.exercise)}</span>${icon("right")}</button>` : `<button class="ex-bar-next" data-action="finish-session"><span>Finalizar</span></button>`}</footer></section>`);
+  renderShell(`<section class="screen exercise-screen ex"><header class="ex-nav"><button class="ex-back" data-action="leave-session" aria-label="Volver al inicio">${icon("left")}<span>${escapeHtml(categoryLabel(uniqueCategories(exercises)))}</span></button><span class="ex-clock">${dateLabel}${index + 1} de ${exercises.length} · ${timer(state.session.clockStartedAt || state.session.startedAt)}</span><button class="ex-more" data-action="exercise-menu" aria-label="Opciones del entrenamiento" aria-haspopup="dialog">${icon("more")}</button></header><nav class="ex-steps" aria-label="Ejercicios del entrenamiento">${steps}</nav><div class="ex-heading"><h1>${escapeHtml(current.exercise)}</h1><p>${details.join(" · ")}</p></div>${techniqueRow(current)}<div class="ex-cols" aria-hidden="true"><span>Serie</span><span>Anterior</span><span>lb</span><span>Reps</span><span></span></div><div class="ex-group ${current.status === "skipped" ? "skipped" : ""}" role="list" aria-label="Series">${current.sets.map((set, position) => renderSetRows(set, position, previousSets)).join("")}<button class="ex-add" data-action="add-set">${icon("plus")}<span>Añadir serie</span></button></div><p class="ex-note" id="weight-help">Desliza un número para ajustarlo o tócalo para escribir.</p><footer class="ex-bar">${before ? `<button class="ex-bar-prev" data-action="previous">${icon("left")}<span>${escapeHtml(before.exercise)}</span></button>` : "<span></span>"}${after ? `<button class="ex-bar-next" data-action="next"><span>${escapeHtml(after.exercise)}</span>${icon("right")}</button>` : `<button class="ex-bar-next" data-action="finish-session"><span>Finalizar</span></button>`}</footer></section>`);
+  mountTechnique();
 }
+
+// Técnica (VIS-01): animación del ejercicio, plegada por defecto para no ocupar sitio entre series. Queda
+// abierta o cerrada mientras dure la app (no se guarda). El vídeo se conserva entre renderizados para que
+// no vuelva a empezar con cada toque, y se elige el del modo de color actual.
+let techniqueVideo = null;
+function techniqueRow(current) {
+  if (!EXERCISE_ANIMATIONS[current.exerciseId]) return "";
+  return `<details class="ex-technique" ${state.techniqueOpen ? "open" : ""}><summary>Ver técnica${icon("down")}</summary><div class="ex-technique-media" data-technique="${escapeHtml(current.exerciseId)}" data-label="Animación de ${escapeHtml(current.exercise)}"></div><p class="ex-technique-note">En azul, los músculos que trabajan: más intenso, los principales.</p></details>`;
+}
+function mountTechnique() {
+  const slot = app.querySelector?.("[data-technique]");
+  if (!slot || !slot.closest("details")?.open) { techniqueVideo?.pause(); return; }
+  const animation = EXERCISE_ANIMATIONS[slot.dataset.technique];
+  const dark = globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  const src = new URL(dark ? animation.dark : animation.light, location.href).href;
+  if (techniqueVideo?.src !== src) {
+    techniqueVideo?.remove(); // al cambiar de modo de color, el vídeo nuevo sustituye al anterior
+    techniqueVideo = document.createElement("video");
+    techniqueVideo.muted = true; techniqueVideo.loop = true; techniqueVideo.playsInline = true;
+    techniqueVideo.setAttribute("muted", ""); techniqueVideo.setAttribute("playsinline", "");
+    techniqueVideo.src = src;
+  }
+  techniqueVideo.setAttribute("aria-label", slot.dataset.label);
+  // Con movimiento reducido no arranca sola: se reproduce con sus controles.
+  const still = Boolean(globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+  techniqueVideo.controls = still;
+  slot.append(techniqueVideo);
+  if (!still) techniqueVideo.play()?.catch(() => {});
+}
+globalThis.matchMedia?.("(prefers-color-scheme: dark)").addEventListener?.("change", () => { if (state.view === "exercise") mountTechnique(); });
 
 // Menú ⋯: acciones de la sesión y del ejercicio. Vive dentro de #app para que sus botones usen los mismos manejadores.
 function openExerciseMenu() {

@@ -123,6 +123,8 @@ export function settingsDashboard(sessions, customCount, snapshots = null) {
     <p class="ui-group-footer">Se guardan solo en este dispositivo. Exporta una copia para conservarlos fuera de él.</p>
     <div class="ui-group"><button class="ui-row" data-action="export"><span class="ui-row-main"><strong>Exportar copia</strong><small>Guarda un archivo con todos tus datos</small></span>${chevron()}</button><button class="ui-row" data-action="import"><span class="ui-row-main"><strong>Restaurar copia</strong><small>Reemplaza los datos actuales por los del archivo</small></span>${chevron()}</button></div>
     ${snapshotSection(snapshots)}
+    <h2 class="ui-group-header">Ilustraciones</h2>
+    <p class="ui-group-footer">La anatomía de las ilustraciones se basa en BodyParts3D (The Database Center for Life Science, CC BY-SA 2.1 Japón) y Z-Anatomy (CC BY-SA 4.0). Las ilustraciones de Sterk se comparten con la licencia CC BY-SA 4.0.</p>
     <h2 class="ui-group-header">Borrar datos</h2>
     <div class="ui-group"><button class="ui-row ui-row-danger" data-action="clear-data">Borrar todos los datos</button></div>
     <p class="ui-group-footer">Elimina historial, entrenamiento en curso, ejercicios propios y preferencias de este dispositivo. Las copias automáticas se conservan.</p>

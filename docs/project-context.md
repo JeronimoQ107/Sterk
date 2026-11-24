@@ -15,11 +15,12 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 5. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
 6. Considerar Excel como exportación opcional para análisis, sin convertirlo en base de datos.
 
-## Estado implementado — 1.9.3
+## Estado implementado — 1.10.0
 
 - HTML, CSS y JavaScript vanilla, sin frameworks ni backend. Persistencia mediante una capa `storage` sobre `localStorage`.
 - Catálogo de **60 ejercicios predeterminados**, búsqueda por nombres y alias en español e inglés sin distinguir acentos, grupos musculares y categorías Push/Pull/Legs. Se pueden crear y archivar ejercicios personalizados.
-- Una ilustración disponible: **Pec Deck**. Los demás ejercicios muestran iniciales; la biblioteca completa de imágenes está pendiente.
+- Ilustraciones disponibles: **Pec Deck**, **Barbell Squat** y **Bench Press**. Los demás ejercicios muestran iniciales; la biblioteca completa de imágenes está pendiente.
+- Barbell Squat y Bench Press tienen además una animación de la técnica en la pantalla del ejercicio («Ver técnica», plegada por defecto): los músculos que trabajan se colorean a medida que baja y quedan en azul completo en la posición más baja. Las ilustraciones nuevas salen de Blender, con un cuerpo anatómico propio que se guarda fuera del repositorio, y citan BodyParts3D y Z-Anatomy (CC BY-SA) en Ajustes.
 - Sesiones construidas mediante selección y orden libre. Durante la sesión se pueden añadir, crear, quitar y reordenar ejercicios, navegar entre ellos y omitir o recuperar pendientes.
 - **Registro por serie obligatorio**: marcado independiente y peso/repeticiones por serie. El selector de modo se eliminó; los campos históricos `trackingMode` se conservan por compatibilidad, pero no permiten desactivar los checks.
 - Registro opcional por lado, con valores y marcado independientes para izquierda/derecha. Copiar valores no marca automáticamente el lado de destino. Los registros anteriores permanecen sin lado asignado.
@@ -69,4 +70,6 @@ Una mejora puede afectar varias carpetas y seguir siendo un solo objetivo. Se ut
 | 2026-11-16 | Trabajar también con Claude Code: `CLAUDE.md` importa `AGENTS.md` para compartir las mismas instrucciones. | Vigente |
 | 2026-11-19 | Rediseñar la interfaz con aspecto de iOS nativo y una paleta índigo azulado sobre carbón en lugar del verde lima, empezando por la pantalla de ejercicio. Reglas en [design-principles.md](design-principles.md). | Implementada en 1.8.0; el color cambió en 1.8.1 |
 | 2026-11-19 | Sustituir el índigo azulado por azul cobalto, tras comparar cinco azules más eléctricos. | Vigente |
+| 2026-11-19 | Ilustraciones de ejercicios sin modelos de pago: Blender, humano de MakeHuman (CC0) y el atlas anatómico Z-Anatomy (CC BY-SA 4.0, basado en BodyParts3D) como base de músculos para todos los ejercicios. Las ilustraciones derivadas citan "BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan" y "Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0" y se comparten con licencia CC BY-SA 4.0; los créditos aparecen en Ajustes (VIS-01). | Vigente |
 | 2026-11-24 | Una serie o lado marcado con 0 repeticiones se guarda, pero no cuenta en ningún sitio (MET-01). | Implementada en 1.9.3 |
+| 2026-11-24 | En el repositorio, solo las imágenes y animaciones ya renderizadas (`assets/exercises/`). Los archivos del modelo (`.blend`, scripts, atlas y documentación) se guardan en el PC, en la carpeta `Sterk-modelo`, con su propio historial de Git local. | Vigente |

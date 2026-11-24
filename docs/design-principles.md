@@ -65,6 +65,7 @@ Es la referencia del resto de la app. Maqueta aprobada en la revisión del 2026-
 - Por lado: cada serie se divide en dos filas, I y D, con un marcador cada una. Sin casilla de "ambos".
 - Barra inferior: ejercicio anterior a la izquierda (texto en `--accent`) y siguiente a la derecha (botón relleno).
 - Se conservan los controles actuales de deslizar y escribir peso y repeticiones, sin mostrar los valores vecinos.
+- Si el ejercicio tiene animación, bajo el título hay una fila «Ver técnica» en `--accent` (decidido el 2026-11-20). Está plegada por defecto para no empujar las series; al abrirla muestra la animación sobre `--surface` y una nota breve sobre el color. Con movimiento reducido no se reproduce sola.
 - Sin botón "Registrar ejercicio" (decidido el 2026-11-19): al marcar la última serie con repeticiones se registra y pasa al siguiente pendiente; al salir del ejercicio por cualquier vía con alguna serie o lado marcado, se registra lo marcado; sin nada marcado queda pendiente. Finalizar sigue siendo una acción explícita y se bloquea mientras haya ejercicios pendientes sin nada marcado.
 
 ## Textos

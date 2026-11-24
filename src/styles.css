@@ -338,6 +338,15 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .ex-heading { margin: .5rem 0 1rem; }
 .ex-heading h1 { margin: 0; font-size: 1.75rem; font-weight: 700; line-height: 1.12; letter-spacing: -.02em; text-wrap: balance; }
 .ex-heading p { margin: .3rem 0 0; color: var(--muted); font-size: .9375rem; }
+/* Técnica (VIS-01): fila plegable con la animación; el vídeo lleva el mismo fondo que la lista (--surface). */
+.ex-technique { margin: 0 0 1rem; overflow: hidden; border-radius: 12px; background: var(--surface); }
+.ex-technique summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 1rem; color: var(--accent); font-size: 1.0625rem; cursor: pointer; list-style: none; }
+.ex-technique summary::-webkit-details-marker { display: none; }
+.ex-technique summary .ui-icon { width: 1.1rem; height: 1.1rem; transition: transform .2s ease; }
+.ex-technique[open] summary .ui-icon { transform: rotate(180deg); }
+.ex-technique-media video { display: block; width: 100%; height: auto; aspect-ratio: 1; background: var(--surface); }
+.ex-technique-note { margin: 0; padding: .4rem 1rem .8rem; color: var(--muted); font-size: .8125rem; line-height: 1.4; }
+@media (prefers-reduced-motion: reduce) { .ex-technique summary .ui-icon { transition: none; } }
 
 .ex-cols, .ex-row { display: grid; grid-template-columns: 2rem minmax(0, 1fr) 4.5rem 3.5rem 44px; align-items: center; gap: .5rem; }
 .ex-cols { padding: 0 .5rem .4rem 1rem; color: var(--muted); font-size: .8125rem; }

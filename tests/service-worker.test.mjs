@@ -22,6 +22,7 @@ function loadWorker({ network = (request) => ({ ok: true, body: `red:${request.u
       this.method = init.method || 'GET';
       this.mode = init.mode || 'cors';
       this.cache = init.cache || 'default';
+      this.headers = new Map(Object.entries(init.headers || {}));
     }
   }
   const fetch = async (request) => {
@@ -66,7 +67,12 @@ function loadWorker({ network = (request) => ({ ok: true, body: `red:${request.u
     async skipWaiting() { lifecycle.skipWaiting += 1; },
     clients: { async claim() { lifecycle.claim += 1; } },
   };
-  vm.runInNewContext(source, { self, caches, fetch, Request, Response: { error: () => ({ type: 'error' }) }, URL, Promise });
+  // Respuesta mínima: cuerpo, estado y cabeceras, para las respuestas por rangos de los vídeos.
+  class Response {
+    constructor(body, init = {}) { this.body = body; this.status = init.status ?? 200; this.headers = new Map(Object.entries(init.headers || {})); }
+    static error() { return { type: 'error' }; }
+  }
+  vm.runInNewContext(source, { self, caches, fetch, Request, Response, URL, Promise, Number, Math, String });
   const cacheName = /const CACHE_NAME = "([^"]+)"/.exec(source)[1];
   const dispatch = async (type, extra = {}) => {
     let pending;
@@ -122,6 +128,29 @@ test('PWA-01: offline, navigation opens the saved app but a missing resource is 
   assert.equal(other.body, `red:${BASE}index.html`);
   const script = await worker.dispatch('fetch', { request: new worker.Request(`${BASE}src/nuevo.js`) });
   assert.equal(script.type, 'error');
+});
+
+test('PWA-02: a saved video asked by ranges, as Safari does, is answered with only those bytes (206)', async () => {
+  const bytes = Uint8Array.from({ length: 100 }, (_, i) => i);
+  const video = `${BASE}assets/exercises/barbell-squat-claro.mp4`;
+  const worker = loadWorker({ network: (request) => (request.url === video
+    ? { ok: true, headers: new Map([['Content-Type', 'video/mp4']]), arrayBuffer: async () => bytes.buffer }
+    : { ok: true, body: `red:${request.url}` }) });
+  await worker.dispatch('install');
+  const ask = (range) => worker.dispatch('fetch', { request: new worker.Request(video, { headers: { range } }) });
+
+  const first = await ask('bytes=0-1');
+  assert.equal(first.status, 206);
+  assert.deepEqual([...new Uint8Array(first.body)], [0, 1]);
+  assert.equal(first.headers.get('Content-Range'), 'bytes 0-1/100');
+  assert.equal(first.headers.get('Content-Type'), 'video/mp4');
+  const rest = await ask('bytes=90-');
+  assert.deepEqual([...new Uint8Array(rest.body)], [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]);
+  assert.equal(rest.headers.get('Content-Range'), 'bytes 90-99/100');
+  assert.equal((await ask('bytes=200-')).status, 416);
+  // Sin rango, el archivo entero como antes.
+  const whole = await worker.dispatch('fetch', { request: new worker.Request(video) });
+  assert.equal(whole.arrayBuffer !== undefined, true);
 });
 
 test('PWA-01: other origins and non-GET requests are left to the browser', async () => {
