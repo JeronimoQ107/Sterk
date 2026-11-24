@@ -15,7 +15,7 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 5. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
 6. Considerar Excel como exportación opcional para análisis, sin convertirlo en base de datos.
 
-## Estado implementado — 1.9.2
+## Estado implementado — 1.9.3
 
 - HTML, CSS y JavaScript vanilla, sin frameworks ni backend. Persistencia mediante una capa `storage` sobre `localStorage`.
 - Catálogo de **60 ejercicios predeterminados**, búsqueda por nombres y alias en español e inglés sin distinguir acentos, grupos musculares y categorías Push/Pull/Legs. Se pueden crear y archivar ejercicios personalizados.
@@ -69,3 +69,4 @@ Una mejora puede afectar varias carpetas y seguir siendo un solo objetivo. Se ut
 | 2026-11-16 | Trabajar también con Claude Code: `CLAUDE.md` importa `AGENTS.md` para compartir las mismas instrucciones. | Vigente |
 | 2026-11-19 | Rediseñar la interfaz con aspecto de iOS nativo y una paleta índigo azulado sobre carbón en lugar del verde lima, empezando por la pantalla de ejercicio. Reglas en [design-principles.md](design-principles.md). | Implementada en 1.8.0; el color cambió en 1.8.1 |
 | 2026-11-19 | Sustituir el índigo azulado por azul cobalto, tras comparar cinco azules más eléctricos. | Vigente |
+| 2026-11-24 | Una serie o lado marcado con 0 repeticiones se guarda, pero no cuenta en ningún sitio (MET-01). | Implementada en 1.9.3 |

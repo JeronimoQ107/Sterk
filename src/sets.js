@@ -9,6 +9,10 @@ export function normalizeSet(set, completed = true) {
   return { weight: nonnegative(set.weight), reps: Math.floor(nonnegative(set.reps)), completed: Boolean(set.completed ?? completed) };
 }
 export function parts(set) { return set.sides ? SIDES.map((side) => set.sides[side]) : [set]; }
+// MET-01: una serie o lado marcado con 0 repeticiones se conserva en los datos, pero no cuenta en ningún sitio.
+// Una pareja izquierda/derecha cuenta como una serie si cuenta alguno de sus lados.
+export function countsPart(part) { return Boolean(part?.completed) && part.reps > 0; }
+export function countsSet(set) { return parts(set).some(countsPart); }
 export function setReps(set) { return parts(set).reduce((sum, part) => sum + (part.completed ? part.reps : 0), 0); }
 export function setVolume(set) { return parts(set).reduce((sum, part) => sum + (part.completed ? part.weight * part.reps : 0), 0); }
 export function resetSet(set) {

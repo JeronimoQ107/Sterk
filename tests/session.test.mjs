@@ -6,7 +6,7 @@ import * as data from '../src/data.js';
 import * as sets from '../src/sets.js';
 import { icon } from '../src/icons.js';
 import { homeDashboard, progressDashboard, settingsDashboard, plural, sessionSummary } from '../src/dashboard.js';
-import { exerciseOptions } from '../src/progress.js';
+import { exerciseOptions, overview, muscleGroupSets } from '../src/progress.js';
 import { createSnapshots } from '../src/snapshots.js';
 import { APP_VERSION } from '../src/version.js';
 import * as format from '../src/format.js';
@@ -263,7 +263,7 @@ test('HIST-03 y QA-03: las sesiones antiguas sin totales muestran valores calcul
     const old = run('getHistorySessions()').find((session) => session.id === 'session-b');
     assert.deepEqual([old.exerciseCount, old.setCount, old.volume, old.skippedCount], [1, 1, 337.5, 0]);
     const current = run('getHistorySessions()').find((session) => session.id === 'session-a');
-    assert.deepEqual([current.exerciseCount, current.setCount, current.volume], [2, 5, 3620]);
+    assert.deepEqual([current.exerciseCount, current.setCount, current.volume], [2, 4, 3620], 'la serie de 0 repeticiones no cuenta (MET-01)');
 
     run('state.view = "history"; render();');
     assert.doesNotMatch(app.innerHTML, /undefined|NaN/);
@@ -286,6 +286,57 @@ test('HIST-03 y QA-03: las sesiones antiguas sin totales muestran valores calcul
   } finally {
     memory.clear();
   }
+});
+
+test('MET-01 y QA-03: las series de 0 repeticiones de datos antiguos no cuentan y los datos no se modifican', () => {
+  const { run, app } = setup();
+  const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/storage-v1.7.3.json', import.meta.url), 'utf8'));
+  memory.clear();
+  Object.entries(fixture).forEach(([key, value]) => memory.set(key, value));
+  try {
+    const sessions = run('getHistorySessions()');
+    const total = sessions.reduce((sum, session) => sum + session.setCount, 0);
+    assert.equal(total, overview(sessions).sets, 'Historial y Progreso cuentan las mismas series');
+    assert.equal(total, muscleGroupSets(sessions).reduce((sum, group) => sum + group.sets, 0));
+    run('state.historySessionId = "session-a"; state.view = "history-detail"; render();');
+    assert.match(app.innerHTML, /135 lb × 0/, 'la serie sigue visible en el detalle');
+    run('state.view = "history"; render();');
+    assert.match(app.innerHTML, /2 ejercicios · 4 series/);
+    assert.equal(storage.getEntries().find((entry) => entry.id === 'entry-bench').sets.length, 3);
+    Object.entries(fixture).forEach(([key, value]) => assert.equal(memory.get(key), value, key));
+  } finally {
+    memory.clear();
+  }
+});
+
+test('MET-01: una serie o lado de 0 repeticiones se guarda, pero no cuenta al registrar, resumir ni comparar', () => {
+  const { run, click, app } = setup();
+  run('state.builderSelection = ["pec-deck", "bayesian-curl"]; startSession();');
+  run('draft().sets[1].reps = 0; persistSession();');
+  click({ toggleSet: '0' }); click({ toggleSet: '1' });
+  assert.match(app.innerHTML, /1 de 3 series/);
+  click({ toggleSet: '2' });
+  assert.equal(storage.getEntries().length, 0, 'con una serie de 0 repeticiones no se registra solo');
+  click({ action: 'next' });
+  assert.deepEqual(storage.getEntries()[0].sets.map((set) => [set.reps > 0, set.completed]), [[true, true], [false, true], [true, true]], 'la serie se conserva');
+
+  // Por lado: cuenta la pareja si cuenta algún lado; con los dos a 0 no cuenta.
+  click({ action: 'toggle-unilateral' });
+  run('draft().sets[0].sides.right.reps = 0; draft().sets[1].sides.left.reps = 0; draft().sets[1].sides.right.reps = 0; persistSession();');
+  for (const [index, side] of [['0', 'left'], ['0', 'right'], ['1', 'left'], ['1', 'right']]) click({ toggleSet: index, side });
+  assert.match(app.innerHTML, /0 de 3 series/);
+  run('commitCurrentExercise(); completeSession();');
+  const [summary] = storage.getCompletedSessions();
+  assert.equal(summary.setCount, 3, '2 de pec deck y 1 pareja');
+  assert.equal(summary.exerciseCount, 2);
+  const sessions = run('getHistorySessions()');
+  assert.equal(sessions[0].setCount, 3);
+  assert.equal(overview(sessions).sets, 3);
+
+  // La columna Anterior no propone la serie de 0 repeticiones como resultado.
+  const row = (index) => run(`renderSetRows({ weight: 1, reps: 1, completed: false }, ${index}, storage.getEntries().find((entry) => entry.exerciseId === 'pec-deck').sets)`);
+  assert.match(row(0), /ex-prev">[0-9.,]+ × [0-9]+</);
+  assert.match(row(1), /ex-prev">—</);
 });
 
 test('UI-01: changing view or starting the workout scrolls to the top and notices stay visible for more than 1 s', () => {

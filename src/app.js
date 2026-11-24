@@ -3,7 +3,7 @@ import { storage } from "./storage.js";
 import { createSnapshots } from "./snapshots.js";
 import { APP_VERSION } from "./version.js";
 
-import { SIDES, parts, setReps, resetSet } from "./sets.js";
+import { SIDES, parts, countsPart, countsSet, setReps, resetSet } from "./sets.js";
 import { openWeightPicker } from "./weight-picker.js";
 import { bindWeightControl } from "./weight-control.js";
 import { bindRepsControl } from "./reps-control.js";
@@ -66,11 +66,11 @@ function weightButton(part, index, side) {
 function repsButton(part, index, side) {
   return `<button class="reps-value" role="spinbutton" aria-valuemin="0" aria-valuemax="999" aria-valuenow="${part.reps}" aria-valuetext="${part.reps} repeticiones" aria-describedby="weight-help" data-edit-reps="${index}" data-side="${side}" aria-label="Repeticiones${side ? ` ${sideLabel(side)}` : ""}, serie ${index + 1}"><span data-reps-offset="-2" aria-hidden="true">${part.reps >= 2 ? part.reps - 2 : ""}</span><span data-reps-offset="-1" aria-hidden="true">${part.reps >= 1 ? part.reps - 1 : ""}</span><span data-reps-offset="0">${part.reps}</span><span data-reps-offset="1" aria-hidden="true">${part.reps < 999 ? part.reps + 1 : ""}</span><span data-reps-offset="2" aria-hidden="true">${part.reps < 998 ? part.reps + 2 : ""}</span></button>`;
 }
-// Resultado de la misma serie (y lado) la última vez; solo cuenta lo que se marcó como hecho.
+// Resultado de la misma serie (y lado) la última vez; solo cuenta lo que se marcó como hecho, con repeticiones (MET-01).
 function previousPart(previousSets, index, side) {
   const set = previousSets?.[index];
   const part = !set ? null : side ? (set.sides ? set.sides[side] : set) : (set.sides ? null : set);
-  return part?.completed ? part : null;
+  return countsPart(part) ? part : null;
 }
 function renderSetRows(set, index, previousSets) {
   const row = (part, side = "") => {
@@ -287,7 +287,7 @@ function renderExercise() {
   const previousSets = previous ? entrySets(previous) : null;
   const exercises = state.session.exercises;
   const index = state.exerciseIndex;
-  const done = current.sets.filter((set) => parts(set).every((part) => part.completed)).length;
+  const done = current.sets.filter((set) => parts(set).every(countsPart)).length;
   const total = current.sets.length;
   const statusLabel = { registered: "registrado", skipped: "omitido", pending: "pendiente" };
   const steps = exercises.map((exercise, position) => `<button data-jump="${position}" class="${position === index ? "now" : exercise.status}" ${position === index ? 'aria-current="step"' : ""} aria-label="${position + 1}. ${escapeHtml(exercise.exercise)}, ${statusLabel[exercise.status] || exercise.status}"></button>`).join("");
@@ -363,7 +363,7 @@ function completeSession() {
   const endedAt = new Date(new Date(state.session.startedAt).getTime() + durationSeconds * 1000);
   const categoryTags = uniqueCategories(entries);
   const label = categoryLabel(categoryTags);
-  const summary = { id: state.session.id, categoryTags, categoryLabel: label, startedAt: state.session.startedAt, endedAt: endedAt.toISOString(), durationSeconds, durationMinutes: Math.max(1, Math.round(durationSeconds / 60)), exerciseCount: entries.length, skippedCount: state.session.exercises.filter((item) => item.status === "skipped").length, setCount: entries.reduce((sum, entry) => sum + entry.setCount, 0), repCount: entries.reduce((sum, entry) => sum + entry.sets.reduce((total, set) => total + setReps(set), 0), 0), volume: entries.reduce((sum, entry) => sum + entry.volume, 0) };
+  const summary = { id: state.session.id, categoryTags, categoryLabel: label, startedAt: state.session.startedAt, endedAt: endedAt.toISOString(), durationSeconds, durationMinutes: Math.max(1, Math.round(durationSeconds / 60)), ...entryTotals(entries), skippedCount: state.session.exercises.filter((item) => item.status === "skipped").length };
   const key = categoryKey(categoryTags);
   const previousSession = storage.getCompletedSessions().filter((item) => categoryKey(item.categoryTags || [item.routineId].filter(Boolean)) === key && new Date(item.startedAt) < new Date(summary.startedAt)).sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt)).at(-1) || null;
   const previous = previousSession && { ...previousSession, ...sessionTotals(previousSession, storage.getEntries().filter((entry) => entry.sessionId === previousSession.id)) };
@@ -393,15 +393,18 @@ function sessionMetadata(session, entries) {
 function entryTotals(entries) {
   return {
     exerciseCount: entries.length,
-    setCount: entries.reduce((sum, entry) => sum + entry.setCount, 0),
+    setCount: entries.reduce((sum, entry) => sum + entry.sets.filter(countsSet).length, 0),
     repCount: entries.reduce((sum, entry) => sum + entry.sets.reduce((total, set) => total + setReps(set), 0), 0),
     volume: entries.reduce((sum, entry) => sum + entry.volume, 0),
   };
 }
 
+// MET-01: las series se cuentan siempre de las entradas, porque hasta 1.9.2 el total guardado incluía las de
+// 0 repeticiones (y el setCount de cada entrada las sigue incluyendo). Los datos guardados no se modifican;
+// los demás totales no cambian con esa regla y conservan el valor guardado.
 function sessionTotals(session, entries) {
   const totals = entryTotals(entries);
-  return { ...Object.fromEntries(Object.entries(totals).map(([key, value]) => [key, Number.isFinite(session[key]) ? session[key] : value])), skippedCount: Number.isFinite(session.skippedCount) ? session.skippedCount : 0 };
+  return { ...Object.fromEntries(Object.entries(totals).map(([key, value]) => [key, Number.isFinite(session[key]) ? session[key] : value])), setCount: totals.setCount, skippedCount: Number.isFinite(session.skippedCount) ? session.skippedCount : 0 };
 }
 
 function getHistorySessions() {
@@ -625,7 +628,7 @@ app.addEventListener("click", (event) => {
     if (side) set.sides[side].completed = !wasCompleted;
     else parts(set).forEach((part) => { part.completed = !wasCompleted; });
     markEdited(); persistSession();
-    if (!wasCompleted && draft().sets.every((item) => parts(item).every((part) => part.completed && part.reps > 0))) return saveExercise();
+    if (!wasCompleted && draft().sets.every((item) => parts(item).every(countsPart))) return saveExercise();
     return render();
   }
   const jumpButton = event.target.closest("[data-jump]");

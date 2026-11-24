@@ -1,5 +1,6 @@
 import { icon } from './icons.js';
 import { MUSCLE_GROUPS } from './data.js';
+import { countsPart } from './sets.js';
 import { APP_VERSION } from './version.js';
 import { inPeriod, overview, exerciseOptions, availableSides, exerciseSeries, personalRecords, muscleGroupSets } from './progress.js';
 import { escapeHtml as escape, formatTotal as number, formatDayMonth as date } from './format.js';
@@ -24,10 +25,10 @@ function homeInsight(sessions) {
     for (const set of entry.sets) {
       const candidates = set.sides ? [['left', set.sides.left], ['right', set.sides.right]] : [['both', set]];
       for (const [side, part] of candidates) {
-        if (!part?.completed || part.reps <= 0) continue;
+        if (!countsPart(part)) continue;
         const prior = previous.flatMap((session) => session.entries.filter((item) => item.exerciseId === entry.exerciseId).flatMap((item) => item.sets.flatMap((old) => {
           const oldPart = side === 'both' ? (!old.sides ? old : null) : old.sides?.[side];
-          return oldPart?.completed && oldPart.weight === part.weight ? [oldPart.reps] : [];
+          return countsPart(oldPart) && oldPart.weight === part.weight ? [oldPart.reps] : [];
         })));
         const best = Math.max(0, ...prior);
         if (prior.length && part.reps > best) return { title: 'Más repeticiones con el mismo peso', detail: `${entry.exercise} · ${number(part.weight)} lb`, value: `+${part.reps - best} rep${part.reps - best === 1 ? '' : 's'}` };

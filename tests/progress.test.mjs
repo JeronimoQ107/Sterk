@@ -21,6 +21,12 @@ test('period uses local calendar days and days active are deduplicated', () => {
   const filtered = inPeriod(sessions, 7, new Date('2026-09-08T12:00:00'));
   assert.equal(filtered.length, 2); assert.equal(overview(filtered).days, 1); assert.equal(overview(filtered).sets, 1);
 });
+test('MET-01: a previous set with 0 reps is not the mark to beat in the home insight', () => {
+  const home = (id, date, sets) => ({ ...session(id, date, sets), label: 'Pull', exerciseCount: 1, setCount: 1, volume: 0 });
+  const last = home('b', '2026-09-08T12:00:00', [part(50, 10)]);
+  assert.doesNotMatch(homeDashboard([last, home('a', '2026-09-01T12:00:00', [part(50, 0)])]), /Más repeticiones/);
+  assert.match(homeDashboard([last, home('a', '2026-09-01T12:00:00', [part(50, 0), part(50, 8)])]), /[+]2 reps/);
+});
 test('empty and single observation views explain missing charts rather than inventing a trend', () => {
   assert.match(progressDashboard([], {}), /Tu progreso empieza/);
   const sessions = [session('a', '2026-09-01', [part(0, 10)])];
