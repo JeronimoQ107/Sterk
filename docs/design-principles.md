@@ -1,6 +1,6 @@
 # Principios de diseño de Sterk
 
-> Decidido el **2026-11-19**: dirección **A · iOS nativo** con una paleta azul sobre carbón que sustituye al verde lima. El azul es **cobalto** desde 1.8.1 (en 1.8.0 era un índigo azulado; se cambió tras comparar cinco azules más eléctricos). Desde 1.8.0 la paleta se aplica a toda la app y la pantalla de ejercicio (UX-02) sigue estas reglas; desde 1.9.0 también el resto de pantallas y el icono (UI-02). Producto: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md).
+> Decidido el **2026-11-19**: dirección **A · iOS nativo** con una paleta azul sobre carbón que sustituye al verde lima. El azul es **cobalto** desde 1.8.1 (en 1.8.0 era un índigo azulado; se cambió tras comparar cinco azules más eléctricos). El **2026-11-24** (UI-03, 1.11.0) se añadieron fuente propia, iconos Phosphor, barras flotantes y movimiento, sin cambiar la paleta. Desde 1.8.0 la paleta se aplica a toda la app y la pantalla de ejercicio (UX-02) sigue estas reglas; desde 1.9.0 también el resto de pantallas y el icono (UI-02). Producto: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md).
 
 Estas reglas existen para que Sterk no parezca una interfaz generada por IA y para que se use rápido en el gimnasio. Si una regla impide algo necesario, cámbiala aquí con su motivo antes de saltártela.
 
@@ -10,9 +10,9 @@ Sterk se usa en un iPhone, a una mano, entre series, a veces con las manos sudad
 
 ## Dirección: iOS nativo
 
-- Aspecto de app de Apple: fuente del sistema, título grande, barra de navegación con volver a la izquierda y un menú `⋯` a la derecha, listas agrupadas y una barra de herramientas abajo cuando haga falta.
+- Aspecto de app de Apple: título grande, navegación con volver a la izquierda y un menú `⋯` a la derecha, listas agrupadas y barras flotantes abajo.
 - Sigue el modo claro u oscuro del sistema. Los dos modos se diseñan y comprueban, no se invierte uno para obtener el otro.
-- La personalidad de Sterk está en el color de acento, en los números y en la claridad, no en adornos.
+- La personalidad de Sterk está en el color de acento, en los títulos y números con Archivo, en cómo responde al toque y en la claridad, no en adornos.
 
 ## Paleta
 
@@ -35,13 +35,14 @@ Contraste comprobado (WCAG AA): texto ≥ 4,5:1 y controles ≥ 3:1 sobre su fon
 
 - El acento marca solo lo que se puede tocar y las series hechas. Todo lo demás es gris.
 - Un solo botón relleno (`--accent-fill`) por pantalla.
-- Prohibido: degradados, brillos o resplandores, sombras decorativas, violeta o lavanda, y volver al verde lima.
+- Prohibido: degradados, brillos o resplandores, sombras decorativas, violeta o lavanda, y volver al verde lima. La única sombra permitida es la de las barras flotantes, que separa dos capas.
 
 ## Tipografía
 
-- Fuente del sistema: `-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif`. Sin fuentes web: Sterk funciona sin conexión y no carga recursos externos.
-- Escala: título grande 28 px negrita · título 20 px seminegrita · texto 17 px · secundario 15 px · nota 13 px.
-- Todos los números de peso, repeticiones, tiempo y totales con `font-variant-numeric: tabular-nums`, para que se alineen.
+- **Archivo** (`--display`) en títulos (ancho 118 %) y números (ancho 106 %); el texto corrido, con la fuente del sistema (`--system`). La fuente se sirve desde `assets/fonts/` y va en el precaché: Sterk funciona sin conexión y no carga recursos externos.
+- Escala, con variables `--size-*`: cifra principal 46 px · título 32 px · título de ejercicio 28 px · sección 20 px · texto 17 px · secundario 15 px · nota 13 px. Un tamaño nuevo necesita motivo.
+- Todos los números de peso, repeticiones, tiempo y totales con la clase `num` o `tabular-nums`, para que se alineen.
+- Radios: 8 px en campos, 12 px en listas y botones, 22 px en hojas y completo en barras, filtros y píldoras (`--radius-*`).
 - Nada en mayúsculas: ni etiquetas sobre los títulos ni botones.
 
 ## Disposición
@@ -63,10 +64,25 @@ Es la referencia del resto de la app. Maqueta aprobada en la revisión del 2026-
 - Las series hechas muestran el marcador relleno en `--accent-fill`; sus campos pierden el fondo.
 - Última fila de la lista: "Añadir serie" en `--accent`.
 - Por lado: cada serie se divide en dos filas, I y D, con un marcador cada una. Sin casilla de "ambos".
-- Barra inferior: ejercicio anterior a la izquierda (texto en `--accent`) y siguiente a la derecha (botón relleno).
-- Se conservan los controles actuales de deslizar y escribir peso y repeticiones, sin mostrar los valores vecinos.
+- Abajo, dos píldoras flotantes: ejercicio anterior a la izquierda (translúcida) y siguiente a la derecha (rellena).
+- Al deslizar peso o repeticiones el campo se abre y muestra el valor anterior y el siguiente; en reposo no se ven.
 - Si el ejercicio tiene animación, bajo el título hay una fila «Ver técnica» en `--accent` (decidido el 2026-11-20). Está plegada por defecto para no empujar las series; al abrirla muestra la animación sobre `--surface` y una nota breve sobre el color. Con movimiento reducido no se reproduce sola.
 - Sin botón "Registrar ejercicio" (decidido el 2026-11-19): al marcar la última serie con repeticiones se registra y pasa al siguiente pendiente; al salir del ejercicio por cualquier vía con alguna serie o lado marcado, se registra lo marcado; sin nada marcado queda pendiente. Finalizar sigue siendo una acción explícita y se bloquea mientras haya ejercicios pendientes sin nada marcado.
+
+## Iconos, barras y hojas (UI-03)
+
+- Iconos de Phosphor (`src/icons.js`), de trazo; rellenos solo en la pestaña activa. Siempre acompañados de texto, salvo en la barra de pestañas y en botones de uso conocido (volver, cerrar, `⋯`), que llevan nombre accesible.
+- Barra de pestañas flotante solo con iconos, redondeada y translúcida, en una capa sobre el contenido. Las pantallas dejan sitio al final para que no tape la última fila.
+- Acciones al pie (anterior y siguiente, selección del constructor): `ui-dock`, con el mismo estilo flotante.
+- Menús, selectores y confirmaciones: hoja inferior (`showSheet`, `ask`, `notice`). Nada de `alert()` ni `confirm()`. El botón dice la acción («Eliminar»), y las que borran datos van en `--danger`.
+
+## Movimiento (UI-03)
+
+- El movimiento explica qué cambió: de dónde viene una pantalla, qué fila se añadió, qué número subió. No decora.
+- Entre 150 y 560 ms; solo el resumen final y la gráfica al entrar duran más (cerca de 1 s). Curvas `--soft` (sin rebote) y `--spring` (rebote leve, en marcas y botones).
+- Nada retrasa el toque ni el guardado: los datos se guardan antes de animar y los toques pasan a la pantalla nueva durante el cambio.
+- Con «Reducir movimiento» de iOS quedan solo cambios instantáneos o fundidos breves. Sin soporte del navegador, la app funciona igual sin animación.
+- Sin librerías: CSS, Web Animations y View Transitions (`src/motion.js`).
 
 ## Textos
 
@@ -77,11 +93,11 @@ Es la referencia del resto de la app. Maqueta aprobada en la revisión del 2026-
 
 ## Icono de la app
 
-Desde 1.9.0 los iconos (`icons/`) son la mancuerna de siempre en blanco sobre cobalto `#1A56DB` (6,2:1). Los PNG son cuadrados completos, sin esquinas redondeadas, porque iOS aplica su propia máscara; `icon.svg` (favicon) sí las lleva. En iPhone, quienes ya tienen Sterk instalada probablemente sigan viendo el icono anterior; nunca se les pide reinstalar para cambiarlo, porque eso borra sus datos. `theme_color` y `background_color` del manifiesto pasan a carbón (`#111214`).
+Desde 1.9.0 los iconos de la app (`icons/`) son la mancuerna de siempre en blanco sobre cobalto `#1A56DB` (6,2:1). Los PNG son cuadrados completos, sin esquinas redondeadas, porque iOS aplica su propia máscara; `icon.svg` (favicon) sí las lleva. En iPhone, quienes ya tienen Sterk instalada probablemente sigan viendo el icono anterior; nunca se les pide reinstalar para cambiarlo, porque eso borra sus datos. `theme_color` y `background_color` del manifiesto pasan a carbón (`#111214`).
 
 ## Componentes compartidos (desde 1.9.0)
 
-Las pantallas se construyen con las clases `ui-*` de `src/styles.css`: `ui-title` (título grande y subtítulo), `ui-nav` y `ui-back` (volver), `ui-group-header`, `ui-group`, `ui-row` y `ui-group-footer` (listas agrupadas), `ui-button` (único botón relleno), `ui-pill`, `ui-search`, `ui-segmented`, `ui-metrics` y `ui-action-bar`. Una pantalla nueva debería poder hacerse solo con ellas.
+Las pantallas se construyen con las clases `ui-*` de `src/styles.css`: `ui-title` (título grande y subtítulo), `ui-nav` y `ui-back` (volver), `ui-group-header`, `ui-group`, `ui-row` y `ui-group-footer` (listas agrupadas), `ui-button` (único botón relleno), `ui-button-plain`, `ui-pill`, `ui-search`, `ui-segmented` (con indicador deslizante), `ui-metrics`, `ui-check` (marca de hecho), `ui-dock` (barra flotante), `ui-fold` (contenido plegable) y `ui-sheet` (hoja). Una pantalla nueva debería poder hacerse solo con ellas.
 
 ## Cómo comprobar un cambio de interfaz
 

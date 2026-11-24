@@ -49,7 +49,7 @@ test('the numbers move between steps and settle smoothly after release', () => {
   control.send('pointerdown');
   control.send('pointermove', { clientY: 90 });
   assert.equal(control.reps(), 11);
-  assert.equal(control.rows[2].style.transform, 'translateY(8px) scale(0.85)');
+  assert.equal(control.rows[2].style.transform, 'translateY(14px) scale(0.85)');
   control.send('pointerup', { clientY: 90 });
   assert.equal(control.frames.size, 1);
   const frame = [...control.frames.values()][0];

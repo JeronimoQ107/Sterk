@@ -4,8 +4,9 @@ import vm from 'node:vm';
 import fs from 'node:fs';
 import * as data from '../src/data.js';
 import * as sets from '../src/sets.js';
-import { icon } from '../src/icons.js';
-import { homeDashboard, progressDashboard, settingsDashboard, plural, sessionSummary } from '../src/dashboard.js';
+import { icon, checkMark } from '../src/icons.js';
+import * as motion from '../src/motion.js';
+import { homeDashboard, progressDashboard, settingsDashboard, plural, metricsRow, segmented } from '../src/dashboard.js';
 import { exerciseOptions, overview, muscleGroupSets } from '../src/progress.js';
 import { createSnapshots } from '../src/snapshots.js';
 import { APP_VERSION } from '../src/version.js';
@@ -17,13 +18,15 @@ const { storage } = await import('../src/storage.js');
 const source = fs.readFileSync(new URL('../src/app.js', import.meta.url), 'utf8').replace(/^import .*;\r?\n/gm, '');
 function setup() {
   storage.clearAll();
-  const handlers = {}, notices = [], dialogs = [];
+  const handlers = {}, notices = [], dialogs = [], asked = [], answer = { accept: true };
   const app = { innerHTML: '', addEventListener: (type, fn) => { handlers[type] = fn; }, querySelector: () => null };
   const dummy = { addEventListener() {}, classList: { add() {}, remove() {} } };
-  const context = vm.createContext({ ...data, ...sets, ...format, icon, homeDashboard, progressDashboard, settingsDashboard, plural, sessionSummary, exerciseOptions, createSnapshots, APP_VERSION, bindWeightControl() {}, bindRepsControl() {}, storage, structuredClone, console, crypto: globalThis.crypto,
-    document: { querySelector: (selector) => selector === '#app' ? app : dummy, querySelectorAll: () => [], body: { append() {} },
+  const context = vm.createContext({ ...data, ...sets, ...format, ...motion, icon, checkMark, homeDashboard, progressDashboard, settingsDashboard, plural, metricsRow, segmented, exerciseOptions, createSnapshots, APP_VERSION, bindWeightControl() {}, bindRepsControl() {}, bindFolds() {}, bindChart() {}, chartState: () => null, morphChart() {},
+    // UX-04: las confirmaciones se aceptan y los avisos se anotan; las hojas no se abren de verdad.
+    showSheet() {}, ask: (options, accept) => { asked.push(options); if (answer.accept) accept(); }, notice: (text) => notices.push(text), storage, structuredClone, console, crypto: globalThis.crypto,
+    document: { querySelector: (selector) => selector === '#app' ? app : selector === 'dialog[open]' ? null : dummy, querySelectorAll: () => [], body: { append() {} },
       createElement: () => { const dialog = { handlers: {}, innerHTML: '', setAttribute() {}, addEventListener(type, fn) { this.handlers[type] = fn; }, showModal() {}, close() {}, remove() {} }; dialogs.push(dialog); return dialog; } },
-    navigator: {}, window: { setInterval() {}, setTimeout() {}, scrollTo() {}, addEventListener() {} }, confirm: () => true, alert: (text) => notices.push(text), openWeightPicker() {}, openRepsPicker() {},
+    navigator: {}, window: { setInterval() {}, setTimeout() {}, scrollTo() {}, addEventListener() {} }, openWeightPicker() {}, openRepsPicker() {},
   });
   vm.runInContext(source, context);
   const run = (code) => vm.runInContext(code, context);
@@ -32,7 +35,7 @@ function setup() {
     const key = attribute?.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
     return key && key in dataset ? { dataset } : null;
   } } });
-  return { run, click, notices, dialogs, app };
+  return { run, click, notices, dialogs, app, asked, answer };
 }
 
 test('start with one exercise, save without closing, append and recover with same clock', () => {
@@ -96,9 +99,9 @@ test('the right-hand set check completes both sides of a unilateral set', () => 
 test('the catalog keeps image slots for illustrated and pending exercises', () => {
   const { run, app } = setup();
   run('state.view = "builder"; render();');
-  assert.match(app.innerHTML, /assets\/exercises\/pec-deck\.png/);
+  assert.match(app.innerHTML, /assets\/exercises\/pec-deck.webp/);
   assert.match(app.innerHTML, /catalog-item illustrated/);
-  assert.match(app.innerHTML, /catalog-thumbnail image-pending">IP<\/span>/);
+  assert.match(app.innerHTML, /catalog-thumbnail image-pending"><svg/);
   assert.match(app.innerHTML, /Antebrazos/);
   assert.match(app.innerHTML, /Reverse Wrist Curl/);
 });
@@ -337,7 +340,7 @@ test('MET-01: una serie o lado de 0 repeticiones se guarda, pero no cuenta al re
   run('state.builderSelection = ["pec-deck", "bayesian-curl"]; startSession();');
   run('draft().sets[1].reps = 0; persistSession();');
   click({ toggleSet: '0' }); click({ toggleSet: '1' });
-  assert.match(app.innerHTML, /1 de 3 series/);
+  assert.match(app.innerHTML, /data-roll>1<\/span> de 3 series/);
   click({ toggleSet: '2' });
   assert.equal(storage.getEntries().length, 0, 'con una serie de 0 repeticiones no se registra solo');
   click({ action: 'next' });
@@ -347,7 +350,7 @@ test('MET-01: una serie o lado de 0 repeticiones se guarda, pero no cuenta al re
   click({ action: 'toggle-unilateral' });
   run('draft().sets[0].sides.right.reps = 0; draft().sets[1].sides.left.reps = 0; draft().sets[1].sides.right.reps = 0; persistSession();');
   for (const [index, side] of [['0', 'left'], ['0', 'right'], ['1', 'left'], ['1', 'right']]) click({ toggleSet: index, side });
-  assert.match(app.innerHTML, /0 de 3 series/);
+  assert.match(app.innerHTML, /data-roll>0<\/span> de 3 series/);
   run('commitCurrentExercise(); completeSession();');
   const [summary] = storage.getCompletedSessions();
   assert.equal(summary.setCount, 3, '2 de pec deck y 1 pareja');
@@ -387,4 +390,66 @@ test('UI-01: weights of 1,000 lb or more use the thousands separator in the exer
   const { run, app } = setup();
   run('state.builderSelection = ["pec-deck"]; startSession(); draft().sets[0].weight = 1002.5; render();');
   assert.match(app.innerHTML, /data-weight-number>1\.002,5</);
+});
+
+test('UX-04 y QA-03: cancelar una confirmación no cambia ningún dato', () => {
+  const { run, click, asked, answer } = setup();
+  run('state.builderSelection = ["bayesian-curl", "hammer-curl"]; startSession();');
+  click({ toggleSet: '0' }); run('saveExercise();');
+  click({ jump: '0' });
+  const stored = () => JSON.stringify([...memory]);
+  const before = stored();
+  answer.accept = false;
+  for (const action of ['skip', 'discard-session', 'new-session', 'clear-data']) click({ action });
+  run('draft().sets.forEach((set) => { set.completed = true; }); persistSession();');
+  const marked = stored();
+  click({ action: 'remove-set' });
+  assert.equal(stored(), marked, 'la serie marcada sigue');
+  run('draft().sets.forEach((set, index) => { set.completed = index === 0; }); persistSession();');
+  assert.equal(stored(), before);
+  assert.deepEqual(Array.from(asked, (options) => [options.action, options.danger]), [['Omitir', true], ['Descartar', true], ['Empezar otro', true], ['Borrar todo', true], ['Eliminar', true]]);
+  click({ jump: '1' }); click({ action: 'skip' });
+  click({ action: 'finish-session' });
+  assert.equal(storage.getCompletedSessions().length, 0, 'finalizar también se puede cancelar');
+  answer.accept = true;
+  click({ action: 'finish-session' });
+  assert.equal(storage.getCompletedSessions().length, 1);
+  run('state.historySessionId = getHistorySessions()[0].id; state.view = "history-detail"; render();');
+  answer.accept = false;
+  const saved = stored();
+  click({ action: 'delete-session' });
+  assert.equal(stored(), saved);
+  answer.accept = true;
+  click({ action: 'delete-session' });
+  assert.equal(storage.getCompletedSessions().length, 0);
+});
+
+test('UI-03: al completar la última serie se registra en el momento y solo se pasa al siguiente si no se tocó nada más', () => {
+  const { run, click } = setup();
+  run('globalThis.waiting = []; afterPause = (milliseconds, next) => waiting.push(next);');
+  const complete = () => { for (let index = 0; index < run('draft().sets.length'); index += 1) click({ toggleSet: String(index) }); };
+  run('state.builderSelection = ["bayesian-curl", "hammer-curl", "preacher-curl"]; startSession();');
+  complete();
+  assert.equal(storage.getEntries().length, 1, 'el registro no espera');
+  assert.equal(run('state.exerciseIndex'), 0, 'la pantalla sí espera a que se vea la marca');
+  click({ toggleSet: '0' }); // se desmarca antes de tiempo
+  run('waiting.shift()();');
+  assert.equal(run('state.exerciseIndex'), 0, 'una edición posterior cancela el cambio');
+  click({ toggleSet: '0' });
+  click({ action: 'next' });
+  run('waiting.shift()();');
+  assert.equal(run('state.exerciseIndex'), 1, 'si ya se cambió de ejercicio, no se vuelve a cambiar');
+  complete();
+  run('waiting.shift()();');
+  assert.equal(run('state.exerciseIndex'), 2);
+});
+
+test('UI-03: cada cambio de vista tiene su animación y volver a dibujar la misma no', () => {
+  const kind = motion.transitionKind;
+  assert.deepEqual([kind(null, 'home'), kind('home', 'home'), kind('exercise', 'exercise')], ['', '', '']);
+  assert.deepEqual([kind('home', 'exercise'), kind('exercise', 'home')], ['expand', 'collapse']);
+  assert.deepEqual([kind('home', 'progress'), kind('settings', 'history')], ['tab-next', 'tab-previous']);
+  assert.deepEqual([kind('history', 'history-detail'), kind('history-detail', 'history')], ['push', 'pop']);
+  assert.deepEqual([kind('home', 'builder'), kind('builder', 'home'), kind('builder', 'exercise')], ['push', 'pop', 'push']);
+  assert.deepEqual([kind('exercise', 'complete'), kind('complete', 'home')], ['finish', 'fade']);
 });

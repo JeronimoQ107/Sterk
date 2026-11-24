@@ -176,6 +176,7 @@ test('PWA-02: the precache lists every app file, and every listed file exists', 
     ...fs.readdirSync(new URL('src/', root)).filter((file) => /\.(js|css)$/.test(file)).map((file) => `./src/${file}`),
     ...fs.readdirSync(new URL('icons/', root)).map((file) => `./icons/${file}`),
     ...fs.readdirSync(new URL('assets/exercises/', root)).map((file) => `./assets/exercises/${file}`),
+    ...fs.readdirSync(new URL('assets/fonts/', root)).map((file) => `./assets/fonts/${file}`),
   ];
   assert.deepEqual([...listed].sort(), [...expected].sort());
   for (const file of listed.filter((file) => file !== './')) assert(fs.existsSync(new URL(file, root)), file);

@@ -17,7 +17,7 @@ function setup() {
     const event = { target: button, pointerId: 1, isPrimary: true, button: 0, clientY: 100, preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; }, ...extra };
     listeners[name](event); return event;
   };
-  return { send, writes, attributes, number, previous, next, rows, frames, weight: () => weight };
+  return { send, writes, attributes, number, previous, next, rows, frames, button, weight: () => weight };
 }
 test('dragging upward changes weight in 2.5 lb steps without opening manual entry', () => {
   const t = setup();
@@ -53,7 +53,7 @@ test('sub-step movement displaces the visible numbers and releasing animates int
   const t = setup();
   t.send('pointerdown'); t.send('pointermove', { clientY: 92 });
   assert.equal(t.weight(), 25);
-  assert.match(t.number.style.transform, /translateY\(-6.4px\)/);
+  assert.match(t.number.style.transform, /translateY\(-11.2/);
   t.send('pointerup'); assert.equal(t.frames.size, 1);
   const callback = [...t.frames.values()][0]; callback(performance.now() + 200);
   assert.match(t.number.style.transform, /translateY\(0px\)/);
@@ -67,4 +67,15 @@ test('a new wheel event continues from the displayed position during animation',
   assert.equal(t.number.style.transform, before);
   assert.equal(t.weight(), 30);
   assert.equal(t.frames.size, 1);
+});
+
+test('UI-03: un gesto sobre un campo que ya no está en pantalla no escribe en otro ejercicio', () => {
+  const t = setup();
+  t.send('pointerdown'); t.send('pointermove', { clientY: 80 });
+  const writes = t.writes.length;
+  t.button.isConnected = false;
+  t.send('pointermove', { clientY: 20 });
+  t.send('pointerup');
+  assert.equal(t.writes.length, writes);
+  assert.equal(t.frames.size, 0);
 });

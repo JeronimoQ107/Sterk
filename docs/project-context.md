@@ -15,18 +15,18 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 5. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
 6. Considerar Excel como exportación opcional para análisis, sin convertirlo en base de datos.
 
-## Estado implementado — 1.10.1
+## Estado implementado — 1.11.0
 
 - HTML, CSS y JavaScript vanilla, sin frameworks ni backend. Persistencia mediante una capa `storage` sobre `localStorage`.
 - Catálogo de **60 ejercicios predeterminados**, búsqueda por nombres y alias en español e inglés sin distinguir acentos, grupos musculares y categorías Push/Pull/Legs. Se pueden crear y archivar ejercicios personalizados.
-- Ilustraciones disponibles: **Pec Deck**, **Barbell Squat** y **Bench Press**. Los demás ejercicios muestran iniciales; la biblioteca completa de imágenes está pendiente.
+- Ilustraciones disponibles: **Pec Deck**, **Barbell Squat** y **Bench Press**. Los demás ejercicios muestran un icono; la biblioteca completa de imágenes está pendiente.
 - Barbell Squat y Bench Press tienen además una animación de la técnica en la pantalla del ejercicio («Ver técnica», plegada por defecto): los músculos que trabajan se colorean a medida que baja y quedan en azul completo en la posición más baja. Las ilustraciones nuevas salen de Blender, con un cuerpo anatómico propio que se guarda fuera del repositorio, y citan BodyParts3D y Z-Anatomy (CC BY-SA) en Ajustes.
 - Sesiones construidas mediante selección y orden libre. Durante la sesión se pueden añadir, crear, quitar y reordenar ejercicios, navegar entre ellos y omitir o recuperar pendientes.
 - **Registro por serie obligatorio**: marcado independiente y peso/repeticiones por serie. El selector de modo se eliminó; los campos históricos `trackingMode` se conservan por compatibilidad, pero no permiten desactivar los checks.
 - Registro opcional por lado, con valores y marcado independientes para izquierda/derecha. Copiar valores no marca automáticamente el lado de destino. Los registros anteriores permanecen sin lado asignado.
 - Controles de peso y repeticiones por deslizamiento y entrada manual. El peso utiliza libras y pasos de 2,5 lb; las repeticiones admiten enteros de 0 a 999.
 - Referencia al entrenamiento anterior, persistencia de la sesión activa y duración automática. Completar todas las series válidas registra el ejercicio, y salir de un ejercicio con alguna serie marcada también lo registra; el entrenamiento se termina mediante una acción explícita.
-- Interfaz con paleta azul cobalto sobre carbón, en claro y oscuro según el sistema. Todas las pantallas siguen la dirección "iOS nativo" de [design-principles.md](design-principles.md): títulos grandes, listas agrupadas, sin etiquetas en mayúsculas ni textos de relleno. Icono: mancuerna blanca sobre cobalto.
+- Interfaz con paleta azul cobalto sobre carbón, en claro y oscuro según el sistema. Desde 1.11.0 (UI-03), fuente Archivo en títulos y números, iconos Phosphor, barras flotantes, animaciones propias y confirmaciones en hojas inferiores. Todas las pantallas siguen la dirección "iOS nativo" de [design-principles.md](design-principles.md): títulos grandes, listas agrupadas, sin etiquetas en mayúsculas ni textos de relleno. Icono: mancuerna blanca sobre cobalto.
 - Historial por entrenamiento con detalles, cambio de fecha y eliminación. **Todavía no permite editar peso, repeticiones o series de una sesión finalizada**.
 - Inicio con acceso al último entrenamiento; Progreso con periodos de 30/90 días o todo el historial, actividad, rendimiento estimado, volumen, repeticiones, récords del periodo y series por grupo muscular.
 - Respaldo JSON **V4**, importación compatible con V1–V4 y migración del historial V0. Una clave ilegible se conserva sin sobrescribirla y la app avisa (DATA-02); un respaldo dañado se rechaza antes de escribir y los datos anteriores no cambian (DATA-01). Al abrir cada versión nueva se guarda una copia automática en el dispositivo; Ajustes conserva las tres últimas y permite restaurarlas y deshacer la restauración (DATA-03).
@@ -72,4 +72,5 @@ Una mejora puede afectar varias carpetas y seguir siendo un solo objetivo. Se ut
 | 2026-11-19 | Sustituir el índigo azulado por azul cobalto, tras comparar cinco azules más eléctricos. | Vigente |
 | 2026-11-19 | Ilustraciones de ejercicios sin modelos de pago: Blender, humano de MakeHuman (CC0) y el atlas anatómico Z-Anatomy (CC BY-SA 4.0, basado en BodyParts3D) como base de músculos para todos los ejercicios. Las ilustraciones derivadas citan "BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan" y "Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0" y se comparten con licencia CC BY-SA 4.0; los créditos aparecen en Ajustes (VIS-01). | Vigente |
 | 2026-11-24 | Una serie o lado marcado con 0 repeticiones se guarda, pero no cuenta en ningún sitio (MET-01). | Implementada en 1.9.3 |
+| 2026-11-24 | Interfaz premium (UI-03): fuente Archivo e iconos Phosphor copiados en el repositorio, animaciones sin librerías, barras flotantes (pestañas solo con iconos) y confirmaciones propias. Se conservan la paleta y la dirección iOS nativo. Aprobada con una maqueta antes de tocar el código. | En la rama `claude/ui-03-interfaz-premium` |
 | 2026-11-24 | En el repositorio, solo las imágenes y animaciones ya renderizadas (`assets/exercises/`). Los archivos del modelo (`.blend`, scripts, atlas y documentación) se guardan en el PC, en la carpeta `Sterk-modelo`, con su propio historial de Git local. | Vigente |

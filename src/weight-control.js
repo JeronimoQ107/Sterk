@@ -1,5 +1,8 @@
 import { formatNumber as format } from './format.js';
 
+// UI-03: separación entre valores al deslizar; el campo se abre para mostrar el anterior y el siguiente (styles.css).
+const ROW = 28;
+
 export function scrubWeight(start, distance) {
   return Math.max(0, Math.round((start + Math.round(distance / 20) * 2.5) * 1000000) / 1000000);
 }
@@ -14,7 +17,7 @@ export function bindWeightControl(root, readWeight, writeWeight) {
       const value = Math.round((anchor + (center + offset) * 2.5) * 1000000) / 1000000;
       const relative = center + offset - position;
       row.textContent = value < 0 ? '' : format(value);
-      row.style.transform = `translateY(${relative * 16}px) scale(${Math.max(.58, 1 - Math.abs(relative) * .3)})`;
+      row.style.transform = `translateY(${relative * ROW}px) scale(${Math.max(.58, 1 - Math.abs(relative) * .3)})`;
       row.style.opacity = String(Math.max(0, 1 - Math.abs(relative) * .57));
     });
   };
@@ -61,6 +64,8 @@ export function bindWeightControl(root, readWeight, writeWeight) {
   });
   root.addEventListener('pointermove', (event) => {
     if (!gesture || event.pointerId !== gesture.id) return;
+    // Si la pantalla cambió a mitad del gesto, el campo ya no existe: seguir escribiría en otro ejercicio.
+    if (!gesture.button.isConnected) { gesture = null; return; }
     const distance = gesture.y - event.clientY;
     if (Math.abs(distance) > 6) gesture.moved = true;
     if (!gesture.moved) return;
@@ -72,6 +77,7 @@ export function bindWeightControl(root, readWeight, writeWeight) {
   });
   const end = (event) => {
     if (!gesture || event.pointerId !== gesture.id) return;
+    if (!gesture.button.isConnected) { gesture = null; return; }
     if (gesture.moved) suppressClickUntil = Date.now() + 500;
     if (gesture.moved) animate(gesture.button, gesture.start, gesture.position, (readWeight(gesture.button) - gesture.start) / 2.5);
     gesture.button.classList.remove('scrubbing');

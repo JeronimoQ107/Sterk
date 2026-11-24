@@ -173,9 +173,9 @@ test('DATA-03: Settings lists the copies with a restore button', () => {
   const snapshot = { id: 'abc', reason: 'version', appVersion: '1.7.5', createdAt: '2026-11-19T10:00:00.000Z', summary: { sessions: 2, entries: 5, customExercises: 2, activeSession: true } };
   const html = settingsDashboard([], 0, [snapshot, { ...snapshot, id: 'def', reason: 'before-restore', summary: { ...snapshot.summary, sessions: 1, activeSession: false } }]);
   assert.match(html, /Copias automáticas/);
-  assert.match(html, /Al abrir la versión 1\.7\.5/);
+  assert.match(html, /Versión 1\.7\.5/);
   assert.match(html, /2 entrenamientos · sesión en curso/);
-  assert.match(html, /Antes de restaurar una copia/);
+  assert.match(html, /Antes de restaurar/);
   assert.match(html, /data-restore-snapshot="abc"/);
   assert.match(settingsDashboard([], 0, 'unavailable'), /no están disponibles/);
   assert.match(settingsDashboard([], 0, []), /Todavía no hay copias/);

@@ -22,7 +22,7 @@ Las instrucciones del usuario prevalecen. Actualiza los documentos afectados cua
 
 ## Implementación y datos
 
-- Mantén separados catálogo (`data.js`), series (`sets.js`), persistencia (`storage.js`), cálculos (`progress.js`) e interfaz (`app.js` y `dashboard.js`). No reorganices carpetas sin una necesidad concreta.
+- Mantén separados catálogo (`data.js`), series (`sets.js`), persistencia (`storage.js`), cálculos (`progress.js`) e interfaz (`app.js` y `dashboard.js`, con `motion.js` para animaciones y `sheet.js` para hojas y confirmaciones). No reorganices carpetas sin una necesidad concreta.
 - Conserva identificadores, historial, ejercicios personalizados y compatibilidad de respaldos JSON V1–V4. Las operaciones sobre datos deben preservar el estado anterior si fallan.
 - El registro actual es por serie. `trackingMode` permanece en datos antiguos por compatibilidad; no lo confundas con un selector disponible en la interfaz.
 - Marcar el último ejercicio no finaliza el entrenamiento. El cierre es explícito y la sesión activa debe poder recuperarse.

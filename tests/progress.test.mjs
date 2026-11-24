@@ -72,20 +72,20 @@ test('UI-02: session totals use correct plurals and thousands separators everywh
   assert.match(homeDashboard([]), /Todavía no hay entrenamientos/);
 });
 test('UI-01: the chart axis follows the data range and the estimated performance is shown in whole pounds', () => {
-  assert.deepEqual(chartScale([258.33, 263.08]), { min: 255, max: 265 });
-  assert.deepEqual(chartScale([20, 24]), { min: 20, max: 24 });
-  assert.deepEqual(chartScale([260, 260]), { min: 250, max: 270 }, 'valores iguales quedan en el centro');
-  assert.deepEqual(chartScale([0, 0]), { min: 0, max: 2 });
-  assert.deepEqual(chartScale([5, 16542.5]), { min: 0, max: 20000 }, 'el eje nunca baja de 0');
+  assert.deepEqual(chartScale([258.33, 263.08]), { min: 258, max: 264, steps: 3 });
+  assert.deepEqual(chartScale([20, 24]), { min: 20, max: 24, steps: 4 });
+  assert.deepEqual(chartScale([260, 260]), { min: 250, max: 270, steps: 4 }, 'valores iguales quedan en el centro');
+  assert.deepEqual(chartScale([0, 0]), { min: 0, max: 2, steps: 2 });
+  assert.deepEqual(chartScale([5, 16542.5]), { min: 0, max: 20000, steps: 4 }, 'el eje nunca baja de 0');
   for (const values of [[1, 3], [95, 1001], [258.33, 263.08], [0.4, 0.6], [1234, 1250]]) {
-    const { min, max } = chartScale(values);
+    const { min, max, steps } = chartScale(values);
     assert(min <= Math.min(...values) && max >= Math.max(...values) && min >= 0, `${values} cabe en ${min}–${max}`);
-    assert(Number.isInteger(min) && Number.isInteger((max - min) / 2), `${values}: marcas enteras`);
+    assert(Number.isInteger(min) && Number.isInteger((max - min) / steps) && steps >= 2 && steps <= 4, `${values}: marcas enteras`);
   }
   // 200 × 9 → 260 lb exactos y 197,5 × 10 → 263,33 lb: el eje va de 260 a 264 y no empieza en 0.
   const sessions = [session('a', '2026-09-01', [part(200, 9)]), session('b', '2026-09-08', [part(197.5, 10)])];
   const html = progressDashboard(sessions, { progressPeriod: 'all' });
-  assert.match(html, /263 <span>lb<\/span>/);
+  assert.match(html, /data-chart-value data-roll>263<\/span> <small>lb<\/small>/);
   assert.doesNotMatch(html, /263,33/);
   assert.match(html, />260<\/text>.*>262<\/text>.*>264<\/text>/s);
   assert.doesNotMatch(html, />0<\/text>/);
@@ -96,7 +96,7 @@ test('MET-02: the comparison names the selected metric and the table has the val
   const expected = { performance: ['Rendimiento', '+3,1%'], volume: ['Volumen', '+23,1%'], reps: ['Repeticiones', '+33,3%'] };
   for (const [metric, [label, change]] of Object.entries(expected)) {
     const html = progressDashboard(sessions, { progressPeriod: 'all', progressMetric: metric });
-    assert(html.includes(`<small>${label} frente al anterior</small><strong>${change}`), `${metric}: ${label} ${change}`);
+    assert(html.includes(`data-chart-label>${label}`) && html.includes(`data-chart-change>${change}</strong><small>frente al anterior</small>`), `${metric}: ${label} ${change}`);
   }
   const html = progressDashboard(sessions, { progressPeriod: 'all' });
   assert.match(html, /<th>Rendimiento<\/th><th>Volumen<\/th><th>Reps<\/th>/);
@@ -105,5 +105,5 @@ test('MET-02: the comparison names the selected metric and the table has the val
 test('UI-01: a change that rounds to zero shows 0% without a sign', () => {
   const sessions = [session('a', '2026-09-01', [part(100, 10), part(50, 1)]), session('b', '2026-09-08', [part(100, 10), part(50, 1), part(0.5, 1)])];
   const html = progressDashboard(sessions, { progressPeriod: 'all', progressMetric: 'volume' });
-  assert(html.includes('<small>Volumen frente al anterior</small><strong>0%</strong>'));
+  assert(html.includes('data-chart-label>Volumen total<') && html.includes('data-chart-change>0%</strong>'));
 });

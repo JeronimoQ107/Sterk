@@ -1,6 +1,6 @@
 # Sterk
 
-PWA personal para registrar entrenamientos desde un iPhone con pocos toques. Versión actual: **1.10.1**. HTML, CSS y JavaScript vanilla, con datos locales en el navegador.
+PWA personal para registrar entrenamientos desde un iPhone con pocos toques. Versión actual: **1.11.0**. HTML, CSS y JavaScript vanilla, con datos locales en el navegador.
 
 ## Ejecutar y comprobar
 
@@ -16,7 +16,7 @@ Abre `http://127.0.0.1:8083`. Las pruebas usan almacenamiento y entorno simulado
 ## Funciones actuales
 
 - Inicio con acceso al último entrenamiento y resumen reciente.
-- Catálogo de 60 ejercicios, grupos desplegables, tarjetas en dos columnas y búsqueda por nombres y alias en español e inglés.
+- Catálogo de 60 ejercicios, grupos desplegables y búsqueda por nombres y alias en español e inglés.
 - Selección y orden libre; añadir, crear, quitar o reordenar ejercicios durante una sesión.
 - Registro por serie con peso, repeticiones y marcado de completado. No hay selector de modo de registro en Ajustes.
 - Registro opcional por lado, con valores y marcado independientes para izquierda/derecha.
@@ -29,7 +29,7 @@ Abre `http://127.0.0.1:8083`. Las pruebas usan almacenamiento y entorno simulado
 - Respaldo JSON V4, importación compatible con V1–V4 y migración del historial de V0.
 - Manifest, iconos y service worker con precaché de recursos para la PWA.
 
-Pec Deck, Barbell Squat y Bench Press tienen ilustración; los demás muestran iniciales. Barbell Squat y Bench Press también tienen animación de la técnica en la pantalla del ejercicio («Ver técnica», plegada por defecto). El detalle del historial permite ajustar la fecha y eliminar datos, pero aún no editar peso y repeticiones guardados.
+Pec Deck, Barbell Squat y Bench Press tienen ilustración; los demás muestran un icono. Barbell Squat y Bench Press también tienen animación de la técnica en la pantalla del ejercicio («Ver técnica», plegada por defecto). El detalle del historial permite ajustar la fecha y eliminar datos, pero aún no editar peso y repeticiones guardados.
 
 ## Estructura actual
 
@@ -38,6 +38,7 @@ index.html                 Entrada y metadatos PWA
 manifest.json              Instalación de Sterk
 service-worker.js          Caché de recursos
 assets/exercises/          Ilustraciones del catálogo y animaciones de la técnica
+assets/fonts/              Fuente Archivo (títulos y números)
 icons/                     Iconos de la aplicación
 src/data.js                Catálogo, grupos y categorías
 src/storage.js             Persistencia, migraciones y respaldos
@@ -51,7 +52,10 @@ src/weight-control.js      Control táctil de peso
 src/weight-picker.js       Entrada manual de peso
 src/reps-control.js        Control táctil de repeticiones
 src/reps-picker.js         Entrada manual de repeticiones
-src/icons.js               Iconos SVG de la interfaz
+src/icons.js               Iconos SVG de la interfaz (Phosphor)
+src/motion.js              Actualización de pantalla y animaciones
+src/sheet.js               Hojas inferiores y confirmaciones
+src/progress-chart.js      Gráfica de Progreso: recorrido táctil
 src/styles.css             Diseño para móvil
 tests/                     Pruebas automatizadas
 scripts/serve.cjs          Servidor local

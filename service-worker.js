@@ -1,7 +1,7 @@
 // La versión debe coincidir con package.json y con APP_VERSION (src/version.js); tests/service-worker.test.mjs lo comprueba.
 // Cambiar este archivo es lo que hace que el iPhone descargue una versión nueva.
 const CACHE_PREFIX = "sterk-";
-const CACHE_NAME = "sterk-v1-10-1";
+const CACHE_NAME = "sterk-v1-11-0";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -15,18 +15,22 @@ const APP_SHELL = [
   "./src/reps-control.js",
   "./src/reps-picker.js",
   "./src/icons.js",
+  "./src/motion.js",
+  "./src/sheet.js",
+  "./src/progress-chart.js",
   "./src/dashboard.js",
   "./src/progress.js",
   "./src/storage.js",
   "./src/snapshots.js",
   "./src/version.js",
   "./src/format.js",
+  "./assets/fonts/archivo.woff2",
   "./icons/icon.svg",
   "./icons/apple-touch-icon.svg",
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./assets/exercises/pec-deck.png",
+  "./assets/exercises/pec-deck.webp",
   "./assets/exercises/barbell-squat.webp",
   "./assets/exercises/barbell-squat-claro.mp4",
   "./assets/exercises/barbell-squat-oscuro.mp4",

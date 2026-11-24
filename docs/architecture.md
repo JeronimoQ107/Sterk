@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-> Implementación revisada: **1.10.1, 2026-11-24**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+> Implementación revisada: **1.11.0, 2026-11-24**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
 
 ## Implementación actual
 
@@ -24,12 +24,20 @@ La aplicación utiliza HTML/CSS y módulos ES de JavaScript, sin framework, back
 | `src/weight-control.js`, `src/reps-control.js` | Ajuste por arrastre, rueda y teclado, conservando el control durante el gesto. |
 | `src/weight-picker.js`, `src/reps-picker.js` | Diálogos de entrada manual con validación. |
 | `src/format.js` | Escape de HTML y formato de números y fechas (`es-CO`, separador de miles), compartido por todas las vistas (TECH-03). |
-| `src/icons.js`, `src/styles.css` | Iconos SVG y presentación mobile-first. |
-| `assets/exercises/` | Imágenes del catálogo (`pec-deck.png`, `barbell-squat.webp`, `bench-press.webp`) y animaciones de la técnica en MP4, una por modo de color (`<ejercicio>-claro.mp4`, `<ejercicio>-oscuro.mp4`). Las de la sentadilla y el press de banca se renderizan con un modelo de Blender que se guarda fuera del repositorio. |
+| `src/icons.js`, `src/styles.css` | Iconos SVG (Phosphor, con trazo y relleno) y presentación mobile-first: escala tipográfica, componentes `ui-*` y animaciones en CSS. |
+| `src/motion.js` | Actualización de la pantalla sin reconstruirla (`paint`), cambios de vista animados (`transition`) y animaciones puntuales (UI-03). |
+| `src/sheet.js` | Hojas inferiores, confirmaciones y avisos propios en lugar de `confirm()` y `alert()` (UX-04). |
+| `src/progress-chart.js` | Recorrido táctil de la gráfica de Progreso y transformación de la línea. |
+| `assets/fonts/` | Archivo (SIL OFL), variable en peso y ancho. Las licencias de la fuente y los iconos están en `docs/licencias/`. |
+| `assets/exercises/` | Imágenes del catálogo (`pec-deck.webp`, `barbell-squat.webp`, `bench-press.webp`) y animaciones de la técnica en MP4, una por modo de color (`<ejercicio>-claro.mp4`, `<ejercicio>-oscuro.mp4`). Las de la sentadilla y el press de banca se renderizan con un modelo de Blender que se guarda fuera del repositorio. |
 | `service-worker.js` | Caché del shell y recursos offline. |
 | `tests/`, `scripts/` | Pruebas con almacenamiento/DOM simulados y servidor local. `tests/fixtures/storage-v1.7.3.json` contiene un estado sintético escrito por 1.7.3 para comprobar compatibilidad (QA-03). |
 
-La UI consume la API pública de `storage`; no accede directamente a las claves de `localStorage`. Los cálculos de series y progreso están separados, pero `app.js` todavía reúne estado, vistas e interacciones. La organización en carpetas adicionales es una refactorización futura.
+La UI consume la API pública de `storage`; no accede directamente a las claves de `localStorage`.
+
+`app.js` sigue generando el HTML completo de cada vista, pero desde 1.11.0 `paint()` lo compara con lo que hay en pantalla y cambia solo lo distinto: los elementos que siguen existiendo conservan foco, desplazamiento y transiciones CSS (la marca de una serie, el avance, el indicador de un filtro). `data-key` identifica filas que se añaden, quitan o reordenan y bloques que deben sustituirse enteros (el cuerpo del ejercicio, al cambiar de ejercicio); `data-enter` anima la entrada y salida de una fila; `data-roll`, un número; `data-keep` protege un contenido que gestiona el código (el vídeo de la técnica). Al cambiar de vista se reemplaza todo, dentro de una View Transition si el navegador la admite (Safari 18 o posterior); si no, al instante. Los datos se guardan siempre antes de animar.
+
+Las hojas (`<dialog>`) viven en `document.body`; las del menú y la selección reenvían sus toques a `handleClick`. `ask()` recibe la acción como función y solo la ejecuta al aceptar. Los cálculos de series y progreso están separados, pero `app.js` todavía reúne estado, vistas e interacciones. La organización en carpetas adicionales es una refactorización futura.
 
 ## Datos y compatibilidad
 
@@ -72,8 +80,8 @@ El peso se presenta en libras, con ajuste directo de 2,5 lb y entrada decimal ma
 - La sesión activa contiene identificador, fechas, categorías, índice de navegación y borradores con estados `pending`, `registered` o `skipped`.
 - Los cambios de valores, series, marcado y navegación se guardan inmediatamente. Si se edita un ejercicio registrado, vuelve a pendiente hasta que se vuelva a registrar.
 - Se puede añadir, crear, quitar o reordenar ejercicios conservando el identificador y el cronómetro. Una sesión vacía sigue siendo recuperable.
-- Registrar un ejercicio exige al menos una serie o lado marcado. Al marcar la última parte, se registra automáticamente si todas las partes tienen repeticiones positivas y se pasa al siguiente pendiente. Desde 1.8.0 no hay botón "Registrar ejercicio": salir de un ejercicio pendiente con algo marcado (cambiar de ejercicio, volver a Inicio, añadir ejercicios o finalizar) lo registra (`commitCurrentExercise`); sin nada marcado sigue pendiente. El entrenamiento permanece abierto.
-- La pantalla de ejercicio (UX-02) es una lista con columnas Serie · Anterior · lb · Reps · ✓; "Anterior" muestra la misma serie y lado del último registro. Las acciones de sesión y de ejercicio (añadir, editar, por lado, copiar, eliminar serie, omitir, finalizar) están en el menú `⋯`. Los controles de deslizar y escribir no cambian; los valores vecinos solo se ven al deslizar.
+- Registrar un ejercicio exige al menos una serie o lado marcado. Al marcar la última parte, se registra automáticamente si todas las partes tienen repeticiones positivas y se pasa al siguiente pendiente. El registro es inmediato; desde 1.11.0 el paso al siguiente espera 0,6 s para que se vea la marca y se cancela si entretanto se edita, se cambia de ejercicio, se desliza un valor o se abre una hoja. Desde 1.8.0 no hay botón "Registrar ejercicio": salir de un ejercicio pendiente con algo marcado (cambiar de ejercicio, volver a Inicio, añadir ejercicios o finalizar) lo registra (`commitCurrentExercise`); sin nada marcado sigue pendiente. El entrenamiento permanece abierto.
+- La pantalla de ejercicio (UX-02) es una lista con columnas Serie · Anterior · lb · Reps · ✓; "Anterior" muestra la misma serie y lado del último registro. Las acciones de sesión y de ejercicio (añadir, editar, por lado, copiar, eliminar serie, omitir, finalizar) están en el menú `⋯`. Al deslizar, el campo se abre y muestra los valores vecinos; si la pantalla cambia a mitad del gesto, el gesto se descarta para no escribir en otro ejercicio.
 - La finalización es explícita y exige resolver los ejercicios pendientes. Guarda resumen y duración y compara volumen con la sesión anterior de la misma categoría, sin comprobar que coincidan ejercicios o series.
 - `clockStartedAt` conserva el inicio real del cronómetro; `startedAt` representa la fecha histórica. Cambiar la fecha modifica también las entradas asociadas y conserva la duración.
 
@@ -85,7 +93,7 @@ Los periodos de 30/90 días incluyen hoy y los 29/89 días de calendario anterio
 
 Se genera una observación por sesión, ejercicio y tipo de registro: sin lado asignado, izquierdo o derecho. Conserva mejor serie por rendimiento, carga máxima, repeticiones máximas, volumen, repeticiones totales y series. El rendimiento usa Epley (`peso × (1 + repeticiones / 30)`), con el peso real para una repetición: es una estimación comparativa.
 
-La gráfica alterna rendimiento, volumen o repeticiones; compara las dos últimas observaciones del periodo y los récords respetan ese filtro. Una sola observación no muestra tendencia. El eje vertical cubre el rango de los datos con tres marcas enteras (`chartScale`), no empieza en 0, y el rendimiento estimado se muestra en libras enteras; los cálculos conservan el valor exacto. Las fórmulas y límites se explican en un diálogo de ayuda.
+La gráfica alterna rendimiento, volumen o repeticiones; compara las dos últimas observaciones del periodo y los récords respetan ese filtro. Una sola observación no muestra tendencia. El eje vertical cubre el rango de los datos con entre tres y cinco marcas enteras (`chartScale`), no empieza en 0, y el rendimiento estimado se muestra en libras enteras; los cálculos conservan el valor exacto. Las fórmulas y límites se explican en un diálogo de ayuda.
 
 ## Respaldos y PWA
 

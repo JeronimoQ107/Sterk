@@ -87,7 +87,7 @@ export const DEFAULT_EXERCISES = Object.freeze([
 
 // Images are optional: a catalog entry can be illustrated without changing saved workouts.
 export const EXERCISE_IMAGES = Object.freeze({
-  "pec-deck": "./assets/exercises/pec-deck.png",
+  "pec-deck": "./assets/exercises/pec-deck.webp",
   "barbell-squat": "./assets/exercises/barbell-squat.webp",
   "bench-press": "./assets/exercises/bench-press.webp",
 });
