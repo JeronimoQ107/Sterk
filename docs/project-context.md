@@ -15,7 +15,7 @@ Desde noviembre de 2026, varias personas cercanas la prueban instalada en sus iP
 5. Evitar servicios de pago cuando exista una alternativa gratuita razonable.
 6. Considerar Excel como exportación opcional para análisis, sin convertirlo en base de datos.
 
-## Estado implementado — 1.11.0
+## Estado implementado — 1.11.1
 
 - HTML, CSS y JavaScript vanilla, sin frameworks ni backend. Persistencia mediante una capa `storage` sobre `localStorage`.
 - Catálogo de **60 ejercicios predeterminados**, búsqueda por nombres y alias en español e inglés sin distinguir acentos, grupos musculares y categorías Push/Pull/Legs. Se pueden crear y archivar ejercicios personalizados.

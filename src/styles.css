@@ -25,7 +25,7 @@
   --danger-line: rgba(194, 53, 43, .35);
   --overlay: rgba(17, 18, 20, .45);
   --press: rgba(17, 18, 20, .06);
-  --bar: rgba(255, 255, 255, .84);
+  --bar: rgba(255, 255, 255, .97);
   --bar-line: rgba(17, 18, 20, .07);
   --shade: rgba(17, 18, 20, .14);
   --toast-bg: #111214;
@@ -76,7 +76,7 @@
     --danger-line: rgba(255, 122, 112, .4);
     --overlay: rgba(0, 0, 0, .6);
     --press: rgba(242, 242, 245, .07);
-    --bar: rgba(39, 41, 46, .84);
+    --bar: rgba(39, 41, 46, .97);
     --bar-line: rgba(242, 242, 245, .1);
     --shade: rgba(0, 0, 0, .5);
     --toast-bg: #f2f2f5;
@@ -99,7 +99,7 @@ button .ui-icon, summary .ui-icon { pointer-events: none; }
 .num, .ui-title h1, .ex-heading h1, .session-card-top strong, .ui-sheet h2, .progress-picker-trigger strong { font-family: var(--display); }
 .num { font-stretch: 106%; font-variant-numeric: tabular-nums; }
 .ui-title h1, .ex-heading h1, .session-card-top strong, .ui-sheet h2, .progress-picker-trigger strong { font-stretch: 118%; font-weight: 700; letter-spacing: -.02em; text-wrap: balance; }
-.ui-roll { position: relative; display: inline-block; clip-path: inset(-.12em 0); }
+.ui-roll { position: relative; display: inline-block; }
 .ui-roll > span { display: inline-block; }
 .ui-roll > i { position: absolute; top: 0; left: 0; font-style: normal; }
 
@@ -188,8 +188,14 @@ summary::-webkit-details-marker { display: none; }
 summary .ui-icon:last-child { transition: transform .35s var(--soft); }
 details[open]:not([data-closing]) > summary .ui-icon:last-child { transform: rotate(180deg); }
 
+/* El fondo va en el título y en el interior, no en el contenedor: así el recorte lo descubre junto con el contenido. */
+.ui-fold { overflow: hidden; }
+.ui-fold-in, .ex-technique > summary, .progress-records > summary, .custom-exercise > summary, .catalog-group > summary { background: var(--surface); }
+details.ui-group, .grouped-catalog { background: none; }
+
 /* ===== Barras flotantes ===== */
-.bottom-nav { position: fixed; z-index: 6; bottom: var(--dock); left: 50%; display: flex; padding: 4px; border: 1px solid var(--bar-line); border-radius: var(--radius-full); background: var(--bar); box-shadow: 0 8px 28px var(--shade); transform: translateX(-50%); -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5); }
+/* Casi opacas y sin desenfoque: el contenido pasa por detrás sin recalcular nada en cada fotograma. */
+.bottom-nav { position: fixed; z-index: 6; bottom: var(--dock); left: 50%; display: flex; padding: 4px; border: 1px solid var(--bar-line); border-radius: var(--radius-full); background: var(--bar); box-shadow: 0 8px 28px var(--shade); transform: translateX(-50%); }
 .bottom-nav button { display: grid; place-items: center; width: 66px; min-height: 52px; padding: 0; border: 0; border-radius: var(--radius-full); background: transparent; color: var(--muted); transition: background-color .25s; }
 .bottom-nav button:active { background: var(--press); transition-duration: 0s; }
 .bottom-nav button.active { color: var(--accent); }
@@ -202,7 +208,7 @@ details[open]:not([data-closing]) > summary .ui-icon:last-child { transform: rot
 .ui-dock button > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-dock .ui-roll { overflow: visible; }
 .ui-dock .ui-icon { width: 1.1rem; height: 1.1rem; }
-.ui-dock-side { max-width: 48%; padding: 0 1.1rem 0 .75rem; border: 1px solid var(--bar-line) !important; background: var(--bar); color: var(--accent); font-weight: 500; -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5); }
+.ui-dock-side { max-width: 48%; padding: 0 1.1rem 0 .75rem; border: 1px solid var(--bar-line) !important; background: var(--bar); color: var(--accent); font-weight: 500; }
 .ui-dock-main { max-width: 60%; margin-left: auto; padding: 0 1.4rem; background: var(--accent-fill); color: var(--on-accent); font-weight: 600; }
 .ui-dock-main:has(.ui-icon) { padding-right: 1rem; }
 .builder-screen .ui-dock-side { padding: 0 1rem 0 1.25rem; color: var(--text); }
@@ -274,7 +280,7 @@ dialog.ui-sheet.closing::backdrop { animation: fade-out .24s both; }
 .ex-heading { margin: .5rem 0 1rem; }
 .ex-heading h1 { margin: 0; font-size: var(--size-heading); line-height: 1.12; }
 .ex-heading p { margin: .3rem 0 0; color: var(--muted); font-size: var(--size-sub); }
-.ex-technique { margin: 0 0 1rem; overflow: hidden; border-radius: var(--radius); background: var(--surface); }
+.ex-technique { margin: 0 0 1rem; overflow: hidden; border-radius: var(--radius); }
 .ex-technique summary { display: flex; align-items: center; gap: .6rem; min-height: 44px; padding: 0 1rem; color: var(--accent); font-size: var(--size-body); }
 .ex-technique summary .ui-icon:first-of-type { order: -1; width: 1.4rem; height: 1.4rem; }
 .ex-technique summary .ui-icon:last-child { width: 1.1rem; height: 1.1rem; margin-left: auto; }
@@ -288,22 +294,30 @@ dialog.ui-sheet.closing::backdrop { animation: fade-out .24s both; }
 .ex-group.skipped { opacity: .55; }
 .ex-row { position: relative; min-height: 56px; padding: .375rem .5rem .375rem 1rem; }
 .ex-row + .ex-row, .ex-add { border-top: 1px solid var(--line); }
-.ex-sweep { position: absolute; inset: 0; background: var(--accent-soft); opacity: 0; pointer-events: none; }
+.ex-sweep { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.ex-sweep::before { content: ""; position: absolute; inset: 0; background: var(--accent-soft); opacity: 0; transform-origin: 100% 50%; }
 .ex-row:first-child .ex-sweep { border-radius: var(--radius) var(--radius) 0 0; }
 .ex-n, .ex-prev { position: relative; color: var(--muted); font-family: var(--display); font-stretch: 106%; font-variant-numeric: tabular-nums; }
 .ex-n { font-size: 1rem; font-weight: 600; }
 .ex-n small { margin-left: .15rem; font-size: .75rem; }
 .ex-prev { overflow: hidden; font-size: var(--size-sub); text-overflow: ellipsis; white-space: nowrap; }
-.weight-value, .reps-value { position: relative; height: 44px; padding: 0; border: 0; background: transparent; cursor: ns-resize; touch-action: none; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
-.weight-value::before, .reps-value::before { content: ""; position: absolute; inset: 0; border-radius: var(--radius-small); background: var(--surface-2); transition: inset .28s var(--soft), border-radius .28s, background-color .25s; }
-.ex-row.done .weight-value:not(.scrubbing)::before, .ex-row.done .reps-value:not(.scrubbing)::before { background-color: transparent; }
+.weight-value, .reps-value { position: relative; height: 44px; padding: 0; border: 0; background: transparent; cursor: ns-resize; isolation: isolate; touch-action: none; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
+.weight-value::before, .reps-value::before { content: ""; position: absolute; inset: 0; border-radius: var(--radius-small); background: var(--surface-2); transition: opacity .2s; }
+/* El fondo abierto ya tiene su tamaño; al deslizar solo aparece. */
+.weight-value::after, .reps-value::after { content: ""; position: absolute; inset: -30px 0; border-radius: var(--radius); background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--accent); opacity: 0; transform: scaleY(.6); transition: opacity .16s, transform .24s var(--soft); pointer-events: none; }
+.ex-row.done .weight-value:not(.scrubbing)::before, .ex-row.done .reps-value:not(.scrubbing)::before { opacity: 0; }
 .weight-value.scrubbing, .reps-value.scrubbing { z-index: 3; }
-.weight-value.scrubbing::before, .reps-value.scrubbing::before { inset: -32px 0; border-radius: var(--radius); background-color: var(--surface-2); box-shadow: inset 0 0 0 2px var(--accent); }
-.weight-value > span, .reps-value > span { position: absolute; top: calc(50% - 12px); left: 0; width: 100%; height: 24px; font-family: var(--display); font-size: 1.125rem; font-stretch: 106%; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 24px; text-align: center; pointer-events: none; }
-:is(.weight-value, .reps-value):not(.scrubbing) > span:not([data-weight-offset="0"], [data-reps-offset="0"]) { opacity: 0 !important; }
+.weight-value.scrubbing::after, .reps-value.scrubbing::after { opacity: 1; transform: none; }
+.weight-value > span, .reps-value > span { position: absolute; z-index: 1; top: calc(50% - 12px); contain: strict; left: 0; width: 100%; height: 24px; font-family: var(--display); font-size: 1.125rem; font-stretch: 106%; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 24px; text-align: center; pointer-events: none; }
+:is([data-weight-offset="-2"], [data-reps-offset="-2"]) { transform: translateY(-40px) scale(.58); }
+:is([data-weight-offset="-1"], [data-reps-offset="-1"]) { transform: translateY(-20px) scale(.7); }
+:is([data-weight-offset="1"], [data-reps-offset="1"]) { transform: translateY(20px) scale(.7); }
+:is([data-weight-offset="2"], [data-reps-offset="2"]) { transform: translateY(40px) scale(.58); }
+:is(.weight-value, .reps-value).scrubbing > span { will-change: transform, opacity; }
+:is(.weight-value, .reps-value):not(.scrubbing) > span:not([data-weight-offset="0"], [data-reps-offset="0"]) { opacity: 0 !important; transition: opacity .16s; }
 .ex-check { position: relative; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; }
-.ex-add { display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 48px; padding: 0 1rem; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 0 0 var(--radius) var(--radius); background: transparent; color: var(--accent); font-size: var(--size-body); text-align: left; transition: background-color .25s; }
-.ex-add:active { background: var(--press); transition-duration: 0s; }
+.ex-add { display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 48px; padding: 0 1rem; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 0 0 var(--radius) var(--radius); background: var(--surface); color: var(--accent); font-size: var(--size-body); text-align: left; transition: background-color .25s; }
+.ex-add:active { background: var(--surface-2); transition-duration: 0s; }
 .ex-note { margin: .5rem 1rem 0; color: var(--muted); font-size: var(--size-note); line-height: 1.4; }
 
 /* ===== Resumen final ===== */
@@ -348,14 +362,22 @@ dialog.ui-sheet.closing::backdrop { animation: fade-out .24s both; }
 .chart-change { display: grid; justify-items: end; text-align: right; }
 .chart-change strong { font-size: var(--size-body); font-weight: 600; }
 .chart-change small { color: var(--muted); font-size: var(--size-note); }
-.progress-chart { display: block; width: 100%; height: auto; margin-top: .875rem; overflow: visible; outline-offset: 4px; touch-action: pan-y; }
-.progress-chart text { fill: var(--muted); font-family: var(--display); font-size: 11px; font-variant-numeric: tabular-nums; }
+.progress-plot { position: relative; aspect-ratio: 326 / 172; margin-top: .875rem; }
+.chart-base, .progress-chart { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.progress-chart { touch-action: pan-y; }
+.progress-chart:focus-visible { outline-offset: -2px; border-radius: var(--radius-small); }
+.chart-base text { fill: var(--muted); font-family: var(--display); font-size: 11px; font-variant-numeric: tabular-nums; }
 .chart-grid { stroke: var(--line); stroke-width: 1; }
-.chart-line { stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; animation: draw-line 1s .16s cubic-bezier(.5, 0, .2, 1) backwards; }
-.chart-dot { fill: var(--accent); stroke: var(--surface); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: pop-in .36s calc(.16s + var(--i) * .06s) var(--spring) backwards; }
-.chart-active { fill: var(--accent-fill); stroke: var(--surface); stroke-width: 2.5; transform-box: fill-box; transform-origin: center; animation: pop-in .48s 1.05s var(--spring) backwards; }
-.chart-cross { stroke: var(--muted); stroke-width: 1; opacity: 0; }
-.progress-chart.touching .chart-cross { opacity: 1; }
+.chart-line { stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart-dots { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.chart-reveal { position: absolute; inset: 0; overflow: hidden; animation: reveal-box .8s cubic-bezier(.5, 0, .2, 1) backwards; }
+.chart-reveal > svg { animation: reveal-art .8s cubic-bezier(.5, 0, .2, 1) backwards; }
+.chart-active, .chart-cross { position: absolute; pointer-events: none; }
+.chart-active { width: 13px; height: 13px; margin: -6.5px; border-radius: 50%; background: var(--accent-fill); box-shadow: 0 0 0 2.5px var(--surface); animation: pop-in .4s .62s var(--spring) backwards; }
+.chart-cross { top: 8.14%; width: 1px; height: 68.6%; background: var(--muted); opacity: 0; }
+.progress-plot.touching .chart-cross { opacity: 1; }
+/* La pantalla nueva no anima nada por dentro hasta que termina de entrar. */
+html[data-nav] :is(.chart-reveal, .chart-reveal > svg, .chart-active), html[data-nav] .muscle-bars i::after { animation-play-state: paused; }
 .muscle-bars { display: grid; gap: .75rem; }
 .muscle-bars > div { display: grid; grid-template-columns: 8rem minmax(0, 1fr) 2.2rem; align-items: center; gap: .65rem; font-size: var(--size-sub); }
 .muscle-bars i { position: relative; height: 8px; overflow: hidden; border-radius: 4px; background: var(--surface-2); }
@@ -379,7 +401,7 @@ dialog.ui-sheet.closing::backdrop { animation: fade-out .24s both; }
 
 /* ===== Constructor ===== */
 .grouped-catalog { margin-top: 1rem; }
-.grouped-catalog .ui-empty { margin: 0; padding: 1rem; }
+.grouped-catalog .ui-empty { margin: 0; padding: 1rem; background: var(--surface); }
 .catalog-group + .catalog-group { border-top: 1px solid var(--line); }
 .catalog-group > summary { display: flex; align-items: center; gap: .5rem; min-height: 54px; padding: 0 1rem; }
 .catalog-group summary strong { font-size: var(--size-body); font-weight: 500; }
@@ -411,7 +433,8 @@ dialog.ui-sheet.closing::backdrop { animation: fade-out .24s both; }
 @keyframes pop { from { transform: scale(.7); } }
 @keyframes pop-in { from { opacity: 0; transform: scale(0); } }
 @keyframes grow { from { transform: scaleX(0); } }
-@keyframes draw-line { from { stroke-dasharray: 1 1; stroke-dashoffset: 1; } to { stroke-dasharray: 1 1; stroke-dashoffset: 0; } }
+@keyframes reveal-box { from { transform: translateX(-100%); } }
+@keyframes reveal-art { from { transform: translateX(100%); } }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes fade-out { to { opacity: 0; } }
 @keyframes sheet-in { from { transform: translateY(100%); } }
@@ -424,6 +447,8 @@ dialog.ui-sheet.closing::backdrop { animation: fade-out .24s both; }
 @keyframes nav-pop-out { to { transform: translateX(100%); } }
 @keyframes nav-next { from { opacity: 0; transform: translateX(26px); } }
 @keyframes nav-previous { from { opacity: 0; transform: translateX(-26px); } }
+@keyframes nav-zoom-in { from { opacity: 0; transform: scale(.9); } }
+@keyframes nav-zoom-out { to { opacity: 0; transform: scale(.9); } }
 @keyframes nav-shrink { to { opacity: 0; transform: scale(.94); } }
 
 /* Cambios de pantalla (View Transitions). motion.js pone data-nav en <html> mientras dura el cambio.
@@ -446,21 +471,14 @@ html[data-nav=pop]::view-transition-old(root) { z-index: 1; animation: nav-pop-o
 html[data-nav=pop]::view-transition-new(root) { animation: nav-pop-in .44s var(--soft) both; }
 html[data-nav=finish]::view-transition-old(root) { animation: nav-shrink .32s ease-out both; }
 html[data-nav=finish]::view-transition-new(root) { animation: fade-in .26s linear both; }
-/* La tarjeta de la sesión se convierte en la pantalla del ejercicio, y al volver, al revés. */
-html:is([data-nav=expand], [data-nav=collapse]) :is(.session-card, .exercise-screen.ex) { view-transition-name: session; }
-html:is([data-nav=expand], [data-nav=collapse]) :is(.session-card, .ex-clock) .session-timer { view-transition-name: clock; }
-html:is([data-nav=expand], [data-nav=collapse]) :is(.session-steps, .ex-steps) { view-transition-name: steps; }
-html:is([data-nav=expand], [data-nav=collapse]) .session-timer { display: inline-block; }
-::view-transition-group(session), ::view-transition-group(clock), ::view-transition-group(steps) { animation-duration: .52s; animation-timing-function: var(--soft); }
-::view-transition-group(session) { overflow: clip; border-radius: var(--radius); background: var(--bg); }
-::view-transition-old(session), ::view-transition-new(session) { width: 100%; height: 100%; object-fit: cover; object-position: top left; mix-blend-mode: normal; }
-html[data-nav=expand]::view-transition-old(session), html[data-nav=collapse]::view-transition-new(session) { object-fit: none; }
-html[data-nav=expand]::view-transition-old(session) { animation: fade-out .14s linear both; }
-html[data-nav=expand]::view-transition-new(session) { animation: fade-in .3s .1s linear both; }
-html[data-nav=collapse]::view-transition-old(session) { animation: fade-out .2s .06s linear both; }
-html[data-nav=collapse]::view-transition-new(session) { animation: fade-in .2s .28s linear both; }
-html:is([data-nav=expand], [data-nav=collapse])::view-transition-old(root) { animation: fade-out .3s linear both; }
-html:is([data-nav=expand], [data-nav=collapse])::view-transition-new(root) { animation: fade-in .3s linear both; }
+/* Entrar al entrenamiento: la pantalla crece desde la tarjeta de la sesión y al salir vuelve a ella; el cronómetro viaja. */
+html:is([data-nav=expand], [data-nav=collapse]) :is(.session-card, .ex-clock) .session-timer { display: inline-block; view-transition-name: clock; }
+::view-transition-group(clock) { animation-duration: .42s; animation-timing-function: var(--soft); }
+html:is([data-nav=expand], [data-nav=collapse])::view-transition-old(root), html:is([data-nav=expand], [data-nav=collapse])::view-transition-new(root) { transform-origin: 50% var(--nav-y, 25%); }
+html[data-nav=expand]::view-transition-old(root) { animation: fade-out .18s linear both; }
+html[data-nav=expand]::view-transition-new(root) { animation: nav-zoom-in .42s var(--soft) both; }
+html[data-nav=collapse]::view-transition-old(root) { z-index: 1; animation: nav-zoom-out .26s ease-in both; }
+html[data-nav=collapse]::view-transition-new(root) { animation: fade-in .3s linear both; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-delay: 0s !important; transition-duration: .01ms !important; transition-delay: 0s !important; }

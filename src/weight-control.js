@@ -1,7 +1,8 @@
 import { formatNumber as format } from './format.js';
 
-// UI-03: separación entre valores al deslizar; el campo se abre para mostrar el anterior y el siguiente (styles.css).
-const ROW = 28;
+// UI-03: los valores siguen al dedo: avanzar uno son 20 px y están separados 20 px. El campo se abre para mostrar
+// el anterior y el siguiente (styles.css).
+const ROW = 20;
 
 export function scrubWeight(start, distance) {
   return Math.max(0, Math.round((start + Math.round(distance / 20) * 2.5) * 1000000) / 1000000);
@@ -16,7 +17,8 @@ export function bindWeightControl(root, readWeight, writeWeight) {
       const offset = Number(row.dataset.weightOffset);
       const value = Math.round((anchor + (center + offset) * 2.5) * 1000000) / 1000000;
       const relative = center + offset - position;
-      row.textContent = value < 0 ? '' : format(value);
+      const text = value < 0 ? '' : format(value);
+      if (row.textContent !== text) row.textContent = text;
       row.style.transform = `translateY(${relative * ROW}px) scale(${Math.max(.58, 1 - Math.abs(relative) * .3)})`;
       row.style.opacity = String(Math.max(0, 1 - Math.abs(relative) * .57));
     });
@@ -27,21 +29,22 @@ export function bindWeightControl(root, readWeight, writeWeight) {
     animations.delete(button);
     return frame;
   };
-  const animate = (button, anchor, from, to) => {
+  const animate = (button, anchor, from, to, done) => {
     const previous = stopAnimation(button);
+    const finish = done || previous?.done;
     if (previous) from = (previous.anchor + previous.position * 2.5 - anchor) / 2.5;
-    if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { draw(button, anchor, to); return; }
+    if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { draw(button, anchor, to); finish?.(); return; }
     const started = performance.now();
     const frame = (now) => {
       if (!button.isConnected) { animations.delete(button); return; }
       const t = Math.min(1, (now - started) / 160);
       const position = from + (to - from) * (1 - (1 - t) ** 3);
       draw(button, anchor, position);
-      if (t < 1) animations.set(button, { id: requestAnimationFrame(frame), anchor, position });
-      else animations.delete(button);
+      if (t < 1) animations.set(button, { id: requestAnimationFrame(frame), anchor, position, done: finish });
+      else { animations.delete(button); finish?.(); }
     };
     draw(button, anchor, from);
-    animations.set(button, { id: requestAnimationFrame(frame), anchor, position: from });
+    animations.set(button, { id: requestAnimationFrame(frame), anchor, position: from, done: finish });
   };
   let gesture = null, suppressClickUntil = 0;
   let wheelTarget = null, wheelDistance = 0, wheelTime = 0;
@@ -58,16 +61,21 @@ export function bindWeightControl(root, readWeight, writeWeight) {
   root.addEventListener('pointerdown', (event) => {
     const button = control(event);
     if (!button || !event.isPrimary || event.button !== 0) return;
-    stopAnimation(button);
-    gesture = { button, id: event.pointerId, y: event.clientY, start: readWeight(button), moved: false };
+    const resumed = Boolean(stopAnimation(button));
+    gesture = { button, id: event.pointerId, y: event.clientY, start: readWeight(button), moved: false, resumed };
     button.setPointerCapture(event.pointerId);
   });
   root.addEventListener('pointermove', (event) => {
     if (!gesture || event.pointerId !== gesture.id) return;
     // Si la pantalla cambió a mitad del gesto, el campo ya no existe: seguir escribiría en otro ejercicio.
     if (!gesture.button.isConnected) { gesture = null; return; }
-    const distance = gesture.y - event.clientY;
-    if (Math.abs(distance) > 6) gesture.moved = true;
+    let distance = gesture.y - event.clientY;
+    // Al reconocer el gesto se descuentan sus primeros 6 px para que el número no salte.
+    if (!gesture.moved && Math.abs(distance) > 6) {
+      gesture.moved = true;
+      gesture.y -= Math.sign(distance) * 6;
+      distance = gesture.y - event.clientY;
+    }
     if (!gesture.moved) return;
     event.preventDefault();
     gesture.button.classList.add('scrubbing');
@@ -78,10 +86,14 @@ export function bindWeightControl(root, readWeight, writeWeight) {
   const end = (event) => {
     if (!gesture || event.pointerId !== gesture.id) return;
     if (!gesture.button.isConnected) { gesture = null; return; }
-    if (gesture.moved) suppressClickUntil = Date.now() + 500;
-    if (gesture.moved) animate(gesture.button, gesture.start, gesture.position, (readWeight(gesture.button) - gesture.start) / 2.5);
-    gesture.button.classList.remove('scrubbing');
+    const { button, start, position, moved, resumed } = gesture;
     gesture = null;
+    // El campo sigue abierto hasta que el número queda centrado.
+    const rest = () => button.classList.remove('scrubbing');
+    if (moved) {
+      suppressClickUntil = Date.now() + 500;
+      animate(button, start, position, (readWeight(button) - start) / 2.5, rest);
+    } else if (resumed) { draw(button, start, 0); rest(); }
   };
   root.addEventListener('pointerup', end);
   root.addEventListener('pointercancel', end);

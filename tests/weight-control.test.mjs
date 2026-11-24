@@ -53,7 +53,7 @@ test('sub-step movement displaces the visible numbers and releasing animates int
   const t = setup();
   t.send('pointerdown'); t.send('pointermove', { clientY: 92 });
   assert.equal(t.weight(), 25);
-  assert.match(t.number.style.transform, /translateY\(-11.2/);
+  assert.match(t.number.style.transform, /translateY\(-2px/);
   t.send('pointerup'); assert.equal(t.frames.size, 1);
   const callback = [...t.frames.values()][0]; callback(performance.now() + 200);
   assert.match(t.number.style.transform, /translateY\(0px\)/);
@@ -78,4 +78,24 @@ test('UI-03: un gesto sobre un campo que ya no está en pantalla no escribe en o
   t.send('pointerup');
   assert.equal(t.writes.length, writes);
   assert.equal(t.frames.size, 0);
+});
+
+test('UI-03: el campo sigue abierto hasta que el número se centra y el gesto empieza sin saltos', () => {
+  const t = setup();
+  const classes = new Set();
+  t.button.classList = { add: (name) => classes.add(name), remove: (name) => classes.delete(name) };
+  t.send('pointerdown'); t.send('pointermove', { clientY: 93 }); // 7 px: se reconocen 6 y se avanza 1
+  assert.match(t.number.style.transform, /translateY\(-1px\)/);
+  t.send('pointermove', { clientY: 80 });
+  assert(classes.has('scrubbing'));
+  t.send('pointerup');
+  assert(classes.has('scrubbing'), 'mientras se centra sigue abierto');
+  [...t.frames.values()].at(-1)(performance.now() + 200);
+  assert(!classes.has('scrubbing'));
+
+  // Volver a tocar mientras se centra y soltar sin mover lo deja en reposo.
+  t.send('pointerdown'); t.send('pointermove', { clientY: 70 }); t.send('pointerup');
+  t.send('pointerdown'); t.send('pointerup');
+  assert(!classes.has('scrubbing'));
+  assert.match(t.number.style.transform, /translateY\(0px\)/);
 });

@@ -47,10 +47,10 @@ test('a tap leaves the value unchanged, while keyboard and wheel can adjust it',
 test('the numbers move between steps and settle smoothly after release', () => {
   const control = setup();
   control.send('pointerdown');
-  control.send('pointermove', { clientY: 90 });
+  control.send('pointermove', { clientY: 84 }); // 16 px menos los 6 que reconocen el gesto
   assert.equal(control.reps(), 11);
-  assert.equal(control.rows[2].style.transform, 'translateY(14px) scale(0.85)');
-  control.send('pointerup', { clientY: 90 });
+  assert.equal(control.rows[2].style.transform, 'translateY(10px) scale(0.85)');
+  control.send('pointerup', { clientY: 84 });
   assert.equal(control.frames.size, 1);
   const frame = [...control.frames.values()][0];
   frame(performance.now() + 200);

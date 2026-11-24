@@ -2,9 +2,14 @@
 // de métrica, periodo o ejercicio. Los valores de cada punto viajan en data-points.
 import { canMove } from "./motion.js";
 
-const WIDTH = 326;
+export const PLOT = { width: 326, height: 172 };
 const pointsOf = (svg) => { try { return JSON.parse(svg?.dataset.points || "[]"); } catch { return []; } };
-const line = (points) => points.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+export const linePath = (points) => points.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+// Todos los puntos en un solo trazo: moverlos es cambiar un atributo.
+export const dotsPath = (points) => points.map(({ x, y }) => `M${(x - 4).toFixed(1)} ${y.toFixed(1)}a4 4 0 1 0 8 0a4 4 0 1 0 -8 0`).join("");
+const percent = (value, total) => `${(value / total * 100).toFixed(2)}%`;
+export const plotLeft = (point) => percent(point.x, PLOT.width);
+export const plotTop = (point) => percent(point.y, PLOT.height);
 
 // Estado de la gráfica antes de redibujar, para transformarla después.
 export function chartState(root) {
@@ -23,14 +28,14 @@ export function morphChart(root, before) {
     return { x: mix("x"), y: mix("y") };
   };
   const from = points.map((_, index) => at(index)), started = performance.now();
-  const path = svg.querySelector(".chart-line"), dots = [...svg.querySelectorAll(".chart-dot")], active = svg.querySelector(".chart-active");
+  const plot = svg.closest(".progress-plot"), path = svg.querySelector(".chart-line"), dots = svg.querySelector(".chart-dots"), active = plot.querySelector(".chart-active"), data = svg.dataset.points;
   const step = (now) => {
-    if (!svg.isConnected || pointsOf(svg).length !== points.length) return;
+    if (!svg.isConnected || svg.dataset.points !== data) return;
     const time = Math.min(1, Math.max(0, (now - started) / 520)), ease = 1 - (1 - time) ** 4;
     const current = points.map((point, index) => ({ x: from[index].x + (point.x - from[index].x) * ease, y: from[index].y + (point.y - from[index].y) * ease }));
-    path.setAttribute("points", line(current));
-    dots.forEach((dot, index) => { if (!current[index]) return; dot.setAttribute("cx", current[index].x); dot.setAttribute("cy", current[index].y); });
-    if (!svg.classList.contains("touching")) { active.setAttribute("cx", current.at(-1).x); active.setAttribute("cy", current.at(-1).y); }
+    path.setAttribute("points", linePath(current));
+    dots.setAttribute("d", dotsPath(current));
+    if (!plot.classList.contains("touching")) { active.style.left = plotLeft(current.at(-1)); active.style.top = plotTop(current.at(-1)); }
     if (time < 1) requestAnimationFrame(step);
   };
   step(started);
@@ -38,20 +43,20 @@ export function morphChart(root, before) {
 
 export function bindChart(root) {
   const show = (svg, index, touching) => {
-    const points = pointsOf(svg), point = points[index], box = svg.closest("[data-chart]");
-    if (!point || !box) return;
+    const point = pointsOf(svg)[index], box = svg.closest("[data-chart]"), plot = svg.closest(".progress-plot");
+    if (!point || !box || !plot) return;
     svg.dataset.index = String(index);
-    svg.classList.toggle("touching", touching);
-    const cross = svg.querySelector(".chart-cross"), active = svg.querySelector(".chart-active");
-    cross.setAttribute("x1", point.x); cross.setAttribute("x2", point.x);
-    active.setAttribute("cx", point.x); active.setAttribute("cy", point.y);
+    plot.classList.toggle("touching", touching);
+    const active = plot.querySelector(".chart-active");
+    plot.querySelector(".chart-cross").style.left = plotLeft(point);
+    active.style.left = plotLeft(point); active.style.top = plotTop(point);
     const value = box.querySelector("[data-chart-value]");
     value.textContent = point.value; value.rollValue = point.value;
     box.querySelector("[data-chart-detail]").textContent = point.detail;
     box.querySelector("[data-chart-change]").textContent = point.change;
   };
   const nearest = (svg, clientX) => {
-    const box = svg.getBoundingClientRect(), x = (clientX - box.left) / box.width * WIDTH;
+    const box = svg.getBoundingClientRect(), x = (clientX - box.left) / box.width * PLOT.width;
     return pointsOf(svg).reduce((best, point, index, all) => (Math.abs(point.x - x) < Math.abs(all[best].x - x) ? index : best), 0);
   };
   let touched = null;

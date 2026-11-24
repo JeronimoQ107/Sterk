@@ -2,6 +2,7 @@ import { icon } from './icons.js';
 import { MUSCLE_GROUPS } from './data.js';
 import { countsPart } from './sets.js';
 import { APP_VERSION } from './version.js';
+import { PLOT, linePath, dotsPath, plotLeft, plotTop } from './progress-chart.js';
 import { inPeriod, overview, exerciseOptions, availableSides, exerciseSeries, personalRecords, muscleGroupSets } from './progress.js';
 import { escapeHtml as escape, formatTotal as number, formatDayMonth as date } from './format.js';
 // UI-01: el rendimiento estimado es una estimación; se muestra en libras enteras. Los cálculos conservan el valor exacto.
@@ -84,7 +85,7 @@ const pointChange = (points, index, field) => {
 
 function chart(points, metricId) {
   const metric = metricDefinitions[metricId];
-  const w = 326, h = 172, x0 = 40, x1 = 316, y0 = 14, y1 = 132;
+  const x0 = 40, x1 = 316, y0 = 14, y1 = 132, box = `viewBox="0 0 ${PLOT.width} ${PLOT.height}"`;
   const { min, max, steps } = chartScale(points.map((point) => point[metric.field]));
   const first = +new Date(points[0].date), last = +new Date(points.at(-1).date);
   const x = (point, index) => last !== first ? x0 + ((+new Date(point.date) - first) / (last - first)) * (x1 - x0) : x0 + index * (x1 - x0) / Math.max(1, points.length - 1);
@@ -97,8 +98,9 @@ function chart(points, metricId) {
     const level = y1 - index / steps * (y1 - y0);
     return `<line x1="${x0}" x2="${x1}" y1="${level}" y2="${level}" class="chart-grid"/><text x="${x0 - 8}" y="${level + 4}" text-anchor="end">${number(min + (max - min) * index / steps)}</text>`;
   }).join('');
+  // La cuadrícula es fija y la línea se descubre de izquierda a derecha deslizando un recorte (chart-reveal), sin redibujarla.
   const end = places.at(-1);
-  return `<svg class="progress-chart" viewBox="0 0 ${w} ${h}" role="img" tabindex="0" data-points="${escape(JSON.stringify(data))}" aria-label="${metric.shortLabel} por entrenamiento. Los valores están en la tabla inferior."><g data-key="grid-${min}-${max}-${steps}">${grid}</g><text data-key="from" x="${x0}" y="158">${date(points[0].date)}</text><text data-key="to" x="${x1}" y="158" text-anchor="end">${date(points.at(-1).date)}</text><polyline data-key="line" points="${places.map((place) => `${place.x},${place.y}`).join(' ')}" fill="none" pathLength="1" class="chart-line"/><line data-key="cross" class="chart-cross" x1="${end.x}" x2="${end.x}" y1="${y0}" y2="${y1}"/>${places.map((place, index) => `<circle cx="${place.x}" cy="${place.y}" r="4" class="chart-dot" style="--i:${index}"><title>${date(points[index].date)}: ${metric.format(points[index][metric.field])} ${metric.unit}</title></circle>`).join('')}<circle data-key="active" cx="${end.x}" cy="${end.y}" r="6" class="chart-active"/></svg>`;
+  return `<div class="progress-plot"><svg class="chart-base" ${box} aria-hidden="true"><g data-key="grid-${min}-${max}-${steps}">${grid}</g><text data-key="from" x="${x0}" y="158">${date(points[0].date)}</text><text data-key="to" x="${x1}" y="158" text-anchor="end">${date(points.at(-1).date)}</text></svg><div class="chart-reveal"><svg class="progress-chart" ${box} role="img" tabindex="0" data-points="${escape(JSON.stringify(data))}" aria-label="${metric.shortLabel} por entrenamiento. Los valores están en la tabla inferior."><polyline data-key="line" points="${linePath(places)}" fill="none" class="chart-line"/><path data-key="dots" d="${dotsPath(places)}" class="chart-dots"/></svg></div><i class="chart-cross" style="left:${plotLeft(end)}"></i><i class="chart-active" style="left:${plotLeft(end)};top:${plotTop(end)}"></i></div>`;
 }
 
 // UI-03: primero la gráfica del ejercicio; después, el resumen del periodo, los grupos musculares y los récords.
@@ -118,7 +120,7 @@ export function progressDashboard(sessions, state) {
   const groupSummary = groups.length ? `<h2 class="ui-group-header"><span>Series por grupo muscular</span><span>${number(groups.reduce((sum, group) => sum + group.sets, 0))} en total</span></h2><section class="ui-group ui-pad muscle-bars">${groups.map((group) => `<div data-key="${escape(group.id)}"><span>${escape(MUSCLE_GROUPS[group.id] || group.id)}</span><i style="--share:${group.sets / maxGroupSets}"></i><strong class="num">${number(group.sets)}</strong></div>`).join('')}</section>` : '';
   const record = (name, label, value, detail) => `<div class="ui-row"><span class="ui-row-lead">${icon(name)}${label}</span><span class="record-value"><strong class="num">${value}</strong><small>${detail}</small></span></div>`;
   const recordRows = records ? `<h2 class="ui-group-header">Récords del periodo</h2><div class="ui-group">${record('trophy', 'Rendimiento', `${estimate(records.performance.estimatedOneRepMax)} lb`, `${number(records.performance.weight)} × ${records.performance.reps}`)}${record('barbell', 'Mayor carga', `${number(records.weight.maxWeight)} lb`, `${records.weight.maxWeightReps} reps`)}${record('repeat', 'Más repeticiones', records.reps.maxReps, `con ${number(records.reps.maxRepsWeight)} lb`)}${record('stack', 'Mayor volumen', `${number(records.volume.volume)} lb`, date(records.volume.date))}</div>` : '';
-  const table = points.length ? `<details class="ui-group progress-records"><summary>Ver registros (${points.length})${icon('down')}</summary><div class="ui-fold"><div class="records-scroll"><table><caption class="visually-hidden">Rendimiento, volumen y repeticiones por sesión</caption><thead><tr><th>Fecha</th><th>Mejor serie</th><th>Rendimiento</th><th>Volumen</th><th>Reps</th></tr></thead><tbody>${[...points].reverse().map((point) => `<tr><td>${date(point.date)}</td><td>${number(point.weight)} × ${point.reps}</td><td>${estimate(point.estimatedOneRepMax)} lb</td><td>${number(point.volume)} lb</td><td>${number(point.totalReps)}</td></tr>`).join('')}</tbody></table></div></div></details>` : '';
+  const table = points.length ? `<details class="ui-group progress-records"><summary>Ver registros (${points.length})${icon('down')}</summary><div class="ui-fold"><div class="ui-fold-in"><div class="records-scroll"><table><caption class="visually-hidden">Rendimiento, volumen y repeticiones por sesión</caption><thead><tr><th>Fecha</th><th>Mejor serie</th><th>Rendimiento</th><th>Volumen</th><th>Reps</th></tr></thead><tbody>${[...points].reverse().map((point) => `<tr><td>${date(point.date)}</td><td>${number(point.weight)} × ${point.reps}</td><td>${estimate(point.estimatedOneRepMax)} lb</td><td>${number(point.volume)} lb</td><td>${number(point.totalReps)}</td></tr>`).join('')}</tbody></table></div></div></div></details>` : '';
   const name = options.find((option) => option.id === state.progressExercise)?.name || '';
   const sideChoice = sides.length > 1 || (sides.length && sides[0] !== 'both') ? segmented('Registro', 'data-progress-side', sides.map((side) => [side, sideNames[side]]), state.progressSide) : '';
   const graph = !latest

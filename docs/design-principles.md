@@ -64,7 +64,7 @@ Es la referencia del resto de la app. Maqueta aprobada en la revisión del 2026-
 - Las series hechas muestran el marcador relleno en `--accent-fill`; sus campos pierden el fondo.
 - Última fila de la lista: "Añadir serie" en `--accent`.
 - Por lado: cada serie se divide en dos filas, I y D, con un marcador cada una. Sin casilla de "ambos".
-- Abajo, dos píldoras flotantes: ejercicio anterior a la izquierda (translúcida) y siguiente a la derecha (rellena).
+- Abajo, dos píldoras flotantes: ejercicio anterior a la izquierda (neutra) y siguiente a la derecha (rellena).
 - Al deslizar peso o repeticiones el campo se abre y muestra el valor anterior y el siguiente; en reposo no se ven.
 - Si el ejercicio tiene animación, bajo el título hay una fila «Ver técnica» en `--accent` (decidido el 2026-11-20). Está plegada por defecto para no empujar las series; al abrirla muestra la animación sobre `--surface` y una nota breve sobre el color. Con movimiento reducido no se reproduce sola.
 - Sin botón "Registrar ejercicio" (decidido el 2026-11-19): al marcar la última serie con repeticiones se registra y pasa al siguiente pendiente; al salir del ejercicio por cualquier vía con alguna serie o lado marcado, se registra lo marcado; sin nada marcado queda pendiente. Finalizar sigue siendo una acción explícita y se bloquea mientras haya ejercicios pendientes sin nada marcado.
@@ -72,7 +72,7 @@ Es la referencia del resto de la app. Maqueta aprobada en la revisión del 2026-
 ## Iconos, barras y hojas (UI-03)
 
 - Iconos de Phosphor (`src/icons.js`), de trazo; rellenos solo en la pestaña activa. Siempre acompañados de texto, salvo en la barra de pestañas y en botones de uso conocido (volver, cerrar, `⋯`), que llevan nombre accesible.
-- Barra de pestañas flotante solo con iconos, redondeada y translúcida, en una capa sobre el contenido. Las pantallas dejan sitio al final para que no tape la última fila.
+- Barra de pestañas flotante solo con iconos, redondeada y casi opaca, en una capa sobre el contenido. Sin desenfoque: en un iPhone se recalcula en cada fotograma. Las pantallas dejan sitio al final para que no tape la última fila.
 - Acciones al pie (anterior y siguiente, selección del constructor): `ui-dock`, con el mismo estilo flotante.
 - Menús, selectores y confirmaciones: hoja inferior (`showSheet`, `ask`, `notice`). Nada de `alert()` ni `confirm()`. El botón dice la acción («Eliminar»), y las que borran datos van en `--danger`.
 
@@ -80,6 +80,8 @@ Es la referencia del resto de la app. Maqueta aprobada en la revisión del 2026-
 
 - El movimiento explica qué cambió: de dónde viene una pantalla, qué fila se añadió, qué número subió. No decora.
 - Entre 150 y 560 ms; solo el resumen final y la gráfica al entrar duran más (cerca de 1 s). Curvas `--soft` (sin rebote) y `--spring` (rebote leve, en marcas y botones).
+- Solo se animan `transform` y `opacity`. Alturas, recortes, posiciones y trazos obligan al iPhone a redibujar en cada fotograma y se notan a saltos.
+- El contenido sigue al dedo: al deslizar un valor, 20 px de dedo son 20 px en pantalla, sin salto al empezar.
 - Nada retrasa el toque ni el guardado: los datos se guardan antes de animar y los toques pasan a la pantalla nueva durante el cambio.
 - Con «Reducir movimiento» de iOS quedan solo cambios instantáneos o fundidos breves. Sin soporte del navegador, la app funciona igual sin animación.
 - Sin librerías: CSS, Web Animations y View Transitions (`src/motion.js`).

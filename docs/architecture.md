@@ -1,6 +1,6 @@
 # Arquitectura de Sterk
 
-> Implementación revisada: **1.11.0, 2026-11-24**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
+> Implementación revisada: **1.11.1, 2026-11-24**. Producto y decisiones: [project-context.md](project-context.md). Pendientes: [roadmap.md](roadmap.md). Flujo de desarrollo: [development-workflow.md](development-workflow.md).
 
 ## Implementación actual
 
@@ -35,7 +35,7 @@ La aplicación utiliza HTML/CSS y módulos ES de JavaScript, sin framework, back
 
 La UI consume la API pública de `storage`; no accede directamente a las claves de `localStorage`.
 
-`app.js` sigue generando el HTML completo de cada vista, pero desde 1.11.0 `paint()` lo compara con lo que hay en pantalla y cambia solo lo distinto: los elementos que siguen existiendo conservan foco, desplazamiento y transiciones CSS (la marca de una serie, el avance, el indicador de un filtro). `data-key` identifica filas que se añaden, quitan o reordenan y bloques que deben sustituirse enteros (el cuerpo del ejercicio, al cambiar de ejercicio); `data-enter` anima la entrada y salida de una fila; `data-roll`, un número; `data-keep` protege un contenido que gestiona el código (el vídeo de la técnica). Al cambiar de vista se reemplaza todo, dentro de una View Transition si el navegador la admite (Safari 18 o posterior); si no, al instante. Los datos se guardan siempre antes de animar.
+`app.js` sigue generando el HTML completo de cada vista, pero desde 1.11.0 `paint()` lo compara con lo que hay en pantalla y cambia solo lo distinto: los elementos que siguen existiendo conservan foco, desplazamiento y transiciones CSS (la marca de una serie, el avance, el indicador de un filtro). `data-key` identifica filas que se añaden, quitan o reordenan y bloques que deben sustituirse enteros (el cuerpo del ejercicio, al cambiar de ejercicio); `data-enter` marca las filas que, al añadirse o quitarse, deslizan lo que tienen debajo; `data-roll`, un número; `data-keep` protege un contenido que gestiona el código (el vídeo de la técnica). Al cambiar de vista se reemplaza todo, dentro de una View Transition si el navegador la admite (Safari 18 o posterior); si no, al instante. Los datos se guardan siempre antes de animar. Solo se animan `transform` y `opacity`: un plegado (`ui-fold` con `ui-fold-in`) o la línea de la gráfica (`chart-reveal`) se descubren moviendo un recorte y su interior en sentidos opuestos, sin cambiar alturas ni redibujar; el punto activo y la guía de la gráfica son elementos aparte del SVG.
 
 Las hojas (`<dialog>`) viven en `document.body`; las del menú y la selección reenvían sus toques a `handleClick`. `ask()` recibe la acción como función y solo la ejecuta al aceptar. Los cálculos de series y progreso están separados, pero `app.js` todavía reúne estado, vistas e interacciones. La organización en carpetas adicionales es una refactorización futura.
 
