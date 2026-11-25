@@ -29,7 +29,7 @@ Abre `http://127.0.0.1:8083`. Las pruebas usan almacenamiento y entorno simulado
 - Respaldo JSON V4, importación compatible con V1–V4 y migración del historial de V0.
 - Manifest, iconos y service worker con precaché de recursos para la PWA.
 
-Pec Deck, Barbell Squat, Bench Press y Romanian Deadlift tienen ilustración; los demás muestran un icono. Barbell Squat, Bench Press y Romanian Deadlift también tienen animación de la técnica en la pantalla del ejercicio («Ver técnica», plegada por defecto). El detalle del historial permite ajustar la fecha y eliminar datos, pero aún no editar peso y repeticiones guardados.
+Pec Deck, Barbell Squat, Bench Press, Romanian Deadlift y Leg Extension tienen ilustración; los demás muestran un icono. Barbell Squat, Bench Press, Romanian Deadlift y Leg Extension también tienen animación de la técnica en la pantalla del ejercicio («Ver técnica», plegada por defecto). El detalle del historial permite ajustar la fecha y eliminar datos, pero aún no editar peso y repeticiones guardados.
 
 ## Estructura actual
 

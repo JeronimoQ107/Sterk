@@ -40,6 +40,9 @@ const APP_SHELL = [
   "./assets/exercises/romanian-deadlift.webp",
   "./assets/exercises/romanian-deadlift-claro.mp4",
   "./assets/exercises/romanian-deadlift-oscuro.mp4",
+  "./assets/exercises/leg-extension.webp",
+  "./assets/exercises/leg-extension-claro.mp4",
+  "./assets/exercises/leg-extension-oscuro.mp4",
 ];
 
 // PWA-02: cada versión se descarga completa desde la red. `cache: "reload"` evita guardar copias
