@@ -43,6 +43,15 @@ const APP_SHELL = [
   "./assets/exercises/leg-extension.webp",
   "./assets/exercises/leg-extension-claro.mp4",
   "./assets/exercises/leg-extension-oscuro.mp4",
+  "./assets/exercises/lat-pulldown.webp",
+  "./assets/exercises/lat-pulldown-claro.mp4",
+  "./assets/exercises/lat-pulldown-oscuro.mp4",
+  "./assets/exercises/t-bar-row.webp",
+  "./assets/exercises/t-bar-row-claro.mp4",
+  "./assets/exercises/t-bar-row-oscuro.mp4",
+  "./assets/exercises/overhead-triceps-extension.webp",
+  "./assets/exercises/overhead-triceps-extension-claro.mp4",
+  "./assets/exercises/overhead-triceps-extension-oscuro.mp4",
 ];
 
 // PWA-02: cada versión se descarga completa desde la red. `cache: "reload"` evita guardar copias

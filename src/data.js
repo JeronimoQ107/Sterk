@@ -92,6 +92,9 @@ export const EXERCISE_IMAGES = Object.freeze({
   "bench-press": "./assets/exercises/bench-press.webp",
   "romanian-deadlift": "./assets/exercises/romanian-deadlift.webp",
   "leg-extension": "./assets/exercises/leg-extension.webp",
+  "lat-pulldown": "./assets/exercises/lat-pulldown.webp",
+  "t-bar-row": "./assets/exercises/t-bar-row.webp",
+  "overhead-triceps-extension": "./assets/exercises/overhead-triceps-extension.webp",
 });
 // Animación de la técnica (VIS-01), una por modo de color: un vídeo no puede ser transparente en Safari,
 // así que cada uno lleva el fondo de las listas de la app (--surface) en modo claro u oscuro.
@@ -100,6 +103,9 @@ export const EXERCISE_ANIMATIONS = Object.freeze({
   "bench-press": Object.freeze({ light: "./assets/exercises/bench-press-claro.mp4", dark: "./assets/exercises/bench-press-oscuro.mp4" }),
   "romanian-deadlift": Object.freeze({ light: "./assets/exercises/romanian-deadlift-claro.mp4", dark: "./assets/exercises/romanian-deadlift-oscuro.mp4" }),
   "leg-extension": Object.freeze({ light: "./assets/exercises/leg-extension-claro.mp4", dark: "./assets/exercises/leg-extension-oscuro.mp4" }),
+  "lat-pulldown": Object.freeze({ light: "./assets/exercises/lat-pulldown-claro.mp4", dark: "./assets/exercises/lat-pulldown-oscuro.mp4" }),
+  "t-bar-row": Object.freeze({ light: "./assets/exercises/t-bar-row-claro.mp4", dark: "./assets/exercises/t-bar-row-oscuro.mp4" }),
+  "overhead-triceps-extension": Object.freeze({ light: "./assets/exercises/overhead-triceps-extension-claro.mp4", dark: "./assets/exercises/overhead-triceps-extension-oscuro.mp4" }),
 });
 
 const LEGACY_ALIASES = {
