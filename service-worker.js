@@ -1,7 +1,7 @@
 // La versión debe coincidir con package.json y con APP_VERSION (src/version.js); tests/service-worker.test.mjs lo comprueba.
 // Cambiar este archivo es lo que hace que el iPhone descargue una versión nueva.
 const CACHE_PREFIX = "sterk-";
-const CACHE_NAME = "sterk-v1-12-0";
+const CACHE_NAME = "sterk-v1-13-0";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -52,6 +52,21 @@ const APP_SHELL = [
   "./assets/exercises/overhead-triceps-extension.webp",
   "./assets/exercises/overhead-triceps-extension-claro.mp4",
   "./assets/exercises/overhead-triceps-extension-oscuro.mp4",
+  "./assets/exercises/shoulder-press.webp",
+  "./assets/exercises/shoulder-press-claro.mp4",
+  "./assets/exercises/shoulder-press-oscuro.mp4",
+  "./assets/exercises/biceps-curl.webp",
+  "./assets/exercises/biceps-curl-claro.mp4",
+  "./assets/exercises/biceps-curl-oscuro.mp4",
+  "./assets/exercises/barbell-row.webp",
+  "./assets/exercises/barbell-row-claro.mp4",
+  "./assets/exercises/barbell-row-oscuro.mp4",
+  "./assets/exercises/pull-up.webp",
+  "./assets/exercises/pull-up-claro.mp4",
+  "./assets/exercises/pull-up-oscuro.mp4",
+  "./assets/exercises/leg-press.webp",
+  "./assets/exercises/leg-press-claro.mp4",
+  "./assets/exercises/leg-press-oscuro.mp4",
 ];
 
 // PWA-02: cada versión se descarga completa desde la red. `cache: "reload"` evita guardar copias
